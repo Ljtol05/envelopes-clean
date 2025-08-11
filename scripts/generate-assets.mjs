@@ -20,15 +20,6 @@ for (const size of sizes) {
   await sharp(src).resize(size, size).webp({ quality: 90 }).toFile(webpOut);
   console.log('Generated', size);
 }
-// favicon.ico (16,32,48)
-const icoSizes = [16,32,48];
-const icoBuffers = await Promise.all(icoSizes.map(s => sharp(src).resize(s,s).png().toBuffer()));
-try {
-  const toIco = (await import('to-ico')).default;
-  const ico = await toIco(icoBuffers);
-  await fs.promises.writeFile(path.join(outDir, 'favicon.ico'), ico);
-  console.log('favicon.ico created');
-} catch {
-  await fs.promises.copyFile(path.join(outDir,'owl-32.png'), path.join(outDir,'favicon.ico'));
-  console.log('favicon.ico fallback (single 32px) created');
-}
+// favicon.ico simplified to single 32px icon (removed to-ico & vulnerable transitive deps)
+await fs.promises.copyFile(path.join(outDir,'owl-32.png'), path.join(outDir,'favicon.ico'));
+console.log('favicon.ico (single 32px) created');
