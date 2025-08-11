@@ -87,15 +87,46 @@ body {
 }
 
 /* Provide consistent default colors for unstyled text elements */
-h1,h2,h3,h4,h5,h6 { color: var(--owl-text-primary); }
-p,span,small,li,dt,dd { color: inherit; }
-a { color: var(--owl-accent); text-decoration: none; }
-a:hover { color: var(--owl-accent-hover); text-decoration: underline; }
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--owl-text-primary);
+}
+
+p,
+span,
+small,
+li,
+dt,
+dd {
+  color: inherit;
+}
+
+a {
+  color: var(--owl-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--owl-accent-hover);
+  text-decoration: underline;
+}
 
 /* Logo specific treatment for contrast subtlety */
-img.logo-light { filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
-img.logo-dark { filter: drop-shadow(0 1px 1px rgba(255,255,255,.08)); }
-img[data-theme-logo] { image-rendering: -webkit-optimize-contrast; }
+img.logo-light {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .25));
+}
+
+img.logo-dark {
+  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, .08));
+}
+
+img[data-theme-logo] {
+  image-rendering: -webkit-optimize-contrast;
+}
 
 /* High contrast focus outlines relying on focus ring token */
 *:focus-visible {
@@ -104,7 +135,9 @@ img[data-theme-logo] { image-rendering: -webkit-optimize-contrast; }
 }
 
 /* Text secondary utility (fallback if component forgot explicit class) */
-.text-secondary { color: var(--owl-text-secondary); }
+.text-secondary {
+  color: var(--owl-text-secondary);
+}
 
 /* Selection colors adapt to theme */
 ::selection {
@@ -133,6 +166,25 @@ img[data-theme-logo] { image-rendering: -webkit-optimize-contrast; }
   --owl-error: #DC2626;
   --owl-focus-ring: #228E86;
   /* teal800 */
+  /* ------------------------------------------------------------------ */
+  /* Legacy design token bridge (neutrals & brand) -> new semantic vars */
+  /* This allows old components still referencing --color-* tokens to    */
+  /* automatically adapt to the active theme without manual refactors.   */
+  --color-brand-primary: var(--owl-accent);
+  --color-brand-primary-hover: var(--owl-accent-hover);
+  --color-neutral-900: var(--owl-text-primary);
+  --color-neutral-800: var(--owl-text-primary);
+  --color-neutral-700: var(--owl-text-secondary);
+  --color-neutral-600: var(--owl-text-secondary);
+  --color-neutral-500: var(--owl-text-secondary);
+  --color-neutral-400: var(--owl-border);
+  --color-neutral-300: var(--owl-border);
+  --color-neutral-200: var(--owl-border);
+  --color-neutral-100: var(--owl-surface-alt);
+  --color-neutral-50: var(--owl-surface);
+  --color-success: var(--owl-success);
+  --color-warning: var(--owl-warning);
+  --color-danger: var(--owl-error);
 }
 
 [data-theme='dark'] {
@@ -149,6 +201,22 @@ img[data-theme-logo] { image-rendering: -webkit-optimize-contrast; }
   --owl-warning: #F59E0B;
   --owl-error: #EF4444;
   --owl-focus-ring: #68DCD4;
+  /* Legacy token bridge (see light theme block for rationale) */
+  --color-brand-primary: var(--owl-accent);
+  --color-brand-primary-hover: var(--owl-accent-hover);
+  --color-neutral-900: var(--owl-text-primary);
+  --color-neutral-800: var(--owl-text-primary);
+  --color-neutral-700: var(--owl-text-secondary);
+  --color-neutral-600: var(--owl-text-secondary);
+  --color-neutral-500: var(--owl-text-secondary);
+  --color-neutral-400: var(--owl-border);
+  --color-neutral-300: var(--owl-border);
+  --color-neutral-200: var(--owl-border);
+  --color-neutral-100: var(--owl-surface-alt);
+  --color-neutral-50: var(--owl-surface);
+  --color-success: var(--owl-success);
+  --color-warning: var(--owl-warning);
+  --color-danger: var(--owl-error);
 }
 
 @media (prefers-color-scheme: dark) {
