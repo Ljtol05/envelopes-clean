@@ -1,0 +1,4 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+npm run typecheck && npm run lint && npm run lint:owl && npm run audit:contrast && npm test -- --bail=1

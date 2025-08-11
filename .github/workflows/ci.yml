@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install
+        run: npm ci
+      - name: Generate Assets
+        run: npm run gen:assets || true
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint -- --max-warnings=0
+      - name: Accent Lint
+        run: npm run lint:owl
+      - name: Contrast Audit
+        run: npm run audit:contrast | tee contrast-report.txt
+      - name: Build
+        run: npm run build
+      - name: Upload Contrast Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: contrast-report
+          path: contrast-report.txt

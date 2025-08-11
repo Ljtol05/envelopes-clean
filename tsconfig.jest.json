@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "verbatimModuleSyntax": false,
+    "esModuleInterop": true,
+    "isolatedModules": false
+  },
+  "exclude": ["src/components/ui"]
+}

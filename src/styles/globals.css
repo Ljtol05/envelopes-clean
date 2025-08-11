@@ -1,0 +1,149 @@
+/* Pruned legacy design tokens in favor of Owllocate semantic variables */
+
+/**
+ * Envelopes Typography System
+ */
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    .text-display {
+      font-size: var(--text-display);
+      line-height: var(--text-display-lh);
+      font-weight: var(--font-weight-medium);
+    }
+
+    h1,
+    .text-h1 {
+      font-size: var(--text-h1);
+      line-height: var(--text-h1-lh);
+      font-weight: var(--font-weight-medium);
+    }
+
+    h2,
+    .text-h2 {
+      font-size: var(--text-h2);
+      line-height: var(--text-h2-lh);
+      font-weight: var(--font-weight-medium);
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    p,
+    .text-body {
+      font-size: var(--text-body);
+      line-height: var(--text-body-lh);
+      font-weight: var(--font-weight-normal);
+    }
+
+    .text-caption {
+      font-size: var(--text-caption);
+      line-height: var(--text-caption-lh);
+      font-weight: var(--font-weight-normal);
+    }
+
+    .text-mono {
+      font-size: var(--text-mono);
+      line-height: var(--text-mono-lh);
+      font-weight: var(--font-weight-normal);
+      font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+    }
+
+    label {
+      font-size: var(--text-body);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--text-body-lh);
+    }
+
+    button {
+      font-size: var(--text-body);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--text-body-lh);
+    }
+
+    input {
+      font-size: var(--text-body);
+      font-weight: var(--font-weight-normal);
+      line-height: var(--text-body-lh);
+    }
+  }
+}
+
+/* Base font sizing optional (removed legacy var references) */
+
+/* Owllocate semantic token fallbacks (single source of truth) */
+:root:not([data-theme='dark']) {
+  --owl-bg: #FFFFFF;
+  --owl-surface: #F5F7FA;
+  --owl-surface-alt: #FFFFFF;
+  --owl-text-primary: #0E1A2B;
+  --owl-text-secondary: #3F4A5F;
+  --owl-border: #CAD2DB;
+  --owl-accent: #45D0C7;
+  /* teal500 */
+  --owl-accent-fg: #0B1423;
+  /* navy900 */
+  --owl-accent-hover: #37C7BC;
+  /* teal600 */
+  --owl-success: #16A34A;
+  --owl-warning: #D97706;
+  --owl-error: #DC2626;
+  --owl-focus-ring: #228E86;
+  /* teal800 */
+}
+
+[data-theme='dark'] {
+  --owl-bg: #0E1A2B;
+  --owl-surface: #122239;
+  --owl-surface-alt: #19304C;
+  --owl-text-primary: #FFFFFF;
+  --owl-text-secondary: #A9B5C3;
+  --owl-border: #19304C;
+  --owl-accent: #45D0C7;
+  --owl-accent-fg: #FFFFFF;
+  --owl-accent-hover: #8EEAE1;
+  --owl-success: #22C55E;
+  --owl-warning: #F59E0B;
+  --owl-error: #EF4444;
+  --owl-focus-ring: #68DCD4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --owl-bg: #0E1A2B;
+    --owl-surface: #122239;
+    --owl-surface-alt: #19304C;
+    --owl-text-primary: #FFFFFF;
+    --owl-text-secondary: #A9B5C3;
+    --owl-border: #19304C;
+    --owl-accent: #45D0C7;
+    --owl-accent-fg: #FFFFFF;
+    --owl-accent-hover: #8EEAE1;
+    --owl-success: #22C55E;
+    --owl-warning: #F59E0B;
+    --owl-error: #EF4444;
+    --owl-focus-ring: #68DCD4;
+  }
+}
+
+/* Mobile-first responsive breakpoints */
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+    /* Slightly larger on desktop */
+  }
+}
+
+/* Touch target compliance - minimum 44px */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}

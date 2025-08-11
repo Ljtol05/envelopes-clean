@@ -1,0 +1,82 @@
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+
+// --- Shell chrome (relative paths) ---
+import { TopAppBar } from "./components/domain/TopAppBar";
+import { BottomNavigation } from "./components/domain/BottomNavigation";
+
+// Toasts
+import { Toaster } from "sonner";
+
+// --- Screens ---
+import { HomeScreen } from "./screens/Mobile/HomeScreen";
+import { CardScreen } from "./screens/Mobile/CardScreen";
+import { RulesScreen } from "./screens/Mobile/RulesScreen";
+import { ActivityScreen } from "./screens/Mobile/ActivityScreen";
+import { SettingsScreen } from "./screens/Mobile/SettingsScreen";
+import { TransactionDetailsScreen } from "./screens/Mobile/TransactionDetailsScreen";
+import { EnvelopesProvider } from './contexts/EnvelopesContext';
+
+function AppLayout() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Map pathnames to tab ids
+  const pathToTab: Record<string, 'home' | 'card' | 'rules' | 'activity' | 'settings'> = {
+    '/home': 'home',
+    '/card': 'card',
+    '/rules': 'rules',
+    '/activity': 'activity',
+    '/settings': 'settings',
+  };
+
+  // Determine active tab from current pathname
+  const activeTab = pathToTab[location.pathname] || 'home';
+
+  // Handler to change route when tab is clicked
+  const handleTabChange = (tab: 'home' | 'card' | 'rules' | 'activity' | 'settings') => {
+    navigate(`/${tab}`);
+  };
+
+  return (
+    <div className="min-h-dvh bg-[color:var(--owl-bg)] text-[color:var(--owl-text-primary)]">
+  <TopAppBar />
+
+  <main className="pb-20 bg-[color:var(--owl-bg)] text-[color:var(--owl-text-primary)]">
+        <Outlet />
+      </main>
+
+      <BottomNavigation
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      />
+
+      <Toaster richColors position="top-center" />
+    </div>
+  );
+}
+
+// Wrapper to inject the required onBack prop into the details screen
+function TxRoute() {
+  const navigate = useNavigate();
+  return <TransactionDetailsScreen onBack={() => navigate(-1)} />;
+}
+
+export default function App() {
+  return (
+    <EnvelopesProvider mockLatencyMs={[120,300]}>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<AppLayout />}> {/* shared chrome */}
+            <Route index element={<Navigate to="/home" replace />} />
+            <Route path="/home" element={<HomeScreen />} />
+            <Route path="/card" element={<CardScreen />} />
+            <Route path="/rules" element={<RulesScreen />} />
+            <Route path="/activity" element={<ActivityScreen />} />
+            <Route path="/settings" element={<SettingsScreen />} />
+            <Route path="/tx/:id" element={<TxRoute />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </EnvelopesProvider>
+  );
+}
