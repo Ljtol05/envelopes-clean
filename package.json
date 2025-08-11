@@ -14,6 +14,8 @@
     "typecheck": "tsc -b",
     "test": "jest --passWithNoTests",
     "audit:lighthouse": "npm run build && lhci autorun",
+  "perf:bundle": "node scripts/bundle-report.mjs",
+  "perf:compare": "node scripts/compare-lhci.mjs",
     "prepare": "husky"
   },
   "dependencies": {

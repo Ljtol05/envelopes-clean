@@ -20,15 +20,32 @@ jobs:
         run: npm run build
       - name: Lighthouse CI
         run: npx lhci autorun || echo "Lighthouse CI finished with non-zero exit (soft fail)"
+      - name: Bundle Size Report
+        run: node scripts/bundle-report.mjs || echo "Bundle size budget failed" 
+      - name: Compare Lighthouse Scores
+        run: node scripts/compare-lhci.mjs
       - name: Upload LHCI Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lighthouse-report
           path: .lighthouseci
+      - name: Upload Bundle Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-report
+          path: bundle-report.json
       - name: Post Lighthouse Score Summary
         if: always()
         run: |
-          SCORE=$(jq '.categories.performance.score' .lighthouseci/*report.json | head -1)
-          echo "## Lighthouse Performance Score: $SCORE" >> $GITHUB_STEP_SUMMARY
-          echo "See full report in uploaded artifacts." >> $GITHUB_STEP_SUMMARY
+          PERF=$(jq '.categories.performance.score' .lighthouseci/*report.json | head -1)
+          ACCESS=$(jq '.categories.accessibility.score' .lighthouseci/*report.json | head -1)
+          SEO=$(jq '.categories.seo.score' .lighthouseci/*report.json | head -1)
+          BEST=$(jq '.categories["best-practices"].score' .lighthouseci/*report.json | head -1)
+          echo "## Lighthouse Scores" >> $GITHUB_STEP_SUMMARY
+          echo "Performance: $PERF" >> $GITHUB_STEP_SUMMARY
+          echo "Accessibility: $ACCESS" >> $GITHUB_STEP_SUMMARY
+          echo "Best Practices: $BEST" >> $GITHUB_STEP_SUMMARY
+          echo "SEO: $SEO" >> $GITHUB_STEP_SUMMARY
+          if [ -f bundle-report.json ]; then echo "" >> $GITHUB_STEP_SUMMARY; echo "Bundle report attached as artifact." >> $GITHUB_STEP_SUMMARY; fi
