@@ -53,7 +53,7 @@ const TopAppBar: React.FC<TopAppBarProps> = ({
             <ChevronLeft className="h-5 w-5" />
           </Button>
         ) : (
-          <OwllocateLogo width={40} height={40} title="Owllocate" />
+          <OwllocateLogo width={48} height={48} title="Owllocate" />
         )}
         {subtitle && (
           <div className="min-w-0 flex-1">

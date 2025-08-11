@@ -77,6 +77,30 @@
   }
 }
 
+/* Base app surface + typography color driven by semantic vars */
+body {
+  background: var(--owl-bg);
+  color: var(--owl-text-primary);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color .3s ease, color .3s ease;
+}
+
+/* High contrast focus outlines relying on focus ring token */
+*:focus-visible {
+  outline: 2px solid var(--owl-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Text secondary utility (fallback if component forgot explicit class) */
+.text-secondary { color: var(--owl-text-secondary); }
+
+/* Selection colors adapt to theme */
+::selection {
+  background: var(--owl-accent);
+  color: var(--owl-accent-fg);
+}
+
 /* Base font sizing optional (removed legacy var references) */
 
 /* Owllocate semantic token fallbacks (single source of truth) */
