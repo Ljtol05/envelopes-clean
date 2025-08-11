@@ -39,3 +39,12 @@ if (typeof window !== 'undefined' && !window.localStorage) {
   // @ts-expect-error polyfill
   window.localStorage = new LocalStorageMock();
 }
+
+// Suppress noisy Node.js deprecation warnings for transitive punycode usage (DEP0040)
+// so CI logs stay focused on actionable issues.
+const originalEmitWarning = process.emitWarning;
+process.emitWarning = function (warning: unknown, ...args: unknown[]) {
+  const msg = typeof warning === 'string' ? warning : (warning as { message?: string })?.message;
+  if (msg && msg.toLowerCase().includes('punycode')) return;
+  return originalEmitWarning.call(process, warning, ...args);
+};

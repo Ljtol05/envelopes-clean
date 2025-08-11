@@ -1,0 +1,43 @@
+name: Coverage Ratchet
+
+on:
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: coverage-ratchet
+  cancel-in-progress: false
+
+jobs:
+  ratchet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install deps
+        run: npm ci
+      - name: Run tests to generate coverage
+        run: npm test -- --runInBand
+      - name: Ratchet coverage thresholds (+1% when exceeded)
+        run: npm run coverage:ratchet
+      - name: Commit updated thresholds (if changed)
+        run: |
+          if ! git diff --quiet --exit-code jest.config.cjs; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add jest.config.cjs
+            git commit -m 'chore(ci): ratchet coverage thresholds'
+            git push
+          else
+            echo 'No threshold changes'
+          fi
