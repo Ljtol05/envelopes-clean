@@ -1,44 +1,39 @@
 import '@testing-library/jest-dom';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { JSDOM } = require('jsdom');
 
-const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', { url: 'http://localhost' });
-// @ts-ignore
-global.window = dom.window as any;
-// @ts-ignore
-global.document = dom.window.document as any;
-// @ts-ignore
-global.HTMLElement = dom.window.HTMLElement;
-// @ts-ignore
-global.navigator = { userAgent: 'node.js' } as any;
-
-// getComputedStyle mock
-// @ts-ignore
-global.getComputedStyle = (el: Element) => ({
-  getPropertyValue: () => ''
-});
-
-// localStorage mock
-class LocalStorageMock {
-  store: Record<string,string> = {};
-  clear(){ this.store = {}; }
-  getItem(k:string){ return this.store[k] ?? null; }
-  setItem(k:string,v:string){ this.store[k]=String(v); }
-  removeItem(k:string){ delete this.store[k]; }
+// Provide matchMedia if missing (jsdom doesn't implement fully)
+if (typeof window !== 'undefined' && !window.matchMedia) {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: (query: string): MediaQueryList => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {}, // deprecated
+      removeListener: () => {}, // deprecated
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false
+    }) as unknown as MediaQueryList
+  });
 }
-// @ts-ignore
-global.localStorage = new LocalStorageMock();
 
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: (query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: () => {},
-    removeListener: () => {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => false
-  })
-});
+// Defensive getComputedStyle stub to avoid undefined in tests reading CSS vars
+if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+  // no change
+} else if (typeof global !== 'undefined') {
+  // @ts-expect-error assigning polyfill
+  global.getComputedStyle = () => ({ getPropertyValue: () => '' });
+}
+
+// Ensure localStorage exists (jsdom provides it; fallback for safety)
+if (typeof window !== 'undefined' && !window.localStorage) {
+  class LocalStorageMock {
+    private store: Record<string, string> = {};
+    clear() { this.store = {}; }
+    getItem(k: string) { return Object.prototype.hasOwnProperty.call(this.store, k) ? this.store[k] : null; }
+    setItem(k: string, v: string) { this.store[k] = String(v); }
+    removeItem(k: string) { delete this.store[k]; }
+  }
+  // @ts-expect-error polyfill
+  window.localStorage = new LocalStorageMock();
+}

@@ -1,5 +1,5 @@
 module.exports = {
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
   setupFilesAfterEnv: ['<rootDir>/setupTests.ts'],
   transform: {

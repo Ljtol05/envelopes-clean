@@ -14,7 +14,7 @@ interface Notification {
   action?: {
     label: string;
     endpoint: string;
-    data?: Record<string, any>;
+  data?: Record<string, unknown>;
   };
 }
 
