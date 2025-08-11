@@ -1,4 +1,6 @@
 import '@testing-library/jest-dom';
+// Accessibility testing helpers
+import 'jest-axe/extend-expect';
 
 // Provide matchMedia if missing (jsdom doesn't implement fully)
 if (typeof window !== 'undefined' && !window.matchMedia) {
