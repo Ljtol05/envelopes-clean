@@ -86,6 +86,17 @@ body {
   transition: background-color .3s ease, color .3s ease;
 }
 
+/* Provide consistent default colors for unstyled text elements */
+h1,h2,h3,h4,h5,h6 { color: var(--owl-text-primary); }
+p,span,small,li,dt,dd { color: inherit; }
+a { color: var(--owl-accent); text-decoration: none; }
+a:hover { color: var(--owl-accent-hover); text-decoration: underline; }
+
+/* Logo specific treatment for contrast subtlety */
+img.logo-light { filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
+img.logo-dark { filter: drop-shadow(0 1px 1px rgba(255,255,255,.08)); }
+img[data-theme-logo] { image-rendering: -webkit-optimize-contrast; }
+
 /* High contrast focus outlines relying on focus ring token */
 *:focus-visible {
   outline: 2px solid var(--owl-focus-ring);

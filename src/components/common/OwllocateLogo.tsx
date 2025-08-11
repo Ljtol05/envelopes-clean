@@ -27,6 +27,7 @@ const OwllocateLogo: React.FC<OwllocateLogoProps> = ({
   // Determine current theme via prop or data-theme attribute (non-hook, safe for SSR/tests)
   const resolvedTheme = themeName || (typeof document !== 'undefined' ? (document.documentElement.getAttribute('data-theme') as 'light' | 'dark' | null) : null) || undefined;
   const src = resolvedTheme === 'light' ? owlSvg : owlPng;
+  const logoModeClass = resolvedTheme ? `logo-${resolvedTheme}` : 'logo-unknown';
   // For now we only have one raster size; browsers downscale smoothly. Later we can add srcSet once more sizes exist.
   // Map height to a font size utility (approx). Fallback to text-lg.
   const pxHeight = Number(height) || 40;
@@ -39,7 +40,8 @@ const OwllocateLogo: React.FC<OwllocateLogoProps> = ({
         height={height}
         alt={title}
         loading="lazy"
-  data-theme-logo={resolvedTheme || 'unknown'}
+        data-theme-logo={resolvedTheme || 'unknown'}
+        className={logoModeClass}
         {...rest}
       />
       {showWordmark && (
