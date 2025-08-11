@@ -14,6 +14,18 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+      - name: Lockfile Sync Guard
+        run: |
+          echo "Checking that package-lock.json is in sync with package.json..."
+          npm install --package-lock-only --ignore-scripts
+          if ! git diff --quiet --exit-code package-lock.json; then
+            echo "::error::package-lock.json is out of sync with package.json. Run 'npm install' locally and commit the updated lockfile.";
+            echo "Changed lines:";
+            git --no-pager diff --name-only package-lock.json;
+            exit 1;
+          else
+            echo "Lockfile is in sync.";
+          fi
       - name: Install
         run: npm ci
       - name: Generate Assets
