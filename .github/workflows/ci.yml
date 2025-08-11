@@ -27,13 +27,20 @@ jobs:
             echo "Lockfile is in sync.";
           fi
       - name: Install
-        run: npm ci
+        run: npm ci --audit=false
       - name: Generate Assets
         run: npm run gen:assets || true
       - name: Typecheck
         run: npm run typecheck
+      - name: Cache ESLint cache
+        uses: actions/cache@v4
+        with:
+          path: .eslintcache
+          key: eslint-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            eslint-${{ runner.os }}-
       - name: Lint
-        run: npm run lint -- --max-warnings=0
+        run: npm run lint -- --max-warnings=0 --cache
       - name: Accent Lint
         run: npm run lint:owl
       - name: Contrast Audit
@@ -45,3 +52,28 @@ jobs:
         with:
           name: contrast-report
           path: contrast-report.txt
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install (prod + dev)
+        run: npm ci --ignore-scripts
+      - name: npm audit (fail on high or critical)
+        run: |
+          set -e
+          echo "Running npm audit (high severity threshold)";
+          if ! npm audit --audit-level=high; then
+            echo "::error::High (or critical) severity vulnerabilities found. See audit log above.";
+            exit 1;
+          fi
+      - name: Summarize Audit
+        if: always()
+        run: |
+          echo "## Security Audit" >> $GITHUB_STEP_SUMMARY
+          echo "Audit run with --audit-level=high. Fails build if high/critical vulnerabilities present." >> $GITHUB_STEP_SUMMARY
