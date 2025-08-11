@@ -3,10 +3,10 @@ module.exports = {
   roots: ['<rootDir>/src'],
   setupFilesAfterEnv: ['<rootDir>/setupTests.ts'],
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }]
+    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: 'tsconfig.jest.json', useESM: false }]
   },
   moduleFileExtensions: ['ts','tsx','js','jsx'],
-  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  testEnvironmentOptions: {},
   moduleNameMapper: {
     '^(.*)\\.(css|less|scss)$': '<rootDir>/styleMock.js'
   }

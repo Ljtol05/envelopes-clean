@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 "use client";
 
 import * as React from "react";
@@ -8,7 +7,7 @@ import { FormProvider } from "react-hook-form";
 
 import { cn } from "./utils";
 import { Label } from "./label";
-import { FormField, useFormField, FormItemContext } from "./form.utils";
+import { FormField, useFormField, FormItemContext } from "./form.utils.tsx";
 
 const Form = FormProvider;
 
