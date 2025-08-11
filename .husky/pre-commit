@@ -1,4 +1,4 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+# Husky v10+ no longer requires sourcing the _/husky.sh script.
 
-npm run typecheck && npm run lint && npm run lint:owl && npm run audit:contrast
+npm run typecheck && npm run lint && npm run lint:owl && npm run audit:contrast && npm test -- --bail=1

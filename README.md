@@ -3,6 +3,8 @@
 ![CI](https://github.com/Ljtol05/envelopes-clean/actions/workflows/ci.yml/badge.svg)
 ![Lighthouse CI](https://github.com/Ljtol05/envelopes-clean/actions/workflows/lighthouse.yml/badge.svg)
 
+![Lighthouse Score](https://img.shields.io/badge/Lighthouse-Performance-green?logo=lighthouse)
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

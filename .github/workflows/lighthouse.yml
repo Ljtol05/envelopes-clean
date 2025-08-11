@@ -26,3 +26,9 @@ jobs:
         with:
           name: lighthouse-report
           path: .lighthouseci
+      - name: Post Lighthouse Score Summary
+        if: always()
+        run: |
+          SCORE=$(jq '.categories.performance.score' .lighthouseci/*report.json | head -1)
+          echo "## Lighthouse Performance Score: $SCORE" >> $GITHUB_STEP_SUMMARY
+          echo "See full report in uploaded artifacts." >> $GITHUB_STEP_SUMMARY

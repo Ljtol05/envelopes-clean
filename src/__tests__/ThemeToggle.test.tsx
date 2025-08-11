@@ -1,3 +1,6 @@
+import React from 'react';
+// Touch React to avoid unused variable TS error for classic runtime JSX
+void React;
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { ThemeProvider } from '../theme';
 import { ThemeToggle } from '../theme/ThemeToggle';
