@@ -1,6 +1,6 @@
 import * as React from 'react';
-import owlPng from '../../assets/branding/owl.png'; // dark-mode optimized (or legacy)
-import owlSvg from '../../assets/branding/owl.svg'; // provided light-mode version
+import owlDark from '../../assets/branding/owl-dark-logo.png';
+import owlLight from '../../assets/branding/owl-light-logo.png';
 
 export type OwllocateLogoVariant = 'icon' | 'full';
 
@@ -26,7 +26,7 @@ const OwllocateLogo: React.FC<OwllocateLogoProps> = ({
   const showWordmark = wordmark || variant === 'full';
   // Determine current theme via prop or data-theme attribute (non-hook, safe for SSR/tests)
   const resolvedTheme = themeName || (typeof document !== 'undefined' ? (document.documentElement.getAttribute('data-theme') as 'light' | 'dark' | null) : null) || undefined;
-  const src = resolvedTheme === 'light' ? owlSvg : owlPng;
+  const src = resolvedTheme === 'light' ? owlLight : owlDark;
   const logoModeClass = resolvedTheme ? `logo-${resolvedTheme}` : 'logo-unknown';
   // For now we only have one raster size; browsers downscale smoothly. Later we can add srcSet once more sizes exist.
   // Map height to a font size utility (approx). Fallback to text-lg.
