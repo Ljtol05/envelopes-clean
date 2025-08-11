@@ -12,6 +12,18 @@ dist
 dist-ssr
 *.local
 
+# Build / test artifacts
+coverage/
+*.lcov
+*.tsbuildinfo
+.eslintcache
+.lhci/
+lhci-report*/
+bundle-report.json
+
+# Misc
+.DS_Store
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
