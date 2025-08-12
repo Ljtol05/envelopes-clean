@@ -18,9 +18,10 @@ export default function RegisterScreen() {
 
   const onSubmit = async (vals: FormValues) => {
     try {
-      await doRegister(vals.name, vals.email, vals.password);
-      toast.success("Account created");
-      navigate("/onboarding/coach", { replace: true });
+  await doRegister(vals.name, vals.email, vals.password);
+  toast.success("Account created");
+  // After backend returns token+user, proceed to onboarding coach
+  navigate("/onboarding/coach", { replace: true });
     } catch (e) {
       const err = e as Error & { status?: number };
       toast.error(err.message || "Registration failed");

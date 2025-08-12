@@ -18,6 +18,8 @@ import { EnvelopesProvider } from './contexts/EnvelopesContext';
 import AuthProvider from './context/AuthContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import AuthTabs from './screens/auth/AuthTabs';
+import ForgotPassword from './screens/auth/ForgotPassword';
+import AuthScaffold from './screens/auth/AuthScaffold';
 import OnboardingCoach from './screens/OnboardingCoach';
 
 function AppLayout() {
@@ -72,6 +74,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<AuthTabs />} />
+            <Route path="/auth/forgot" element={<AuthScaffold><ForgotPassword /></AuthScaffold>} />
             <Route element={<AppLayout />}> {/* shared chrome */}
               <Route element={<ProtectedRoute />}> {/* protected app */}
                 <Route path="/onboarding/coach" element={<OnboardingCoach />} />

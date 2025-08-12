@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/ca
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Button } from "../../components/ui/button";
+import { Link } from "react-router-dom";
 
 type FormValues = { email: string; password: string };
 
@@ -58,6 +59,9 @@ export default function LoginScreen() {
               {isSubmitting ? "Signing in…" : "Sign in"}
             </Button>
           </form>
+          <div className="mt-3 text-center">
+            <Link to="/auth/forgot" className="text-sm text-[color:var(--owl-accent)] hover:underline">Forgot password?</Link>
+          </div>
         </CardContent>
       </Card>
     </div>
