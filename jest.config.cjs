@@ -2,6 +2,7 @@ module.exports = {
   testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
   setupFilesAfterEnv: ['<rootDir>/setupTests.ts'],
+  coverageProvider: 'v8',
   transform: {
     '^.+\\.(ts|tsx)$': 'babel-jest'
   },

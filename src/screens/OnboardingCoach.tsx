@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { askCoach, type CoachResponse } from "../lib/api";
+import { askCoach, executeAction, type CoachResponse } from "../lib/api";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -79,7 +79,22 @@ export default function OnboardingCoach() {
               {m.role === "assistant" && m.meta?.suggestedActions && m.meta.suggestedActions.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {m.meta.suggestedActions.map((a, i) => (
-                    <Button key={i} size="sm" variant="secondary" onClick={() => toast.info(a.label)}>
+                    <Button
+                      key={i}
+                      size="sm"
+                      variant="secondary"
+                      onClick={async () => {
+                        try {
+                          await executeAction({ action: a.type || a.label, params: a.payload as Record<string, unknown> | undefined });
+                          toast.success("Action executed");
+                          // Optionally reflect action result in chat
+                          setMessages((msgs) => [...msgs, { role: "assistant", content: `✓ ${a.label}` }]);
+                        } catch (e) {
+                          const err = e as Error;
+                          toast.error(err.message || `Failed to execute: ${a.label}`);
+                        }
+                      }}
+                    >
                       {a.label}
                     </Button>
                   ))}
@@ -90,7 +105,20 @@ export default function OnboardingCoach() {
                   <CardContent className="py-2">
                     <div className="flex items-center justify-between gap-2 text-sm">
                       <span>New here? Start a guided setup.</span>
-                      <Button size="sm" onClick={() => toast.info("Guided setup coming soon")}>Start</Button>
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            await executeAction({ action: "start_guided_setup" });
+                            toast.success("Starting guided setup…");
+                          } catch (e) {
+                            const err = e as Error;
+                            toast.error(err.message || "Failed to start guided setup");
+                          }
+                        }}
+                      >
+                        Start
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
