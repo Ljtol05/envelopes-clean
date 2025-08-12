@@ -10,7 +10,7 @@ module.exports = {
     '^.+\\.(t|j)sx?$': [
       'babel-jest',
       {
-        configFile: path.join(__dirname, 'babel.config.js'),
+  configFile: path.join(__dirname, 'babel.config.cjs'),
         babelrc: false,
         sourceType: 'unambiguous',
         plugins: ['@babel/plugin-syntax-import-meta'],
@@ -19,7 +19,7 @@ module.exports = {
   },
   moduleFileExtensions: ['ts','tsx','js','jsx'],
   moduleNameMapper: {
-    '^(.*)\\.(css|less|scss)$': '<rootDir>/styleMock.js'
+    '^(.*)\\.(css|less|scss)$': '<rootDir>/styleMock.cjs'
   },
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.{ts,tsx}','!src/**/*.d.ts'],
