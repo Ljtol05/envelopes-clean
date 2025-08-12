@@ -2,9 +2,8 @@
 
 // ===== Config & helpers =====
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
-// Replit dev auth headers (optional): when provided, backend uses these for auth in dev.
-const REPLIT_USER_ID = import.meta.env.VITE_REPLIT_USER_ID || (typeof localStorage !== 'undefined' ? localStorage.getItem('x-replit-user-id') : null) || null;
-const REPLIT_USER_NAME = import.meta.env.VITE_REPLIT_USER_NAME || (typeof localStorage !== 'undefined' ? localStorage.getItem('x-replit-user-name') : null) || null;
+const REPLIT_USER_ID = import.meta.env.VITE_REPLIT_USER_ID || "";
+const REPLIT_USER_NAME = import.meta.env.VITE_REPLIT_USER_NAME || "";
 const AUTH_HEADER_KEY = "Authorization";
 const TOKEN_STORAGE_KEY = "auth_token";
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -23,11 +22,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
+  // Replit dev headers (backend requires them for auth simulation)
+  if (REPLIT_USER_ID) headers["x-replit-user-id"] = REPLIT_USER_ID;
+  if (REPLIT_USER_NAME) headers["x-replit-user-name"] = REPLIT_USER_NAME;
   const token = getToken();
   if (token) headers[AUTH_HEADER_KEY] = `Bearer ${token}`;
-  // Add Replit dev headers if configured
-  if (REPLIT_USER_ID) headers['x-replit-user-id'] = REPLIT_USER_ID;
-  if (REPLIT_USER_NAME) headers['x-replit-user-name'] = REPLIT_USER_NAME;
 
   const res = await fetch(url, { ...options, headers });
   const isJson = res.headers.get("content-type")?.includes("application/json");
@@ -72,8 +71,10 @@ const PATHS = {
     me: "/api/auth/me",
   },
   coach: "/api/ai/coach",
-  setup: "/api/ai/setup-envelopes",
-  execute: "/api/ai/execute-action",
+  ai: {
+    setup: "/api/ai/setup-envelopes",
+    execute: "/api/ai/execute-action",
+  },
 } as const;
 
 // ===== Public API (auth & coach) =====
@@ -102,22 +103,19 @@ export async function askCoach(question: string, context?: Record<string, unknow
   });
 }
 
-// Optional AI helper endpoints used during onboarding flows
-export type SetupEnvelopesRequest = Record<string, unknown>;
-export type SetupEnvelopesResponse = unknown;
-export async function setupEnvelopes(payload: SetupEnvelopesRequest): Promise<SetupEnvelopesResponse> {
-  return request<SetupEnvelopesResponse>(PATHS.setup, {
+export async function executeAction(action: string, payload?: Record<string, unknown>): Promise<{ ok: boolean; result?: unknown }>
+{
+  return request(PATHS.ai.execute, {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ action, payload }),
   });
 }
 
-export type ExecuteActionRequest = { action: string; params?: Record<string, unknown> };
-export type ExecuteActionResponse = unknown;
-export async function executeAction(payload: ExecuteActionRequest): Promise<ExecuteActionResponse> {
-  return request<ExecuteActionResponse>(PATHS.execute, {
+export async function setupEnvelopes(params: Record<string, unknown>): Promise<{ ok: boolean; created?: unknown }>
+{
+  return request(PATHS.ai.setup, {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(params),
   });
 }
 

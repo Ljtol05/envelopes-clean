@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { askCoach, executeAction, type CoachResponse } from "../lib/api";
+import { askCoach, executeAction, setupEnvelopes, type CoachResponse } from "../lib/api";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -9,6 +9,7 @@ const SEED_QUESTION = "Tell me your income, current savings, debts, and goals.";
 const SESSION_KEY = "coach_messages_v1";
 
 type Msg = { role: "user" | "assistant"; content: string; meta?: Partial<CoachResponse> };
+type ActionPayload = { action?: string; params?: Record<string, unknown> } | Record<string, unknown> | undefined;
 
 export default function OnboardingCoach() {
   const [messages, setMessages] = useState<Msg[]>(() => {
@@ -85,13 +86,32 @@ export default function OnboardingCoach() {
                       variant="secondary"
                       onClick={async () => {
                         try {
-                          await executeAction({ action: a.type || a.label, params: a.payload as Record<string, unknown> | undefined });
-                          toast.success("Action executed");
-                          // Optionally reflect action result in chat
-                          setMessages((msgs) => [...msgs, { role: "assistant", content: `✓ ${a.label}` }]);
+                          // Two common cases: execute-action and setup-envelopes
+                          if (a.type === "execute-action") {
+                            const raw = a.payload as ActionPayload;
+                            const actionName = String(
+                              (typeof raw === "object" && raw && "action" in (raw as Record<string, unknown>)
+                                ? (raw as Record<string, unknown>).action
+                                : a.label) || ""
+                            )
+                              .toLowerCase()
+                              .replace(/\s+/g, "-");
+                            const params = (typeof raw === "object" && raw && "params" in (raw as Record<string, unknown>)
+                              ? (raw as Record<string, unknown>).params
+                              : raw) as Record<string, unknown> | undefined;
+                            const res = await executeAction(actionName, params);
+                            toast.success("Action executed");
+                            if (res && typeof res === "object") console.debug("executeAction result", res);
+                          } else if (a.type === "setup-envelopes") {
+                            const res = await setupEnvelopes((a.payload as Record<string, unknown>) ?? {});
+                            toast.success("Setup complete");
+                            if (res && typeof res === "object") console.debug("setupEnvelopes result", res);
+                          } else {
+                            toast.info(a.label);
+                          }
                         } catch (e) {
                           const err = e as Error;
-                          toast.error(err.message || `Failed to execute: ${a.label}`);
+                          toast.error(err.message || "Action failed");
                         }
                       }}
                     >
@@ -109,11 +129,11 @@ export default function OnboardingCoach() {
                         size="sm"
                         onClick={async () => {
                           try {
-                            await executeAction({ action: "start_guided_setup" });
-                            toast.success("Starting guided setup…");
+                            await setupEnvelopes({ mode: "quickstart" });
+                            toast.success("Guided setup started");
                           } catch (e) {
                             const err = e as Error;
-                            toast.error(err.message || "Failed to start guided setup");
+                            toast.error(err.message || "Failed to start setup");
                           }
                         }}
                       >
