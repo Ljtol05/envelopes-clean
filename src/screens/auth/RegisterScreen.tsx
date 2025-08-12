@@ -28,8 +28,8 @@ export default function RegisterScreen() {
   };
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-4">
-      <Card className="w-full max-w-sm">
+    <div>
+      <Card className="w-full max-w-md mx-auto bg-[color:var(--owl-surface)] shadow-[var(--owl-shadow-md)] border border-[color:var(--owl-border)]">
         <CardHeader>
           <CardTitle>Create account</CardTitle>
         </CardHeader>

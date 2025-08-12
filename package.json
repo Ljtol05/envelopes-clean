@@ -4,8 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+  "predev": "node scripts/env-validate.mjs --silent",
+  "dev": "vite",
+  "prebuild": "node scripts/env-validate.mjs --strict",
+  "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "gen:assets": "node scripts/generate-assets.mjs",
