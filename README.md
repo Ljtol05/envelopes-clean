@@ -175,6 +175,22 @@ export default tseslint.config([
   npm run dev
   ```
 
+  ## Environment variables (.env)
+
+  Create a .env (or .env.local) at the project root for Vite.
+
+  - VITE_API_BASE_URL: Base URL for the backend API used by src/lib/api.ts.
+    - Example: https://envelopes-backend-ashb786.replit.dev
+  - VITE_REPLIT_USER_ID: Dev-only header to emulate a user in Replit backend.
+    - Example: test-user-123
+  - VITE_REPLIT_USER_NAME: Dev-only header to pass a display name to backend.
+    - Example: testuser
+
+  Notes
+  - Vite exposes only variables prefixed with VITE_ to the client code (via import.meta.env).
+  - These headers are added automatically by the API client during development to help the Replit backend identify requests.
+  - Restart dev server after changing env vars.
+
   ## GitHub Setup Notes
   After pushing the initial commit:
   1. Enable GitHub Pages (if desired) pointing to a deploy workflow (not yet included).
