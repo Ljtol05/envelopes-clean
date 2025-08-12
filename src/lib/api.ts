@@ -1,6 +1,103 @@
-// Lightweight typed mock API used by the UI while the real backend is wired.
+// API utilities: existing mock endpoints for envelopes + real auth/coach wrappers.
 
+// ===== Config & helpers =====
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+const AUTH_HEADER_KEY = "Authorization";
+const TOKEN_STORAGE_KEY = "auth_token";
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+function getToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const url = `${API_BASE_URL}${path}`;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
+  const token = getToken();
+  if (token) headers[AUTH_HEADER_KEY] = `Bearer ${token}`;
+
+  const res = await fetch(url, { ...options, headers });
+  const isJson = res.headers.get("content-type")?.includes("application/json");
+  let body: unknown = null;
+  if (isJson) {
+    try {
+      body = await res.json();
+    } catch {
+      body = null;
+    }
+  } else {
+    const text = await res.text().catch(() => null);
+    body = text;
+  }
+
+  if (!res.ok) {
+    const maybeObj = (typeof body === "object" && body !== null) ? (body as { message?: string; error?: string }) : undefined;
+    const message = maybeObj?.message || maybeObj?.error || res.statusText || "Request failed";
+    const err = new Error(message) as Error & { status?: number; body?: unknown };
+    err.status = res.status;
+    err.body = body;
+    throw err;
+  }
+  return body as T;
+}
+
+// ===== Types (auth & coach) =====
+export type User = { id: number; name: string; email: string };
+export type AuthResponse = { token: string; user: User };
+export type CoachResponse = {
+  response: string;
+  suggestedActions?: { type: string; label: string; payload?: unknown }[];
+  analytics?: Record<string, number | string>;
+  isNewUser?: boolean;
+};
+
+// ===== Endpoints =====
+const PATHS = {
+  auth: {
+    login: "/api/auth/login",
+    register: "/api/auth/register",
+    me: "/api/auth/me",
+  },
+  coach: "/api/ai/coach",
+} as const;
+
+// ===== Public API (auth & coach) =====
+export async function apiLogin(email: string, password: string): Promise<AuthResponse> {
+  return request<AuthResponse>(PATHS.auth.login, {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function apiRegister(name: string, email: string, password: string): Promise<AuthResponse> {
+  return request<AuthResponse>(PATHS.auth.register, {
+    method: "POST",
+    body: JSON.stringify({ name, email, password }),
+  });
+}
+
+export async function apiGetMe(): Promise<User> {
+  return request<User>(PATHS.auth.me, { method: "GET" });
+}
+
+export async function askCoach(question: string, context?: Record<string, unknown>): Promise<CoachResponse> {
+  return request<CoachResponse>(PATHS.coach, {
+    method: "POST",
+    body: JSON.stringify({ question, context }),
+  });
+}
+
+// Also export with canonical names used in requirements
+export const login = apiLogin;
+export const register = apiRegister;
+export const getMe = apiGetMe;
 
 // ===== Types =====
 export type EnvelopeId = string;
@@ -58,6 +155,7 @@ export interface ReallocateResponse {
 }
 
 // ===== API stubs =====
+// ===== Existing mock API (kept for envelopes UI) =====
 export async function getBalances(account_id: string): Promise<BalancesResponse> {
   await sleep(200);
   return {
