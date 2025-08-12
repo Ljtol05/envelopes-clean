@@ -143,7 +143,7 @@ const ActivityScreen: React.FC<ActivityScreenProps> = ({
       {/* Filters */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-h2 text-[var(--color-neutral-900)]">Activity</h2>
+          <h2 className="text-h2 text-[color:var(--owl-text-primary)]">Activity</h2>
           <Button 
             variant="ghost" 
             size="sm"
@@ -156,7 +156,7 @@ const ActivityScreen: React.FC<ActivityScreenProps> = ({
 
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-2">
-            <label className="text-caption text-[var(--color-neutral-600)]">Month</label>
+            <label className="text-caption text-[color:var(--owl-text-secondary)]">Month</label>
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="text-caption">
                 <SelectValue />
@@ -170,7 +170,7 @@ const ActivityScreen: React.FC<ActivityScreenProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-caption text-[var(--color-neutral-600)]">Envelope</label>
+            <label className="text-caption text-[color:var(--owl-text-secondary)]">Envelope</label>
             <Select value={selectedEnvelope} onValueChange={setSelectedEnvelope}>
               <SelectTrigger className="text-caption">
                 <SelectValue />
@@ -186,7 +186,7 @@ const ActivityScreen: React.FC<ActivityScreenProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-caption text-[var(--color-neutral-600)]">Merchant</label>
+            <label className="text-caption text-[color:var(--owl-text-secondary)]">Merchant</label>
             <Select value={selectedMerchant} onValueChange={setSelectedMerchant}>
               <SelectTrigger className="text-caption">
                 <SelectValue />
@@ -209,10 +209,10 @@ const ActivityScreen: React.FC<ActivityScreenProps> = ({
           <div key={dateString} className="space-y-3">
             {/* Date Header */}
             <div className="flex items-center justify-between">
-              <h3 className="text-body font-medium text-[var(--color-neutral-700)]">
+              <h3 className="text-body font-medium text-[color:var(--owl-text-secondary)]">
                 {formatDateHeader(dateString)}
               </h3>
-              <p className="text-caption text-[var(--color-neutral-500)]">
+              <p className="text-caption text-[color:var(--owl-text-secondary)]">
                 {dayTransactions.length} transaction{dayTransactions.length !== 1 ? 's' : ''}
               </p>
             </div>
@@ -242,7 +242,7 @@ const ActivityScreen: React.FC<ActivityScreenProps> = ({
 
         {filteredTransactions.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-body text-[var(--color-neutral-500)]">
+            <p className="text-body text-[color:var(--owl-text-secondary)]">
               No transactions found for the selected filters
             </p>
           </div>

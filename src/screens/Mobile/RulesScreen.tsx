@@ -152,7 +152,7 @@ const RulesScreen: React.FC<RulesScreenProps> = ({
     return (
       <div className={cn('p-4 space-y-4', className)}>
         {[1,2,3].map(i => (
-          <div key={i} className="h-20 bg-[var(--color-neutral-100)] rounded-[var(--radius-md)] animate-pulse" />
+          <div key={i} className="h-20 bg-[color:var(--owl-surface-alt)] rounded-[var(--radius-md)] animate-pulse" />
         ))}
       </div>
     );
@@ -166,8 +166,8 @@ const RulesScreen: React.FC<RulesScreenProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-h1 text-[var(--color-neutral-900)]">Routing Rules</h1>
-          <p className="text-caption text-[var(--color-neutral-500)] mt-1">
+          <h1 className="text-h1 text-[color:var(--owl-text-primary)]">Routing Rules</h1>
+          <p className="text-caption text-[color:var(--owl-text-secondary)] mt-1">
             Higher priority rules are applied first
           </p>
         </div>
@@ -184,8 +184,8 @@ const RulesScreen: React.FC<RulesScreenProps> = ({
       {/* Rules List */}
       <div className="space-y-3">
         {sampleRules.length === 0 ? (
-          <div className="text-center py-8 border-2 border-dashed border-[var(--color-neutral-200)] rounded-[var(--radius-md)]">
-            <p className="text-body text-[var(--color-neutral-500)] mb-4">
+          <div className="text-center py-8 border-2 border-dashed border-[color:var(--owl-border)] rounded-[var(--radius-md)]">
+            <p className="text-body text-[color:var(--owl-text-secondary)] mb-4">
               No rules created yet
             </p>
             <Button onClick={() => setIsCreating(true)}>
@@ -197,9 +197,9 @@ const RulesScreen: React.FC<RulesScreenProps> = ({
             <div
               key={rule.id}
               className={cn(
-                'flex items-center gap-3 p-4 bg-white rounded-[var(--radius-md)]',
-                'border border-[var(--color-neutral-200)] shadow-[var(--shadow-card)]',
-                'hover:border-[var(--color-neutral-300)] transition-colors duration-200'
+                'flex items-center gap-3 p-4 bg-[color:var(--owl-surface-alt)] rounded-[var(--radius-md)]',
+                'border border-[color:var(--owl-border)] shadow-[var(--shadow-card)]',
+                'hover:border-[color:var(--owl-border)] transition-colors duration-200'
               )}
               data-rule-id={rule.id}
             >
@@ -222,18 +222,18 @@ const RulesScreen: React.FC<RulesScreenProps> = ({
               {/* Rule Logic */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-2 text-body">
-                  <span className="font-medium text-[var(--color-neutral-700)]">IF</span>
+                  <span className="font-medium text-[color:var(--owl-text-secondary)]">IF</span>
                   <Badge variant="outline" className="text-xs">
                     {formatPredicate(rule.predicate)}
                   </Badge>
-                  <ArrowRight className="h-3 w-3 text-[var(--color-neutral-400)]" />
-                  <Badge className="text-xs bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]">
+                  <ArrowRight className="h-3 w-3 text-[color:var(--owl-text-secondary)]/70" />
+                  <Badge className="text-xs bg-[color:var(--owl-accent)]/10 text-[color:var(--owl-accent)]">
                     {rule.action.envelope_name}
                   </Badge>
                 </div>
                 
                 {rule.predicate.type === 'mcc' && (
-                  <p className="text-caption text-[var(--color-neutral-500)]">
+                  <p className="text-caption text-[color:var(--owl-text-secondary)]">
                     Merchant Category: {rule.predicate.value === '5411' ? 'Grocery Stores' :
                                         rule.predicate.value === '5814' ? 'Fast Food' :
                                         rule.predicate.value === '5542' ? 'Gas Stations' : 'Other'}
@@ -248,7 +248,7 @@ const RulesScreen: React.FC<RulesScreenProps> = ({
                   onCheckedChange={(enabled: boolean) => handleToggleRule(rule.id, enabled)}
                   data-action="toggle:enabled"
                 />
-                <span className="text-caption text-[var(--color-neutral-500)]">
+                <span className="text-caption text-[color:var(--owl-text-secondary)]">
                   {rule.enabled ? 'On' : 'Off'}
                 </span>
               </div>
@@ -261,8 +261,8 @@ const RulesScreen: React.FC<RulesScreenProps> = ({
       {suggestions.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-[var(--color-warning)]" />
-            <h3 className="text-h2 text-[var(--color-neutral-900)]">Suggested Rules</h3>
+            <Lightbulb className="h-4 w-4 text-[color:var(--owl-warning)]" />
+            <h3 className="text-h2 text-[color:var(--owl-text-primary)]">Suggested Rules</h3>
           </div>
           <div className="space-y-2">
             {suggestions.map((suggestion, index) => (
@@ -270,13 +270,13 @@ const RulesScreen: React.FC<RulesScreenProps> = ({
                 key={index}
                 className="flex items-center justify-between p-3 bg-[var(--color-warning)]/5 border border-[var(--color-warning)]/20 rounded-[var(--radius-sm)]"
               >
-                <div className="text-caption text-[var(--color-neutral-700)]">
+                <div className="text-caption text-[color:var(--owl-text-secondary)]">
                   <strong>{suggestion.merchant}</strong> ➜ {suggestion.envelope}
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-[var(--color-brand-primary)] text-caption"
+                  className="text-[color:var(--owl-accent)] text-caption"
                   onClick={() => {
                     // Pre-fill rule builder
                     setNewRule({
@@ -302,10 +302,10 @@ const RulesScreen: React.FC<RulesScreenProps> = ({
 
       {/* Create Rule Modal */}
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
-        <DialogContent className="sm:max-w-lg" data-endpoint="POST /rules">
+    <DialogContent className="sm:max-w-lg" data-endpoint="POST /rules">
           <DialogHeader>
             <DialogTitle>Create New Rule</DialogTitle>
-            <DialogDescription className="text-caption text-[var(--color-neutral-500)]">
+      <DialogDescription className="text-caption text-[color:var(--owl-text-secondary)]">
               Create a custom routing rule to automatically direct transactions to specific envelopes.
             </DialogDescription>
           </DialogHeader>

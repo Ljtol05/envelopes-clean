@@ -53,7 +53,7 @@ const TopAppBar: React.FC<TopAppBarProps> = ({
             <ChevronLeft className="h-5 w-5" />
           </Button>
         ) : (
-          <OwllocateLogo width={56} height={56} title="Owllocate" />
+          <OwllocateLogo width={70} height={70} title="Owllocate" />
         )}
         {subtitle && (
           <div className="min-w-0 flex-1">
@@ -86,7 +86,7 @@ const TopAppBar: React.FC<TopAppBarProps> = ({
         >
           <Bell className="h-5 w-5" />
           {notificationCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-4 w-4 bg-[color:var(--owl-error,var(--owl-accent))] text-white text-xs rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 h-4 w-4 bg-[color:var(--owl-error,var(--owl-accent))] text-[color:var(--owl-on-strong)] text-xs rounded-full flex items-center justify-center">
               {notificationCount > 9 ? '9+' : notificationCount}
             </span>
           )}

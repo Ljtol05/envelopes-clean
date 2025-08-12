@@ -164,7 +164,50 @@ img[data-theme-logo] {
   --owl-success: #16A34A;
   --owl-warning: #D97706;
   --owl-error: #DC2626;
+  --owl-on-strong: #FFFFFF;
   --owl-focus-ring: #228E86;
+  /* Modal specific (light) */
+  --owl-modal-bg: #FFFFFF;
+  /* Top/bottom allow subtle vertical elevation; top a touch brighter, bottom a touch toned */
+  --owl-modal-bg: #FFFFFF;
+  /* Increased vertical separation: brighter top, cooler deeper bottom */
+  --owl-modal-bg-top: #FFFFFF;
+  /* pure white for highlight */
+  --owl-modal-bg-bottom: #E1E8F0;
+  /* deeper cool tint (was #EEF2F7) */
+  /* Slightly stronger/larger shadow for clearer separation in light theme */
+  --owl-shadow-modal: 0 6px 28px -6px rgba(0, 0, 0, .18), 0 4px 12px -2px rgba(0, 0, 0, .10), 0 1px 0 rgba(0, 0, 0, .08);
+  /* Layered shadow stack incl. tight + mid + ambient + hairline + inset light */
+  --owl-shadow-modal: 0 1px 2px rgba(0, 0, 0, .14), 0 3px 6px -1px rgba(0, 0, 0, .12), 0 12px 32px -6px rgba(0, 0, 0, .18), 0 0 0 1px rgba(0, 0, 0, .06), inset 0 0 0 1px rgba(255, 255, 255, .65);
+  --owl-shadow-popover: 0 1px 2px rgba(0, 0, 0, .12), 0 4px 12px -2px rgba(0, 0, 0, .14), 0 0 0 1px rgba(0, 0, 0, .05);
+  --owl-shadow-sheet: -2px 0 8px -2px rgba(0, 0, 0, .18), -12px 0 32px -8px rgba(0, 0, 0, .12), 0 0 0 1px rgba(0, 0, 0, .05);
+  /* Darkened overlay a bit more for stronger dim + increased blur contrast */
+  --owl-overlay: rgba(14, 26, 43, 0.55);
+  /* Darkened overlay further for stronger dim */
+  --owl-overlay: rgba(14, 26, 43, 0.62);
+  --owl-popover-bg: #FFFFFF;
+  --owl-modal-gloss-opacity: .35;
+  --foreground: var(--owl-text-primary);
+  --muted: var(--owl-surface);
+  --muted-foreground: var(--owl-text-secondary);
+  --card: var(--owl-surface-alt);
+  --card-foreground: var(--owl-text-primary);
+  --popover: var(--owl-modal-bg);
+  --popover-foreground: var(--owl-text-primary);
+  --primary: var(--owl-accent);
+  --primary-foreground: var(--owl-accent-fg);
+  --secondary: var(--owl-surface-alt);
+  --secondary-foreground: var(--owl-text-primary);
+  --accent: var(--owl-accent);
+  --accent-foreground: var(--owl-accent-fg);
+  --destructive: var(--owl-error);
+  --destructive-foreground: var(--owl-on-strong);
+  --border: var(--owl-border);
+  --input: var(--owl-border);
+  --ring: var(--owl-focus-ring);
+  --success: var(--owl-success);
+  --warning: var(--owl-warning);
+  --radius: 0.5rem;
   /* teal800 */
   /* ------------------------------------------------------------------ */
   /* Legacy design token bridge (neutrals & brand) -> new semantic vars */
@@ -190,9 +233,11 @@ img[data-theme-logo] {
 [data-theme='dark'] {
   --owl-bg: #0E1A2B;
   --owl-surface: #122239;
-  --owl-surface-alt: #19304C;
+  /* Dark alt surface slightly deepened for clearer elevation layering */
+  --owl-surface-alt: #152A45;
   --owl-text-primary: #FFFFFF;
-  --owl-text-secondary: #A9B5C3;
+  /* Muted text slightly brightened for readability against deeper alt */
+  --owl-text-secondary: #B3BECB;
   --owl-border: #19304C;
   --owl-accent: #45D0C7;
   --owl-accent-fg: #FFFFFF;
@@ -200,7 +245,48 @@ img[data-theme-logo] {
   --owl-success: #22C55E;
   --owl-warning: #F59E0B;
   --owl-error: #EF4444;
+  --owl-on-strong: #FFFFFF;
   --owl-focus-ring: #68DCD4;
+  /* Modal specific (dark) - elevated layer slightly lighter than alt */
+  --owl-modal-bg: #27486A;
+  --owl-modal-bg-top: #326089;
+  /* brighter top to imply lift */
+  --owl-modal-bg-bottom: #1D354F;
+  /* deeper bottom for depth */
+  --owl-modal-border: #3B648C;
+  /* slightly brighter border */
+  --owl-modal-muted: #B3BECB;
+  --owl-shadow-modal: 0 1px 2px rgba(0, 0, 0, .55), 0 4px 10px -2px rgba(0, 0, 0, .55), 0 14px 40px -10px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 255, 255, .05), inset 0 0 0 1px rgba(255, 255, 255, .06);
+  --owl-shadow-popover: 0 1px 2px rgba(0, 0, 0, .5), 0 6px 16px -4px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .04);
+  --owl-shadow-sheet: -2px 0 10px -2px rgba(0, 0, 0, .6), -14px 0 40px -10px rgba(0, 0, 0, .65), 0 0 0 1px rgba(255, 255, 255, .05);
+  --owl-field-bg: #2B4A6B;
+  --owl-field-border: #3E5F82;
+  --owl-overlay: rgba(8, 15, 25, 0.74);
+  --owl-popover-bg: #27486A;
+  --owl-modal-gloss-opacity: .12;
+  /* Bridge: legacy shadcn-style semantic vars -> owl tokens */
+  --background: var(--owl-bg);
+  --foreground: var(--owl-text-primary);
+  --muted: var(--owl-surface);
+  --muted-foreground: var(--owl-text-secondary);
+  --card: var(--owl-surface-alt);
+  --card-foreground: var(--owl-text-primary);
+  --popover: var(--owl-modal-bg);
+  --popover-foreground: var(--owl-text-primary);
+  --primary: var(--owl-accent);
+  --primary-foreground: var(--owl-accent-fg);
+  --secondary: var(--owl-surface-alt);
+  --secondary-foreground: var(--owl-text-primary);
+  --accent: var(--owl-accent);
+  --accent-foreground: var(--owl-accent-fg);
+  --destructive: var(--owl-error);
+  --destructive-foreground: var(--owl-on-strong);
+  --border: var(--owl-border);
+  --input: var(--owl-border);
+  --ring: var(--owl-focus-ring);
+  --success: var(--owl-success);
+  --warning: var(--owl-warning);
+  --radius: 0.5rem;
   /* Legacy token bridge (see light theme block for rationale) */
   --color-brand-primary: var(--owl-accent);
   --color-brand-primary-hover: var(--owl-accent-hover);
@@ -223,9 +309,9 @@ img[data-theme-logo] {
   :root:not([data-theme='light']) {
     --owl-bg: #0E1A2B;
     --owl-surface: #122239;
-    --owl-surface-alt: #19304C;
+    --owl-surface-alt: #152A45;
     --owl-text-primary: #FFFFFF;
-    --owl-text-secondary: #A9B5C3;
+    --owl-text-secondary: #B3BECB;
     --owl-border: #19304C;
     --owl-accent: #45D0C7;
     --owl-accent-fg: #FFFFFF;
@@ -233,8 +319,78 @@ img[data-theme-logo] {
     --owl-success: #22C55E;
     --owl-warning: #F59E0B;
     --owl-error: #EF4444;
+    --owl-on-strong: #FFFFFF;
     --owl-focus-ring: #68DCD4;
+    --owl-modal-bg: #27486A;
+    --owl-modal-bg-top: #326089;
+    --owl-modal-bg-bottom: #1D354F;
+    --owl-modal-border: #3B648C;
+    --owl-modal-muted: #B3BECB;
+    --owl-shadow-modal: 0 1px 2px rgba(0, 0, 0, .55), 0 4px 10px -2px rgba(0, 0, 0, .55), 0 14px 40px -10px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 255, 255, .05), inset 0 0 0 1px rgba(255, 255, 255, .06);
+    --owl-shadow-popover: 0 1px 2px rgba(0, 0, 0, .5), 0 6px 16px -4px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .04);
+    --owl-shadow-sheet: -2px 0 10px -2px rgba(0, 0, 0, .6), -14px 0 40px -10px rgba(0, 0, 0, .65), 0 0 0 1px rgba(255, 255, 255, .05);
+    --owl-field-bg: #2B4A6B;
+    --owl-field-border: #3E5F82;
+    --owl-overlay: rgba(8, 15, 25, 0.74);
+    --owl-popover-bg: #27486A;
+    --owl-modal-gloss-opacity: .12;
+
+    --background: var(--owl-bg);
+    --foreground: var(--owl-text-primary);
+    --muted: var(--owl-surface);
+    --muted-foreground: var(--owl-text-secondary);
+    --card: var(--owl-surface-alt);
+    --card-foreground: var(--owl-text-primary);
+    --popover: var(--owl-modal-bg);
+    --popover-foreground: var(--owl-text-primary);
+    --primary: var(--owl-accent);
+    --primary-foreground: var(--owl-accent-fg);
+    --secondary: var(--owl-surface-alt);
+    --secondary-foreground: var(--owl-text-primary);
+    --accent: var(--owl-accent);
+    --accent-foreground: var(--owl-accent-fg);
+    --destructive: var(--owl-error);
+    --destructive-foreground: var(--owl-on-strong);
+    --border: var(--owl-border);
+    --input: var(--owl-border);
+    --ring: var(--owl-focus-ring);
+    --success: var(--owl-success);
+    --warning: var(--owl-warning);
+    --radius: 0.5rem;
   }
+}
+
+/* Unified modal gradient surface helper (both themes; tokens differ per theme) */
+.owl-modal-surface {
+  background: var(--owl-modal-bg);
+  background: linear-gradient(180deg, var(--owl-modal-bg-top, var(--owl-modal-bg)) 0%, var(--owl-modal-bg-bottom, var(--owl-modal-bg)) 100%);
+  position: relative;
+  isolation: isolate;
+  /* ensure pseudo overlays don't bleed */
+}
+
+/* Gloss / subtle top highlight */
+.owl-modal-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg,
+      rgba(255, 255, 255, var(--owl-modal-gloss-opacity, 0)) 0%,
+      rgba(255, 255, 255, 0) 42%);
+  mix-blend-mode: normal;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* Popover surface variant (lighter elevation) */
+.owl-popover-surface {
+  background: var(--owl-popover-bg, var(--owl-modal-bg));
+  background: linear-gradient(180deg, var(--owl-popover-bg, var(--owl-modal-bg)) 0%, color-mix(in srgb, var(--owl-popover-bg, var(--owl-modal-bg)) 92%, #000) 100%);
+  box-shadow: var(--owl-shadow-popover, var(--owl-shadow-modal));
+  position: relative;
+  isolation: isolate;
 }
 
 /* Mobile-first responsive breakpoints */

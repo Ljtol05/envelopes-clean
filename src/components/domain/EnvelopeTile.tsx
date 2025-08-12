@@ -27,12 +27,12 @@ const EnvelopeTile: React.FC<EnvelopeTileProps> = ({
 
   const stateStyles: Record<NonNullable<EnvelopeTileProps["state"]>, string> = {
     default:
-      "border-[var(--color-neutral-200)] bg-white hover:border-[var(--color-neutral-300)]",
+      "border-[color:var(--owl-border)] bg-[color:var(--owl-surface-alt)] hover:border-[color:var(--owl-border)]",
     active:
-      "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5 ring-2 ring-[var(--color-brand-primary)]/20",
-    low: "border-[var(--color-warning)] bg-[var(--color-warning)]/5 ring-1 ring-[var(--color-warning)]/20",
+      "border-[color:var(--owl-accent)] bg-[color:var(--owl-accent)]/5 ring-2 ring-[color:var(--owl-accent)]/20",
+    low: "border-[color:var(--owl-warning)] bg-[color:var(--owl-warning)]/5 ring-1 ring-[color:var(--owl-warning)]/20",
     locked:
-      "border-[var(--color-neutral-300)] bg-[var(--color-neutral-50)] opacity-60",
+      "border-[color:var(--owl-border)] bg-[color:var(--owl-surface)] opacity-60",
   };
 
   const formatCurrency = (amount: number) =>
@@ -47,29 +47,29 @@ const EnvelopeTile: React.FC<EnvelopeTileProps> = ({
   // Choose colors for the progress element via classes rather than inline styles
   const progressTone =
     clampedPct > 90
-      ? "[--progress-accent:var(--color-danger)]"
+      ? "[--progress-accent:var(--owl-error)]"
       : clampedPct > 70
-      ? "[--progress-accent:var(--color-warning)]"
-      : "[--progress-accent:var(--color-success)]";
+      ? "[--progress-accent:var(--owl-warning)]"
+      : "[--progress-accent:var(--owl-success)]";
 
   const content = (
     <>
       {/* Active Badge */}
       {state === "active" && (
-        <Badge className="absolute -top-2 -right-2 bg-[var(--color-brand-primary)] text-white text-xs px-2 py-1">
+        <Badge className="absolute -top-2 -right-2 bg-[color:var(--owl-accent)] text-[color:var(--owl-accent-fg,var(--owl-bg))] text-xs px-2 py-1">
           Active
         </Badge>
       )}
 
       {/* Envelope Name */}
       <div className="mb-3">
-        <h3 className="text-h2 text-[var(--color-neutral-900)] font-medium leading-tight">{name}</h3>
-        <p className="text-caption text-[var(--color-neutral-500)] mt-1">Available Balance</p>
+  <h3 className="text-h2 text-[color:var(--owl-text-primary)] font-medium leading-tight">{name}</h3>
+  <p className="text-caption text-[color:var(--owl-text-secondary)] mt-1">Available Balance</p>
       </div>
 
       {/* Balance */}
       <div className="mb-4">
-        <p className="text-display text-[var(--color-neutral-900)] font-medium leading-none">
+  <p className="text-display text-[color:var(--owl-text-primary)] font-medium leading-none">
           {formatCurrency(balance)}
         </p>
       </div>
@@ -78,15 +78,15 @@ const EnvelopeTile: React.FC<EnvelopeTileProps> = ({
       {progressPct !== undefined && (
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <span className="text-caption text-[var(--color-neutral-500)]">Spent this month</span>
-            <span className="text-caption text-[var(--color-neutral-600)] font-medium">{clampedPct}%</span>
+            <span className="text-caption text-[color:var(--owl-text-secondary)]">Spent this month</span>
+            <span className="text-caption text-[color:var(--owl-text-secondary)] font-medium">{clampedPct}%</span>
           </div>
           <progress
             value={clampedPct}
             max={100}
             aria-label="Monthly spend progress"
             className={cn(
-              "w-full h-2 overflow-hidden rounded-full appearance-none bg-[var(--color-neutral-200)]",
+              "w-full h-2 overflow-hidden rounded-full appearance-none bg-[color:var(--owl-border)]",
               // accent color via CSS var (supported in modern browsers)
               "[accent-color:var(--progress-accent)]",
               progressTone
@@ -99,14 +99,14 @@ const EnvelopeTile: React.FC<EnvelopeTileProps> = ({
       {state === "low" && (
         <div className="mt-3 flex items-center gap-2">
           <span className="text-xs">⚠️</span>
-          <p className="text-caption text-[var(--color-warning)] font-medium">Low balance</p>
+          <p className="text-caption text-[color:var(--owl-warning)] font-medium">Low balance</p>
         </div>
       )}
 
       {state === "locked" && (
         <div className="mt-3 flex items-center gap-2">
           <span className="text-xs">🔒</span>
-          <p className="text-caption text-[var(--color-neutral-500)]">Envelope locked</p>
+          <p className="text-caption text-[color:var(--owl-text-secondary)]">Envelope locked</p>
         </div>
       )}
     </>
@@ -122,7 +122,7 @@ const EnvelopeTile: React.FC<EnvelopeTileProps> = ({
         "shadow-[var(--shadow-card)]",
         "min-h-[120px] touch-target",
         stateStyles[state],
-        "cursor-pointer hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)] focus:ring-offset-2",
+  "cursor-pointer hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--owl-accent)] focus:ring-offset-2",
         "disabled:opacity-60 disabled:cursor-not-allowed",
         className
       )}

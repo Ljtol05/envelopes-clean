@@ -81,19 +81,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
     >
       {/* Profile Section */}
       <div className="space-y-4">
-        <h2 className="text-h2 text-[var(--color-neutral-900)] flex items-center gap-2">
+  <h2 className="text-h2 text-[var(--owl-text-primary)] flex items-center gap-2">
           <User className="h-5 w-5" />
           Profile
         </h2>
         
-        <div className="bg-white rounded-[var(--radius-md)] border border-[var(--color-neutral-200)] shadow-[var(--shadow-card)]">
+  <div className="bg-[var(--owl-surface-alt)] rounded-[var(--radius-md)] border border-[var(--owl-border)] shadow-[var(--shadow-card)]">
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-body font-medium text-[var(--color-neutral-900)]">
+                <p className="text-body font-medium text-[var(--owl-text-primary)]">
                   John Doe
                 </p>
-                <p className="text-caption text-[var(--color-neutral-500)]">
+                <p className="text-caption text-[var(--owl-text-secondary)]">
                   john.doe@email.com
                 </p>
               </div>
@@ -102,15 +102,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
               </Button>
             </div>
             
-            <div className="pt-3 border-t border-[var(--color-neutral-200)]">
+    <div className="pt-3 border-t border-[var(--owl-border)]">
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
-                  <p className="text-caption text-[var(--color-neutral-500)]">Member Since</p>
-                  <p className="text-body font-medium text-[var(--color-neutral-900)]">Jan 2025</p>
+      <p className="text-caption text-[var(--owl-text-secondary)]">Member Since</p>
+      <p className="text-body font-medium text-[var(--owl-text-primary)]">Jan 2025</p>
                 </div>
                 <div>
-                  <p className="text-caption text-[var(--color-neutral-500)]">Total Envelopes</p>
-                  <p className="text-body font-medium text-[var(--color-neutral-900)]">6</p>
+      <p className="text-caption text-[var(--owl-text-secondary)]">Total Envelopes</p>
+      <p className="text-body font-medium text-[var(--owl-text-primary)]">6</p>
                 </div>
               </div>
             </div>
@@ -120,12 +120,12 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
 
       {/* Spend Modes & Fallbacks */}
       <div className="space-y-4">
-        <h2 className="text-h2 text-[var(--color-neutral-900)] flex items-center gap-2">
+  <h2 className="text-h2 text-[var(--owl-text-primary)] flex items-center gap-2">
           <Settings2 className="h-5 w-5" />
           Default Spend Mode
         </h2>
         
-        <div className="bg-white rounded-[var(--radius-md)] border border-[var(--color-neutral-200)] shadow-[var(--shadow-card)] p-4 space-y-4">
+  <div className="bg-[var(--owl-surface-alt)] rounded-[var(--radius-md)] border border-[var(--owl-border)] shadow-[var(--shadow-card)] p-4 space-y-4">
           <div className="space-y-2">
             <Label>Default Mode for New Transactions</Label>
             <Select
@@ -143,13 +143,13 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
             </Select>
           </div>
 
-          <div className="space-y-3 pt-3 border-t border-[var(--color-neutral-200)]">
-            <h3 className="text-body font-medium text-[var(--color-neutral-900)]">Fallback Chain</h3>
+          <div className="space-y-3 pt-3 border-t border-[var(--owl-border)]">
+            <h3 className="text-body font-medium text-[var(--owl-text-primary)]">Fallback Chain</h3>
             
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-body text-[var(--color-neutral-900)]">General Pool Fallback</p>
-                <p className="text-caption text-[var(--color-neutral-500)]">
+                <p className="text-body text-[var(--owl-text-primary)]">General Pool Fallback</p>
+                <p className="text-caption text-[var(--owl-text-secondary)]">
                   Use when specific envelope routing fails
                 </p>
               </div>
@@ -162,8 +162,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-body text-[var(--color-neutral-900)]">Buffer Envelope</p>
-                <p className="text-caption text-[var(--color-neutral-500)]">
+                <p className="text-body text-[var(--owl-text-primary)]">Buffer Envelope</p>
+                <p className="text-caption text-[var(--owl-text-secondary)]">
                   Last resort before declining
                 </p>
               </div>
@@ -179,12 +179,12 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
 
       {/* Buffer Settings */}
       <div className="space-y-4">
-        <h2 className="text-h2 text-[var(--color-neutral-900)] flex items-center gap-2">
+  <h2 className="text-h2 text-[var(--owl-text-primary)] flex items-center gap-2">
           <DollarSign className="h-5 w-5" />
           Buffer Settings
         </h2>
         
-        <div className="bg-white rounded-[var(--radius-md)] border border-[var(--color-neutral-200)] shadow-[var(--shadow-card)] p-4 space-y-4">
+  <div className="bg-[var(--owl-surface-alt)] rounded-[var(--radius-md)] border border-[var(--owl-border)] shadow-[var(--shadow-card)] p-4 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="tip-percentage" className="flex items-center gap-1">
@@ -199,7 +199,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
                   onChange={(e) => setTipPercentage(e.target.value)}
                   className="pr-8"
                 />
-                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--color-neutral-500)] text-caption">
+                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--owl-text-secondary)] text-caption">
                   %
                 </span>
               </div>
@@ -211,7 +211,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
                 Gas Hold Amount
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--color-neutral-500)]">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--owl-text-secondary)]">
                   $
                 </span>
                 <Input
@@ -225,7 +225,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
             </div>
           </div>
 
-          <div className="text-xs text-[var(--color-neutral-500)] bg-[var(--color-neutral-50)] rounded-[var(--radius-sm)] p-3">
+          <div className="text-xs text-[var(--owl-text-secondary)] bg-[var(--owl-surface)] rounded-[var(--radius-sm)] p-3">
             <p><strong>Tip percentage:</strong> Auto-calculate tips for restaurants (MCC 5812, 5814)</p>
             <p><strong>Gas hold:</strong> Pre-authorization amount for gas stations</p>
           </div>
@@ -234,17 +234,17 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
 
       {/* Approval Settings */}
       <div className="space-y-4">
-        <h2 className="text-h2 text-[var(--color-neutral-900)] flex items-center gap-2">
+  <h2 className="text-h2 text-[var(--owl-text-primary)] flex items-center gap-2">
           <Shield className="h-5 w-5" />
           Security & Approvals
         </h2>
         
-        <div className="bg-white rounded-[var(--radius-md)] border border-[var(--color-neutral-200)] shadow-[var(--shadow-card)] p-4 space-y-4">
+  <div className="bg-[var(--owl-surface-alt)] rounded-[var(--radius-md)] border border-[var(--owl-border)] shadow-[var(--shadow-card)] p-4 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="cnp-threshold">Card-Not-Present Approval</Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--color-neutral-500)]">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--owl-text-secondary)]">
                   $
                 </span>
                 <Input
@@ -260,7 +260,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
             <div className="space-y-2">
               <Label htmlFor="large-amount">Large Amount Approval</Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--color-neutral-500)]">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--owl-text-secondary)]">
                   $
                 </span>
                 <Input
@@ -274,7 +274,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
             </div>
           </div>
 
-          <div className="text-xs text-[var(--color-neutral-500)] bg-[var(--color-info)]/10 rounded-[var(--radius-sm)] p-3 border border-[var(--color-info)]/20">
+          <div className="text-xs text-[var(--owl-text-secondary)] bg-[var(--owl-surface)] rounded-[var(--radius-sm)] p-3 border border-[var(--owl-border)]">
             <p>Transactions above these amounts will require push notification approval</p>
           </div>
         </div>
@@ -282,17 +282,17 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
 
       {/* Notification Settings */}
       <div className="space-y-4">
-        <h2 className="text-h2 text-[var(--color-neutral-900)] flex items-center gap-2">
+  <h2 className="text-h2 text-[var(--owl-text-primary)] flex items-center gap-2">
           <Bell className="h-5 w-5" />
           Notifications
         </h2>
         
-        <div className="bg-white rounded-[var(--radius-md)] border border-[var(--color-neutral-200)] shadow-[var(--shadow-card)] p-4 space-y-4">
+  <div className="bg-[var(--owl-surface-alt)] rounded-[var(--radius-md)] border border-[var(--owl-border)] shadow-[var(--shadow-card)] p-4 space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-body text-[var(--color-neutral-900)]">Transaction Alerts</p>
-                <p className="text-caption text-[var(--color-neutral-500)]">
+                <p className="text-body text-[var(--owl-text-primary)]">Transaction Alerts</p>
+                <p className="text-caption text-[var(--owl-text-secondary)]">
                   Notify on all transactions
                 </p>
               </div>
@@ -304,8 +304,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-body text-[var(--color-neutral-900)]">Low Balance Alerts</p>
-                <p className="text-caption text-[var(--color-neutral-500)]">
+                <p className="text-body text-[var(--owl-text-primary)]">Low Balance Alerts</p>
+                <p className="text-caption text-[var(--owl-text-secondary)]">
                   When envelopes are running low
                 </p>
               </div>
@@ -317,8 +317,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-body text-[var(--color-neutral-900)]">Declined Transactions</p>
-                <p className="text-caption text-[var(--color-neutral-500)]">
+                <p className="text-body text-[var(--owl-text-primary)]">Declined Transactions</p>
+                <p className="text-caption text-[var(--owl-text-secondary)]">
                   When transactions are declined
                 </p>
               </div>
@@ -330,8 +330,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-body text-[var(--color-neutral-900)]">Rule Updates</p>
-                <p className="text-caption text-[var(--color-neutral-500)]">
+                <p className="text-body text-[var(--owl-text-primary)]">Rule Updates</p>
+                <p className="text-caption text-[var(--owl-text-secondary)]">
                   When new rules are created
                 </p>
               </div>
@@ -343,8 +343,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-body text-[var(--color-neutral-900)]">Weekly Digest</p>
-                <p className="text-caption text-[var(--color-neutral-500)]">
+                <p className="text-body text-[var(--owl-text-primary)]">Weekly Digest</p>
+                <p className="text-caption text-[var(--owl-text-secondary)]">
                   Summary of spending by category
                 </p>
               </div>
@@ -359,7 +359,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
 
       {/* Virtual Card Management */}
       <div className="space-y-4">
-        <h2 className="text-h2 text-[var(--color-neutral-900)] flex items-center gap-2">
+  <h2 className="text-h2 text-[var(--owl-text-primary)] flex items-center gap-2">
           <CreditCard className="h-5 w-5" />
           Virtual Cards
         </h2>
@@ -368,7 +368,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
           {virtualCards.map((card) => (
             <div 
               key={card.last4}
-              className="bg-white rounded-[var(--radius-md)] border border-[var(--color-neutral-200)] shadow-[var(--shadow-card)]"
+              className="bg-[var(--owl-surface-alt)] rounded-[var(--radius-md)] border border-[var(--owl-border)] shadow-[var(--shadow-card)]"
             >
               <CardTokenRow
                 name={card.name}
@@ -380,15 +380,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
               />
               
               {/* Card Actions */}
-              <div className="px-4 pb-4 border-t border-[var(--color-neutral-200)]">
+              <div className="px-4 pb-4 border-t border-[var(--owl-border)]">
                 <div className="flex items-center gap-2 mt-3">
                   {card.frozen ? (
-                    <Badge className="bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/20">
+                    <Badge className="bg-[color:var(--owl-warning)]/10 text-[color:var(--owl-warning)] border-[color:var(--owl-warning)]/20">
                       <Lock className="h-3 w-3 mr-1" />
                       Frozen
                     </Badge>
                   ) : (
-                    <Badge className="bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20">
+                    <Badge className="bg-[color:var(--owl-success)]/10 text-[color:var(--owl-success)] border-[color:var(--owl-success)]/20">
                       Active
                     </Badge>
                   )}
@@ -406,7 +406,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleCardAction(card.name, 'replace')}
-                      className="text-xs h-auto py-1 px-2 text-[var(--color-danger)]"
+                      className="text-xs h-auto py-1 px-2 text-[color:var(--owl-error)]"
                     >
                       <Trash2 className="h-3 w-3 mr-1" />
                       Replace
@@ -420,7 +420,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ className }) => {
       </div>
 
       {/* Developer Notes */}
-      <div className="fixed bottom-20 right-4 p-3 bg-yellow-100 border border-yellow-300 rounded-[var(--radius-sm)] text-xs max-w-xs opacity-75 pointer-events-none z-50">
+  <div className="fixed bottom-20 right-4 p-3 bg-[color:var(--owl-warning)]/10 border border-[color:var(--owl-warning)]/30 text-[color:var(--owl-text-secondary)] rounded-[var(--radius-sm)] text-xs max-w-xs opacity-75 pointer-events-none z-50">
         <strong>Dev Notes:</strong><br />
         • Local state in MVP<br />
         • Later: persist to user profile<br />

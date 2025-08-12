@@ -67,10 +67,10 @@ const TxnListItem: React.FC<TxnListItemProps> = ({
   };
 
   const statusColors = {
-    preauth: 'bg-[var(--color-warning)]/10 text-[var(--color-warning)]',
-    captured: 'bg-[var(--color-info)]/10 text-[var(--color-info)]',
-    settled: 'bg-[var(--color-success)]/10 text-[var(--color-success)]'
-  };
+    preauth: 'bg-[color:var(--owl-warning)]/10 text-[color:var(--owl-warning)]',
+    captured: 'bg-[color:var(--owl-accent)]/10 text-[color:var(--owl-accent)]',
+    settled: 'bg-[color:var(--owl-success)]/10 text-[color:var(--owl-success)]'
+  } as const;
 
   const normalizeReason = (
     r: ReasonChipProps['reason'] | 'mcc'
@@ -81,8 +81,8 @@ const TxnListItem: React.FC<TxnListItemProps> = ({
       type="button"
       onClick={onClick}
       className={cn(
-        'p-4 rounded-[var(--radius-sm)] border border-[var(--color-neutral-200)] bg-white transition-all duration-200',
-        'cursor-pointer hover:bg-[var(--color-neutral-50)] hover:border-[var(--color-neutral-300)] touch-target',
+        'p-4 rounded-[var(--radius-sm)] border border-[color:var(--owl-border)] bg-[color:var(--owl-surface-alt)] transition-all duration-200',
+        'cursor-pointer hover:bg-[color:var(--owl-surface)] hover:border-[color:var(--owl-border)] touch-target',
         className
       )}
     >
@@ -91,15 +91,15 @@ const TxnListItem: React.FC<TxnListItemProps> = ({
         <div className="flex-1 min-w-0">
           {/* Merchant & Amount */}
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-body font-medium text-[var(--color-neutral-900)] truncate pr-2">
+            <h4 className="text-body font-medium text-[color:var(--owl-text-primary)] truncate pr-2">
               {merchant}
             </h4>
             <div className="text-right flex-shrink-0">
-              <p className="text-body font-medium text-[var(--color-neutral-900)]">
+              <p className="text-body font-medium text-[color:var(--owl-text-primary)]">
                 -{formatCurrency(amount)}
               </p>
               {tip && tip > 0 && (
-                <p className="text-caption text-[var(--color-neutral-500)]">
+                <p className="text-caption text-[color:var(--owl-text-secondary)]">
                   tip {formatCurrency(tip)}
                 </p>
               )}
@@ -111,7 +111,7 @@ const TxnListItem: React.FC<TxnListItemProps> = ({
             <Badge variant="secondary" className="text-xs">
               {envelope}
             </Badge>
-            <span className="text-caption text-[var(--color-neutral-500)]">
+            <span className="text-caption text-[color:var(--owl-text-secondary)]">
               {formatDate(date)} • {formatTime(date)}
             </span>
           </div>
@@ -125,7 +125,7 @@ const TxnListItem: React.FC<TxnListItemProps> = ({
             )}
 
             {isPreauth && (
-              <Badge className="text-xs bg-[var(--color-warning)]/10 text-[var(--color-warning)]">
+              <Badge className="text-xs bg-[color:var(--owl-warning)]/10 text-[color:var(--owl-warning)]">
                 Hold $175 → Settled
               </Badge>
             )}
@@ -147,7 +147,7 @@ const TxnListItem: React.FC<TxnListItemProps> = ({
   ) : (
     <div
       className={cn(
-        'p-4 rounded-[var(--radius-sm)] border border-[var(--color-neutral-200)] bg-white transition-all duration-200',
+        'p-4 rounded-[var(--radius-sm)] border border-[color:var(--owl-border)] bg-[color:var(--owl-surface-alt)] transition-all duration-200',
         className
       )}
     >
@@ -156,15 +156,15 @@ const TxnListItem: React.FC<TxnListItemProps> = ({
         <div className="flex-1 min-w-0">
           {/* Merchant & Amount */}
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-body font-medium text-[var(--color-neutral-900)] truncate pr-2">
+            <h4 className="text-body font-medium text-[color:var(--owl-text-primary)] truncate pr-2">
               {merchant}
             </h4>
             <div className="text-right flex-shrink-0">
-              <p className="text-body font-medium text-[var(--color-neutral-900)]">
+              <p className="text-body font-medium text-[color:var(--owl-text-primary)]">
                 -{formatCurrency(amount)}
               </p>
               {tip && tip > 0 && (
-                <p className="text-caption text-[var(--color-neutral-500)]">
+                <p className="text-caption text-[color:var(--owl-text-secondary)]">
                   tip {formatCurrency(tip)}
                 </p>
               )}
@@ -176,7 +176,7 @@ const TxnListItem: React.FC<TxnListItemProps> = ({
             <Badge variant="secondary" className="text-xs">
               {envelope}
             </Badge>
-            <span className="text-caption text-[var(--color-neutral-500)]">
+            <span className="text-caption text-[color:var(--owl-text-secondary)]">
               {formatDate(date)} • {formatTime(date)}
             </span>
           </div>
@@ -190,7 +190,7 @@ const TxnListItem: React.FC<TxnListItemProps> = ({
             )}
 
             {isPreauth && (
-              <Badge className="text-xs bg-[var(--color-warning)]/10 text-[var(--color-warning)]">
+              <Badge className="text-xs bg-[color:var(--owl-warning)]/10 text-[color:var(--owl-warning)]">
                 Hold $175 → Settled
               </Badge>
             )}

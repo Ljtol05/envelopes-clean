@@ -40,7 +40,7 @@ const SpendModeControl: React.FC<SpendModeControlProps> = ({
   return (
     <div 
       className={cn(
-        'grid grid-cols-3 gap-1 p-1 bg-[var(--color-neutral-100)] rounded-[var(--radius-sm)]',
+        'grid grid-cols-3 gap-1 p-1 bg-[color:var(--owl-surface-alt)] rounded-[var(--radius-sm)]',
         className
       )}
       {...dataAttributes}
@@ -57,22 +57,22 @@ const SpendModeControl: React.FC<SpendModeControlProps> = ({
               'flex flex-col items-center gap-2 px-3 py-3 rounded-[var(--radius-sm)]',
               'text-caption transition-all duration-200',
               'touch-target min-h-[80px]',
-              'focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)] focus:ring-offset-2',
+              'focus:outline-none focus:ring-2 focus:ring-[color:var(--owl-accent)] focus:ring-offset-2',
               isActive 
-                ? 'bg-white text-[var(--color-neutral-900)] shadow-sm font-medium' 
-                : 'text-[var(--color-neutral-600)] hover:text-[var(--color-neutral-900)] hover:bg-white/50'
+                ? 'bg-[color:var(--owl-surface-alt)] text-[color:var(--owl-text-primary)] shadow-sm font-medium' 
+                : 'text-[color:var(--owl-text-secondary)] hover:text-[color:var(--owl-text-primary)] hover:bg-[color:var(--owl-surface)]/60'
             )}
             data-spend-mode={mode.value}
           >
             <Icon className={cn(
               'h-5 w-5 transition-colors duration-200',
-              isActive ? 'text-[var(--color-brand-primary)]' : 'text-current'
+              isActive ? 'text-[color:var(--owl-accent)]' : 'text-current'
             )} />
             <div className="text-center">
               <div className="font-medium leading-tight">
                 {mode.label}
               </div>
-              <div className="text-xs text-[var(--color-neutral-500)] mt-1 leading-tight">
+              <div className="text-xs text-[color:var(--owl-text-secondary)] mt-1 leading-tight">
                 {mode.description}
               </div>
             </div>

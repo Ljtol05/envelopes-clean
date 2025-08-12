@@ -103,11 +103,11 @@ const NotificationSheet: React.FC<NotificationSheetProps> = ({
 
   const getNotificationColor = (type: Notification['type']) => {
     switch (type) {
-      case 'success': return 'text-[var(--color-success)]';
-      case 'warning': return 'text-[var(--color-warning)]';
-      case 'info': return 'text-[var(--color-info)]';
-      case 'error': return 'text-[var(--color-danger)]';
-      default: return 'text-[var(--color-neutral-600)]';
+      case 'success': return 'text-[color:var(--owl-success)]';
+      case 'warning': return 'text-[color:var(--owl-warning)]';
+      case 'info': return 'text-[color:var(--owl-accent)]';
+      case 'error': return 'text-[color:var(--owl-error)]';
+      default: return 'text-[color:var(--owl-text-secondary)]';
     }
   };
 
@@ -140,7 +140,7 @@ const NotificationSheet: React.FC<NotificationSheetProps> = ({
         className={cn('w-full sm:max-w-md p-0', className)}
         {...dataAttributes}
       >
-        <SheetHeader className="p-4 border-b border-[var(--color-neutral-200)]">
+  <SheetHeader className="p-4 border-b border-[color:var(--owl-border)]">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-h1">Notifications</SheetTitle>
             {unreadCount > 0 && (
@@ -148,7 +148,7 @@ const NotificationSheet: React.FC<NotificationSheetProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={onMarkAllAsRead}
-                className="text-[var(--color-brand-primary)] text-caption"
+                className="text-[color:var(--owl-accent)] text-caption"
                 data-action="mark_all_read"
               >
                 <Check className="h-4 w-4 mr-1" />
@@ -156,7 +156,7 @@ const NotificationSheet: React.FC<NotificationSheetProps> = ({
               </Button>
             )}
           </div>
-          <SheetDescription className="text-caption text-[var(--color-neutral-500)]">
+          <SheetDescription className="text-caption text-[color:var(--owl-text-secondary)]">
             {unreadCount > 0 
               ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`
               : 'All notifications'
@@ -167,18 +167,18 @@ const NotificationSheet: React.FC<NotificationSheetProps> = ({
         <div className="flex-1 overflow-y-auto">
           {sampleNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4">
-              <div className="p-3 bg-[var(--color-neutral-100)] rounded-full mb-4">
-                <Bell className="h-6 w-6 text-[var(--color-neutral-400)]" />
+              <div className="p-3 bg-[color:var(--owl-surface)] rounded-full mb-4">
+                <Bell className="h-6 w-6 text-[color:var(--owl-text-secondary)]/70" />
               </div>
-              <h3 className="text-body font-medium text-[var(--color-neutral-900)] mb-2">
+              <h3 className="text-body font-medium text-[color:var(--owl-text-primary)] mb-2">
                 No notifications
               </h3>
-              <p className="text-caption text-[var(--color-neutral-500)] text-center">
+              <p className="text-caption text-[color:var(--owl-text-secondary)] text-center">
                 You're all caught up! Notifications will appear here.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-[var(--color-neutral-200)]">
+            <div className="divide-y divide-[color:var(--owl-border)]">
               {sampleNotifications.map((notification) => {
                 const Icon = getNotificationIcon(notification.type);
                 const colorClass = getNotificationColor(notification.type);
@@ -187,8 +187,8 @@ const NotificationSheet: React.FC<NotificationSheetProps> = ({
                   <div
                     key={notification.id}
                     className={cn(
-                      'p-4 hover:bg-[var(--color-neutral-50)] transition-colors duration-200',
-                      !notification.read && 'bg-[var(--color-brand-primary)]/5 border-l-2 border-l-[var(--color-brand-primary)]'
+                      'p-4 hover:bg-[color:var(--owl-surface)] transition-colors duration-200',
+                      !notification.read && 'bg-[color:var(--owl-accent)]/5 border-l-2 border-l-[color:var(--owl-accent)]'
                     )}
                     data-notification-id={notification.id}
                   >
@@ -203,14 +203,14 @@ const NotificationSheet: React.FC<NotificationSheetProps> = ({
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <h4 className="text-body font-medium text-[var(--color-neutral-900)] truncate">
+                                <h4 className="text-body font-medium text-[color:var(--owl-text-primary)] truncate">
                                 {notification.title}
                               </h4>
                               {!notification.read && (
-                                <div className="w-2 h-2 bg-[var(--color-brand-primary)] rounded-full flex-shrink-0" />
+                                <div className="w-2 h-2 bg-[color:var(--owl-accent)] text-[color:var(--owl-accent-fg,var(--owl-bg))] rounded-full flex-shrink-0" />
                               )}
                             </div>
-                            <p className="text-caption text-[var(--color-neutral-600)] leading-relaxed">
+                              <p className="text-caption text-[color:var(--owl-text-secondary)] leading-relaxed">
                               {notification.message}
                             </p>
                           </div>
@@ -221,7 +221,7 @@ const NotificationSheet: React.FC<NotificationSheetProps> = ({
                               variant="ghost"
                               size="sm"
                               onClick={() => onMarkAsRead?.(notification.id)}
-                              className="p-1 h-auto text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-600)] flex-shrink-0"
+                                className="p-1 h-auto text-[color:var(--owl-text-secondary)]/70 hover:text-[color:var(--owl-text-secondary)] flex-shrink-0"
                               data-action="mark_read"
                             >
                               <Check className="h-3 w-3" />
@@ -231,7 +231,7 @@ const NotificationSheet: React.FC<NotificationSheetProps> = ({
 
                         {/* Timestamp and Action */}
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-[var(--color-neutral-500)]">
+                            <span className="text-xs text-[color:var(--owl-text-secondary)]">
                             {formatTimestamp(notification.timestamp)}
                           </span>
                           
@@ -240,7 +240,7 @@ const NotificationSheet: React.FC<NotificationSheetProps> = ({
                               variant="ghost"
                               size="sm"
                               onClick={() => onNotificationAction?.(notification)}
-                              className="text-[var(--color-brand-primary)] text-xs h-auto py-1 px-2"
+                                className="text-[color:var(--owl-accent)] text-xs h-auto py-1 px-2"
                               data-action="notification:action"
                               data-endpoint={notification.action.endpoint}
                             >

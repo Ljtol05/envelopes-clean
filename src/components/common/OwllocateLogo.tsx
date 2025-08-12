@@ -1,6 +1,8 @@
 import * as React from 'react';
 import owlDark from '../../assets/branding/owl-dark-logo.png';
 import owlLight from '../../assets/branding/owl-light-logo.png';
+import { useContext } from 'react';
+import { ThemeContext } from '../../theme/context';
 
 export type OwllocateLogoVariant = 'icon' | 'full';
 
@@ -23,9 +25,15 @@ const OwllocateLogo: React.FC<OwllocateLogoProps> = ({
   themeName,
   ...rest
 }) => {
+  // Read theme from context so this component re-renders when theme toggles
+  // Allow explicit override via prop for rare cases (e.g., storybook controls)
+  const themeCtx = useContext(ThemeContext);
   const showWordmark = wordmark || variant === 'full';
   // Determine current theme via prop or data-theme attribute (non-hook, safe for SSR/tests)
-  const resolvedTheme = themeName || (typeof document !== 'undefined' ? (document.documentElement.getAttribute('data-theme') as 'light' | 'dark' | null) : null) || undefined;
+  const resolvedTheme =
+    themeName ||
+    (themeCtx ? themeCtx.name : (typeof document !== 'undefined' ? (document.documentElement.getAttribute('data-theme') as 'light' | 'dark' | null) : null)) ||
+    undefined;
   const src = resolvedTheme === 'light' ? owlLight : owlDark;
   const logoModeClass = resolvedTheme ? `logo-${resolvedTheme}` : 'logo-unknown';
   // For now we only have one raster size; browsers downscale smoothly. Later we can add srcSet once more sizes exist.

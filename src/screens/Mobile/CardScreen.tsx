@@ -82,7 +82,7 @@ const CardScreen: React.FC<CardScreenProps> = ({
     >
       {/* Physical Smart Card Section */}
       <div className="space-y-4">
-        <h2 className="text-h2 text-[var(--color-neutral-900)]">Smart Card</h2>
+  <h2 className="text-h2 text-[color:var(--owl-text-primary)]">Smart Card</h2>
         
         {/* Physical Card Preview */}
         <div className="relative p-6 bg-gradient-to-br from-[var(--color-brand-primary)] to-[var(--color-brand-primary-hover)] rounded-[var(--radius-md)] text-white">
@@ -119,7 +119,7 @@ const CardScreen: React.FC<CardScreenProps> = ({
 
       {/* Spend Mode Control */}
       <div className="space-y-4">
-        <h3 className="text-h2 text-[var(--color-neutral-900)]">Spend Mode</h3>
+  <h3 className="text-h2 text-[color:var(--owl-text-primary)]">Spend Mode</h3>
         
         <SpendModeControl
           value={spendMode}
@@ -131,11 +131,11 @@ const CardScreen: React.FC<CardScreenProps> = ({
         {/* Mode-specific Controls */}
         {spendMode === 'LOCKED' && (
           <div className="space-y-3">
-            <p className="text-caption text-[var(--color-neutral-600)]">
+            <p className="text-caption text-[color:var(--owl-text-secondary)]">
               Route all purchases to the envelope you select.
             </p>
             <div className="space-y-2">
-              <label className="text-body font-medium text-[var(--color-neutral-900)]">
+              <label className="text-body font-medium text-[color:var(--owl-text-primary)]">
                 Locked Envelope
               </label>
               <Select value={selectedEnvelope} onValueChange={setSelectedEnvelope}>
@@ -152,8 +152,8 @@ const CardScreen: React.FC<CardScreenProps> = ({
               </Select>
             </div>
             {selectedEnvelopeData && (
-              <div className="p-3 bg-[var(--color-brand-primary)]/10 rounded-[var(--radius-sm)] border border-[var(--color-brand-primary)]/20">
-                <p className="text-caption text-[var(--color-brand-primary)] font-medium">
+              <div className="p-3 bg-[color:var(--owl-accent)]/10 rounded-[var(--radius-sm)] border border-[color:var(--owl-accent)]/20">
+                <p className="text-caption text-[color:var(--owl-accent)] font-medium">
                   Available: {formatCurrency(selectedEnvelopeData.balance)}
                 </p>
               </div>
@@ -163,14 +163,14 @@ const CardScreen: React.FC<CardScreenProps> = ({
 
         {spendMode === 'SMART_AUTO' && (
           <div className="space-y-4">
-            <p className="text-caption text-[var(--color-neutral-600)]">
+            <p className="text-caption text-[color:var(--owl-text-secondary)]">
               We'll choose using merchant, MCC, and location.
             </p>
             
             {/* Confidence Slider */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-body font-medium text-[var(--color-neutral-900)]">
+                <label className="text-body font-medium text-[color:var(--owl-text-primary)]">
                   Confidence Level
                 </label>
                 <Badge variant="secondary" className="text-xs">
@@ -186,7 +186,7 @@ const CardScreen: React.FC<CardScreenProps> = ({
                   step={5}
                   className="w-full"
                 />
-                <div className="flex justify-between text-caption text-[var(--color-neutral-500)]">
+                <div className="flex justify-between text-caption text-[color:var(--owl-text-secondary)]">
                   <span>Low</span>
                   <span>High</span>
                 </div>
@@ -194,8 +194,8 @@ const CardScreen: React.FC<CardScreenProps> = ({
             </div>
 
             {/* Fallback Chain Info */}
-            <div className="p-3 bg-[var(--color-neutral-50)] rounded-[var(--radius-sm)] border border-[var(--color-neutral-200)]">
-              <p className="text-caption text-[var(--color-neutral-600)]">
+            <div className="p-3 bg-[color:var(--owl-surface)] rounded-[var(--radius-sm)] border border-[color:var(--owl-border)]">
+              <p className="text-caption text-[color:var(--owl-text-secondary)]">
                 <strong>Fallback chain:</strong> Locked → Rule → Auto → General Pool (if on) → Buffer → Decline
               </p>
             </div>
@@ -204,11 +204,11 @@ const CardScreen: React.FC<CardScreenProps> = ({
 
         {spendMode === 'GENERAL_POOL' && (
           <div className="space-y-3">
-            <p className="text-caption text-[var(--color-neutral-600)]">
+            <p className="text-caption text-[color:var(--owl-text-secondary)]">
               Spend from one pool. Sort later.
             </p>
             <div className="p-3 bg-[var(--color-warning)]/10 rounded-[var(--radius-sm)] border border-[var(--color-warning)]/20">
-              <p className="text-caption text-[var(--color-warning)] font-medium">
+              <p className="text-caption text-[color:var(--owl-warning)] font-medium">
                 ⚠️ You'll need to manually sort transactions into envelopes later
               </p>
             </div>
@@ -218,8 +218,8 @@ const CardScreen: React.FC<CardScreenProps> = ({
 
       {/* Category Cards Section */}
       <div className="space-y-4">
-        <h3 className="text-h2 text-[var(--color-neutral-900)]">Category Cards</h3>
-        <p className="text-caption text-[var(--color-neutral-600)]">
+  <h3 className="text-h2 text-[color:var(--owl-text-primary)]">Category Cards</h3>
+  <p className="text-caption text-[color:var(--owl-text-secondary)]">
           Virtual cards linked 1:1 to your envelopes
         </p>
         

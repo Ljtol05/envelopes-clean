@@ -35,8 +35,8 @@ const CardTokenRow: React.FC<CardTokenRowProps> = ({
     <div 
       className={cn(
         'flex items-center justify-between p-4 rounded-[var(--radius-md)]',
-        'border border-[var(--color-neutral-200)] bg-white',
-        'hover:bg-[var(--color-neutral-50)] transition-colors duration-200',
+        'border border-[color:var(--owl-border)] bg-[color:var(--owl-surface-alt)]',
+        'hover:bg-[color:var(--owl-surface)] transition-colors duration-200',
         'min-h-[80px]',
         className
       )}
@@ -48,21 +48,21 @@ const CardTokenRow: React.FC<CardTokenRowProps> = ({
         <div className={cn(
           'p-3 rounded-[var(--radius-sm)] flex-shrink-0',
           type === 'physical' 
-            ? 'bg-[var(--color-brand-primary)]/10' 
-            : 'bg-[var(--color-neutral-100)]'
+           ? 'bg-[color:var(--owl-accent)]/10' 
+           : 'bg-[color:var(--owl-surface)]'
         )}>
           <CreditCard className={cn(
             'h-5 w-5',
             type === 'physical' 
-              ? 'text-[var(--color-brand-primary)]' 
-              : 'text-[var(--color-neutral-600)]'
+             ? 'text-[color:var(--owl-accent)]' 
+             : 'text-[color:var(--owl-text-secondary)]'
           )} />
         </div>
 
         {/* Card Details */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="text-body font-medium text-[var(--color-neutral-900)] truncate">
+            <h4 className="text-body font-medium text-[color:var(--owl-text-primary)] truncate">
               {name}
             </h4>
             {type === 'physical' && (
@@ -72,7 +72,7 @@ const CardTokenRow: React.FC<CardTokenRowProps> = ({
             )}
           </div>
           
-          <div className="flex items-center gap-2 text-caption text-[var(--color-neutral-500)] mb-1">
+          <div className="flex items-center gap-2 text-caption text-[color:var(--owl-text-secondary)] mb-1">
             <span className="text-mono">•••• {last4}</span>
             {linkedEnvelopeId && (
               <>
@@ -86,14 +86,14 @@ const CardTokenRow: React.FC<CardTokenRowProps> = ({
           <div className="flex items-center gap-2">
             {isProvisioned ? (
               <>
-                <Apple className="h-3 w-3 text-[var(--color-neutral-400)]" />
-                <Smartphone className="h-3 w-3 text-[var(--color-neutral-400)]" />
-                <span className="text-caption text-[var(--color-success)] font-medium">
+               <Apple className="h-3 w-3 text-[color:var(--owl-text-secondary)]/70" />
+               <Smartphone className="h-3 w-3 text-[color:var(--owl-text-secondary)]/70" />
+               <span className="text-caption text-[color:var(--owl-success)] font-medium">
                   Added to wallet
                 </span>
               </>
             ) : (
-              <span className="text-caption text-[var(--color-neutral-500)]">
+              <span className="text-caption text-[color:var(--owl-text-secondary)]">
                 Not in wallet
               </span>
             )}
