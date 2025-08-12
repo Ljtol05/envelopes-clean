@@ -6,7 +6,7 @@ const tseslint = require('typescript-eslint');
 const { globalIgnores } = require('eslint/config');
 
 module.exports = tseslint.config([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'coverage', 'coverage/**', 'coverage/lcov-report/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
