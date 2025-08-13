@@ -17,8 +17,9 @@ export function useKyc(pollMs: number = 3000) {
     try {
       const s = await apiGetKycStatus();
       setStatus(s);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch KYC status');
+  } catch {
+      // Normalize message for consistent UI/testing
+      setError('Failed to fetch KYC status');
     }
   }, []);
 
@@ -28,8 +29,8 @@ export function useKyc(pollMs: number = 3000) {
     try {
       const res = await apiStartKyc(form);
       setStatus(res);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'KYC submission failed');
+  } catch {
+      setError('KYC submission failed');
     } finally {
       setSubmitting(false);
     }

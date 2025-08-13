@@ -21,7 +21,10 @@ describe('KYC Flow', () => {
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
+    // Wrap pending timer flush in act to avoid React act warnings from navigation timeout
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
     jest.useRealTimers();
     jest.resetAllMocks();
   });
@@ -84,5 +87,22 @@ describe('KYC Flow', () => {
     // Click Try again -> should show form again
   await user.click(screen.getByRole('button', { name: /try again/i }));
     expect(await screen.findByLabelText(/first name/i)).toBeInTheDocument();
+  });
+
+  test('shows error when initial status fetch fails', async () => {
+    (apiGetKycStatus as jest.Mock).mockRejectedValue(new Error('network boom'));
+    renderInApp(<Routes><Route path="/kyc" element={<KycScreen />} /></Routes>);
+    // Error surfaced - generic message from hook
+    expect(await screen.findByText(/failed to fetch kyc status/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /submit for verification/i })).toBeInTheDocument();
+  });
+
+  test('shows submission error when startKyc fails', async () => {
+    (apiGetKycStatus as jest.Mock).mockResolvedValue({ status: 'not_started' });
+    (apiStartKyc as jest.Mock).mockRejectedValue(new Error('submit failed'));
+    renderInApp(<Routes><Route path="/kyc" element={<KycScreen />} /></Routes>);
+    const user = await fillValidForm();
+    await user.click(screen.getByRole('button', { name: /submit for verification/i }));
+    expect(await screen.findByText(/kyc submission failed/i)).toBeInTheDocument();
   });
 });
