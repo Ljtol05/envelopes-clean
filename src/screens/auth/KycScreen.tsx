@@ -1,3 +1,5 @@
+import React from 'react'; // needed for jsx in test env
+void React;
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,10 +50,14 @@ export default function KycScreen() {
     await submitKyc(values as unknown as KycFormData);
   });
 
-  // Redirect once approved
-  if (status?.status === 'approved') {
-    setTimeout(() => navigate(from, { replace: true }), 200);
-  }
+  // Redirect once approved (side-effect)
+  React.useEffect(() => {
+    if (status?.status === 'approved') {
+      const id = setTimeout(() => navigate(from, { replace: true }), 200);
+      return () => clearTimeout(id);
+    }
+    return undefined;
+  }, [status?.status, navigate, from]);
 
   return (
     <div className="p-4 max-w-xl mx-auto">
