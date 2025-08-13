@@ -19,7 +19,8 @@ import AuthProvider from './context/AuthContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import KycGuard from './routes/KycGuard';
 import KycScreen from './screens/auth/KycScreen';
-import AuthTabs from './screens/auth/AuthTabs';
+import LoginPage from './screens/auth/LoginPage';
+import RegisterPage from './screens/auth/RegisterPage';
 import ForgotPassword from './screens/auth/ForgotPassword';
 import AuthScaffold from './screens/auth/AuthScaffold';
 import OnboardingCoach from './screens/OnboardingCoach';
@@ -75,11 +76,14 @@ export default function App() {
       <EnvelopesProvider mockLatencyMs={[120,300]}>
         <BrowserRouter>
           <Routes>
-            <Route path="/auth" element={<AuthTabs />} />
+            <Route path="/auth" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/auth/login" element={<LoginPage />} />
+            <Route path="/auth/register" element={<RegisterPage />} />
             <Route path="/auth/forgot" element={<AuthScaffold><ForgotPassword /></AuthScaffold>} />
             <Route element={<AppLayout />}> {/* shared chrome */}
               <Route element={<ProtectedRoute />}> {/* protected app (auth) */}
-                <Route path="/kyc" element={<KycScreen />} />
+                <Route path="/auth/kyc" element={<KycScreen />} />
+                <Route path="/kyc" element={<Navigate to="/auth/kyc" replace />} />
                 <Route element={<KycGuard />}> {/* KYC approved only */}
                   <Route path="/onboarding/coach" element={<OnboardingCoach />} />
                   <Route index element={<Navigate to="/home" replace />} />

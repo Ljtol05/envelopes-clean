@@ -19,8 +19,8 @@ export default function AuthScaffold({ children, subtitle = 'Welcome back to bud
       {/* Background illustration */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-20 [mask-image:radial-gradient(60%_60%_at_50%_40%,black,transparent)]"
-        style={{ backgroundImage: `url(${owlBg})`, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 18%', backgroundSize: '640px' }}
+        className="pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(55%_55%_at_50%_38%,black,transparent)]"
+        style={{ backgroundImage: `url(${owlBg})`, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 16%', backgroundSize: '800px' }}
       />
       <div className="relative w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">

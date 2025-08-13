@@ -47,13 +47,13 @@ export default function LoginScreen() {
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" {...register("email", { required: "Email is required", pattern: { value: EMAIL_RE, message: "Enter a valid email" } })} />
-              {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+              <Input id="email" type="email" placeholder="you@example.com" aria-invalid={errors.email ? 'true' : undefined} aria-describedby={errors.email ? 'login-email-error' : undefined} autoComplete="email" {...register("email", { required: "Email is required", pattern: { value: EMAIL_RE, message: "Enter a valid email" } })} />
+              {errors.email && <p id="login-email-error" className="text-xs text-[color:var(--owl-accent)]">{errors.email.message}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" {...register("password", { required: "Password is required", minLength: { value: 6, message: "Min length is 6" } })} />
-              {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
+              <Input id="password" type="password" aria-invalid={errors.password ? 'true' : undefined} aria-describedby={errors.password ? 'login-password-error' : undefined} autoComplete="current-password" {...register("password", { required: "Password is required", minLength: { value: 6, message: "Min length is 6" } })} />
+              {errors.password && <p id="login-password-error" className="text-xs text-[color:var(--owl-accent)]">{errors.password.message}</p>}
             </div>
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Signing in…" : "Sign in"}
