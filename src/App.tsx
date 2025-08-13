@@ -17,6 +17,8 @@ import { TransactionDetailsScreen } from "./screens/Mobile/TransactionDetailsScr
 import { EnvelopesProvider } from './contexts/EnvelopesContext';
 import AuthProvider from './context/AuthContext';
 import ProtectedRoute from './routes/ProtectedRoute';
+import KycGuard from './routes/KycGuard';
+import KycScreen from './screens/auth/KycScreen';
 import AuthTabs from './screens/auth/AuthTabs';
 import ForgotPassword from './screens/auth/ForgotPassword';
 import AuthScaffold from './screens/auth/AuthScaffold';
@@ -76,15 +78,18 @@ export default function App() {
             <Route path="/auth" element={<AuthTabs />} />
             <Route path="/auth/forgot" element={<AuthScaffold><ForgotPassword /></AuthScaffold>} />
             <Route element={<AppLayout />}> {/* shared chrome */}
-              <Route element={<ProtectedRoute />}> {/* protected app */}
-                <Route path="/onboarding/coach" element={<OnboardingCoach />} />
-                <Route index element={<Navigate to="/home" replace />} />
-                <Route path="/home" element={<HomeScreen />} />
-                <Route path="/card" element={<CardScreen />} />
-                <Route path="/rules" element={<RulesScreen />} />
-                <Route path="/activity" element={<ActivityScreen />} />
-                <Route path="/settings" element={<SettingsScreen />} />
-                <Route path="/tx/:id" element={<TxRoute />} />
+              <Route element={<ProtectedRoute />}> {/* protected app (auth) */}
+                <Route path="/kyc" element={<KycScreen />} />
+                <Route element={<KycGuard />}> {/* KYC approved only */}
+                  <Route path="/onboarding/coach" element={<OnboardingCoach />} />
+                  <Route index element={<Navigate to="/home" replace />} />
+                  <Route path="/home" element={<HomeScreen />} />
+                  <Route path="/card" element={<CardScreen />} />
+                  <Route path="/rules" element={<RulesScreen />} />
+                  <Route path="/activity" element={<ActivityScreen />} />
+                  <Route path="/settings" element={<SettingsScreen />} />
+                  <Route path="/tx/:id" element={<TxRoute />} />
+                </Route>
               </Route>
             </Route>
           </Routes>
