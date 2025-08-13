@@ -9,8 +9,8 @@ module.exports = {
   transform: {
     '^.+\\.(t|j)sx?$': [
       'babel-jest',
-      {
-  configFile: path.join(__dirname, 'babel.config.cjs'),
+  {
+	configFile: path.join(__dirname, 'babel.config.cjs'),
         babelrc: false,
         sourceType: 'unambiguous',
         plugins: ['@babel/plugin-syntax-import-meta'],

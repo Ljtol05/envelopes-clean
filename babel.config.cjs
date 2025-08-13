@@ -4,5 +4,8 @@ module.exports = {
     require.resolve('@babel/preset-react'),
     require.resolve('@babel/preset-typescript')
   ],
-  sourceType: 'unambiguous',
+  plugins: [
+    require.resolve('@babel/plugin-syntax-import-meta')
+  ],
+  sourceType: 'unambiguous'
 };
