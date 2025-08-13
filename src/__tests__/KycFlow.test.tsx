@@ -9,6 +9,7 @@ jest.mock('../lib/kyc', () => ({
 import KycScreen from '../screens/auth/KycScreen';
 import { apiGetKycStatus, apiStartKyc } from '../lib/kyc';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import KycGuard from '../routes/KycGuard';
 
 // Utility to mock fetch sequences
 // (No network fetch needed because API layer is mocked)
@@ -104,5 +105,80 @@ describe('KYC Flow', () => {
     const user = await fillValidForm();
     await user.click(screen.getByRole('button', { name: /submit for verification/i }));
     expect(await screen.findByText(/kyc submission failed/i)).toBeInTheDocument();
+  });
+
+  test('field-level validation errors block submission and focus first invalid', async () => {
+    (apiGetKycStatus as jest.Mock).mockResolvedValue({ status: 'not_started' });
+    renderInApp(<Routes><Route path="/kyc" element={<KycScreen />} /></Routes>);
+    const submitBtn = await screen.findByRole('button', { name: /submit for verification/i });
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    await user.click(submitBtn);
+    // Collect all required messages
+    const requiredErrors = await screen.findAllByText('Required');
+    expect(requiredErrors.length).toBeGreaterThanOrEqual(4);
+    const firstName = screen.getByLabelText(/first name/i);
+    expect(firstName).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  test('polling stops after terminal state', async () => {
+    const seq = ['not_started', 'pending', 'approved'];
+    (apiGetKycStatus as jest.Mock).mockImplementation(async () => ({ status: seq[0] }));
+    (apiStartKyc as jest.Mock).mockImplementation(async () => ({ status: 'pending' }));
+    renderInApp(<Routes><Route path="/kyc" element={<KycScreen />} /></Routes>);
+    const user = await fillValidForm();
+    await user.click(screen.getByRole('button', { name: /submit for verification/i }));
+    // Move sequence forward manually on each fetch call after submission
+    (apiGetKycStatus as jest.Mock).mockImplementation(async () => ({ status: seq.shift() || 'approved' }));
+    // Advance two polls
+    act(() => { jest.advanceTimersByTime(6500); });
+    // Approved reached
+    await waitFor(() => expect(apiGetKycStatus).toHaveBeenCalled());
+    const callsAfterApproval = (apiGetKycStatus as jest.Mock).mock.calls.length;
+    // Advance more time; no additional calls expected
+    act(() => { jest.advanceTimersByTime(6000); });
+    expect((apiGetKycStatus as jest.Mock).mock.calls.length).toBe(callsAfterApproval);
+  });
+
+  test('guard redirects non-approved user to /kyc', async () => {
+    (apiGetKycStatus as jest.Mock).mockResolvedValue({ status: 'not_started' });
+    const ui = (
+      <Routes>
+        <Route element={<KycGuard />}> <Route path="/protected" element={<div>Protected Content</div>} /> </Route>
+        <Route path="/kyc" element={<KycScreen />} />
+      </Routes>
+    );
+    render(<MemoryRouter initialEntries={['/protected']}>{ui}</MemoryRouter>);
+    // Wait for KYC screen after redirect
+    expect(await screen.findByText(/identity verification/i)).toBeInTheDocument();
+    expect(screen.queryByText(/protected content/i)).toBeNull();
+  });
+
+  test('pending persists across multiple polls without duplication', async () => {
+    (apiGetKycStatus as jest.Mock).mockResolvedValue({ status: 'not_started' });
+    const statuses = ['pending','pending','pending'];
+    (apiStartKyc as jest.Mock).mockResolvedValue({ status: 'pending' });
+    (apiGetKycStatus as jest.Mock).mockImplementation(async () => ({ status: statuses.shift() ?? 'pending' }));
+    renderInApp(<Routes><Route path="/kyc" element={<KycScreen />} /></Routes>);
+    const user = await fillValidForm();
+    await user.click(screen.getByRole('button', { name: /submit for verification/i }));
+    expect(await screen.findByText(/being reviewed/i)).toBeInTheDocument();
+    act(() => { jest.advanceTimersByTime(9000); }); // three poll intervals
+    // Still pending
+    expect(screen.getByText(/being reviewed/i)).toBeInTheDocument();
+    // Ensure number of apiGetKycStatus calls ~ initial + 3 polls
+    const pollCalls = (apiGetKycStatus as jest.Mock).mock.calls.length;
+    expect(pollCalls).toBeGreaterThanOrEqual(3);
+  });
+
+  test('form data persists after failed submission', async () => {
+    (apiGetKycStatus as jest.Mock).mockResolvedValue({ status: 'not_started' });
+    (apiStartKyc as jest.Mock).mockRejectedValue(new Error('fail'));
+    renderInApp(<Routes><Route path="/kyc" element={<KycScreen />} /></Routes>);
+    const user = await fillValidForm();
+    await user.click(screen.getByRole('button', { name: /submit for verification/i }));
+    expect(await screen.findByText(/kyc submission failed/i)).toBeInTheDocument();
+    // Values should remain in inputs
+    expect((screen.getByLabelText(/first name/i) as HTMLInputElement).value).toBe('Jane');
+    expect((screen.getByLabelText(/last name/i) as HTMLInputElement).value).toBe('Doe');
   });
 });

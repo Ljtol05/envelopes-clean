@@ -1,3 +1,5 @@
+import React from 'react';
+void React; // ensure React import retained for jsx in test env
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useKyc } from '../hooks/useKyc';
 

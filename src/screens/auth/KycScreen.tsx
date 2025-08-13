@@ -81,48 +81,48 @@ export default function KycScreen() {
             <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="legalFirstName">First name</Label>
-                <Input id="legalFirstName" {...register('legalFirstName')} />
-                {errors.legalFirstName && (<p className="text-xs text-red-500">{errors.legalFirstName.message}</p>)}
+                <Input id="legalFirstName" aria-invalid={errors.legalFirstName ? 'true' : undefined} aria-describedby={errors.legalFirstName ? 'legalFirstName-error' : undefined} {...register('legalFirstName')} />
+                {errors.legalFirstName && (<p id="legalFirstName-error" className="text-xs text-red-500">{errors.legalFirstName.message}</p>)}
               </div>
               <div>
                 <Label htmlFor="legalLastName">Last name</Label>
-                <Input id="legalLastName" {...register('legalLastName')} />
-                {errors.legalLastName && (<p className="text-xs text-red-500">{errors.legalLastName.message}</p>)}
+                <Input id="legalLastName" aria-invalid={errors.legalLastName ? 'true' : undefined} aria-describedby={errors.legalLastName ? 'legalLastName-error' : undefined} {...register('legalLastName')} />
+                {errors.legalLastName && (<p id="legalLastName-error" className="text-xs text-red-500">{errors.legalLastName.message}</p>)}
               </div>
               <div>
                 <Label htmlFor="dob">Date of birth</Label>
-                <Input id="dob" placeholder="YYYY-MM-DD" {...register('dob')} />
-                {errors.dob && (<p className="text-xs text-red-500">{errors.dob.message}</p>)}
+                <Input id="dob" placeholder="YYYY-MM-DD" aria-invalid={errors.dob ? 'true' : undefined} aria-describedby={errors.dob ? 'dob-error' : undefined} {...register('dob')} />
+                {errors.dob && (<p id="dob-error" className="text-xs text-red-500">{errors.dob.message}</p>)}
               </div>
               <div>
                 <Label htmlFor="ssnLast4">SSN (last 4)</Label>
-                <Input id="ssnLast4" inputMode="numeric" maxLength={4} {...register('ssnLast4')} />
-                {errors.ssnLast4 && (<p className="text-xs text-red-500">{errors.ssnLast4.message}</p>)}
+                <Input id="ssnLast4" inputMode="numeric" maxLength={4} aria-invalid={errors.ssnLast4 ? 'true' : undefined} aria-describedby={errors.ssnLast4 ? 'ssnLast4-error' : undefined} {...register('ssnLast4')} />
+                {errors.ssnLast4 && (<p id="ssnLast4-error" className="text-xs text-red-500">{errors.ssnLast4.message}</p>)}
               </div>
               <div className="col-span-2">
                 <Label htmlFor="addressLine1">Address line 1</Label>
-                <Input id="addressLine1" {...register('addressLine1')} />
-                {errors.addressLine1 && (<p className="text-xs text-red-500">{errors.addressLine1.message}</p>)}
+                <Input id="addressLine1" aria-invalid={errors.addressLine1 ? 'true' : undefined} aria-describedby={errors.addressLine1 ? 'addressLine1-error' : undefined} {...register('addressLine1')} />
+                {errors.addressLine1 && (<p id="addressLine1-error" className="text-xs text-red-500">{errors.addressLine1.message}</p>)}
               </div>
               <div className="col-span-2">
                 <Label htmlFor="addressLine2">Address line 2</Label>
-                <Input id="addressLine2" {...register('addressLine2')} />
-                {errors.addressLine2 && (<p className="text-xs text-red-500">{errors.addressLine2.message}</p>)}
+                <Input id="addressLine2" aria-invalid={errors.addressLine2 ? 'true' : undefined} aria-describedby={errors.addressLine2 ? 'addressLine2-error' : undefined} {...register('addressLine2')} />
+                {errors.addressLine2 && (<p id="addressLine2-error" className="text-xs text-red-500">{errors.addressLine2.message}</p>)}
               </div>
               <div>
                 <Label htmlFor="city">City</Label>
-                <Input id="city" {...register('city')} />
-                {errors.city && <p className="text-xs text-red-500">{errors.city.message}</p>}
+                <Input id="city" aria-invalid={errors.city ? 'true' : undefined} aria-describedby={errors.city ? 'city-error' : undefined} {...register('city')} />
+                {errors.city && <p id="city-error" className="text-xs text-red-500">{errors.city.message}</p>}
               </div>
               <div>
                 <Label htmlFor="state">State</Label>
-                <Input id="state" maxLength={2} placeholder="GA" {...register('state')} />
-                {errors.state && <p className="text-xs text-red-500">{errors.state.message}</p>}
+                <Input id="state" maxLength={2} placeholder="GA" aria-invalid={errors.state ? 'true' : undefined} aria-describedby={errors.state ? 'state-error' : undefined} {...register('state')} />
+                {errors.state && <p id="state-error" className="text-xs text-red-500">{errors.state.message}</p>}
               </div>
               <div className="col-span-2">
                 <Label htmlFor="postalCode">ZIP code</Label>
-                <Input id="postalCode" inputMode="numeric" {...register('postalCode')} />
-                {errors.postalCode && (<p className="text-xs text-red-500">{errors.postalCode.message}</p>)}
+                <Input id="postalCode" inputMode="numeric" aria-invalid={errors.postalCode ? 'true' : undefined} aria-describedby={errors.postalCode ? 'postalCode-error' : undefined} {...register('postalCode')} />
+                {errors.postalCode && (<p id="postalCode-error" className="text-xs text-red-500">{errors.postalCode.message}</p>)}
               </div>
               <div className="col-span-2">
                 <Button type="submit" className="w-full" disabled={submitting}>
