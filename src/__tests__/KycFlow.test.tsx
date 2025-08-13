@@ -53,7 +53,7 @@ describe('KYC Flow', () => {
   const sequence = ['not_started', 'pending', 'approved'];
   (apiGetKycStatus as jest.Mock).mockImplementation(async () => ({ status: sequence.shift() || 'approved' }));
 
-  renderInApp(<Routes><Route path="/kyc" element={<KycScreen />} /><Route path="/" element={<div>Home Screen</div>} /></Routes>);
+  renderInApp(<Routes><Route path="/kyc" element={<KycScreen />} /><Route path="/home" element={<div>Home Screen</div>} /></Routes>);
 
     // Ensure form present
     expect(await screen.findByText(/identity verification/i)).toBeInTheDocument();

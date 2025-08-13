@@ -3,8 +3,7 @@ void React;
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate, useLocation } from 'react-router-dom';
-import type { Location } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useKyc } from '../../hooks/useKyc';
 import type { KycFormData } from '../../types/kyc';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -28,8 +27,7 @@ const schema = z.object({
 export default function KycScreen() {
   const { status, error, submitting, submitKyc, reset } = useKyc();
   const navigate = useNavigate();
-  const location = useLocation() as Location & { state?: { from?: { pathname?: string } } };
-  const from = location.state?.from?.pathname ?? '/';
+  const from = '/home';
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema),

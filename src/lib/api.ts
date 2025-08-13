@@ -69,6 +69,8 @@ const PATHS = {
     login: "/api/auth/login",
     register: "/api/auth/register",
     me: "/api/auth/me",
+  verifyEmail: "/api/auth/verify-email",
+  resendVerification: "/api/auth/resend-verification",
   },
   coach: "/api/ai/coach",
   ai: {
@@ -94,6 +96,20 @@ export async function apiRegister(name: string, email: string, password: string)
 
 export async function apiGetMe(): Promise<User> {
   return request<User>(PATHS.auth.me, { method: "GET" });
+}
+
+export async function apiVerifyEmail(code: string): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>(PATHS.auth.verifyEmail, {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
+}
+
+export async function apiResendVerification(email: string): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>(PATHS.auth.resendVerification, {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
 }
 
 export async function askCoach(question: string, context?: Record<string, unknown>): Promise<CoachResponse> {

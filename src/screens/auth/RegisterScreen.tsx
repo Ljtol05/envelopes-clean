@@ -21,7 +21,7 @@ export default function RegisterScreen() {
   await doRegister(vals.name, vals.email, vals.password);
   toast.success("Account created");
   // Redirect into KYC flow; that will handle onward navigation once approved
-  navigate("/auth/kyc", { replace: true });
+  navigate("/auth/verify-email", { replace: true });
     } catch (e) {
       const err = e as Error & { status?: number };
       toast.error(err.message || "Registration failed");

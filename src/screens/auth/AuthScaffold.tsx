@@ -1,5 +1,4 @@
 import { useContext, useEffect, type PropsWithChildren } from 'react';
-import EnvelopesLogo from '../../components/common/EnvelopesLogo';
 import owlBg from '../../assets/branding/owl.svg';
 import { ThemeContext } from '../../theme/context';
 
@@ -24,7 +23,7 @@ export default function AuthScaffold({ children, subtitle = 'Welcome back to bud
       />
       <div className="relative w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
-          <EnvelopesLogo variant="full" height={72} className="select-none" />
+          <h1 className="text-3xl font-semibold tracking-tight select-none">Owllocate</h1>
           <p className="mt-3 text-lg sm:text-xl text-[color:var(--owl-text-secondary)]">{subtitle}</p>
         </div>
         {children}

@@ -24,14 +24,14 @@ export default function LoginPage() {
           <div className="flex w-full max-w-md gap-3 justify-center">
             <Link
               to="/auth/login"
-              className={`flex-1 text-center font-medium rounded-lg px-4 py-2 transition shadow-[var(--owl-shadow-md)] border border-[color:var(--owl-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--owl-accent)] ${isLogin ? 'bg-white text-[color:var(--owl-bg)] shadow-[var(--owl-shadow-lg)]' : 'bg-transparent text-[color:var(--owl-text-secondary)] hover:text-[color:var(--owl-text-primary)]'}`}
+              className={`flex-1 text-center font-medium rounded-lg px-4 py-2 transition border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--owl-accent)] ${isLogin ? 'bg-white text-[color:var(--owl-bg)] shadow-[var(--owl-shadow-lg)] border-white' : 'bg-transparent text-white border-white/60 hover:border-white hover:shadow-[var(--owl-shadow-md)]'}`}
               aria-current={isLogin ? 'page' : undefined}
             >
               Log in
             </Link>
             <Link
               to="/auth/register"
-              className={`flex-1 text-center font-medium rounded-lg px-4 py-2 transition shadow-[var(--owl-shadow-md)] border border-[color:var(--owl-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--owl-accent)] ${!isLogin ? 'bg-white text-[color:var(--owl-bg)] shadow-[var(--owl-shadow-lg)]' : 'bg-transparent text-[color:var(--owl-text-secondary)] hover:text-[color:var(--owl-text-primary)]'}`}
+              className={`flex-1 text-center font-medium rounded-lg px-4 py-2 transition border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--owl-accent)] ${!isLogin ? 'bg-white text-[color:var(--owl-bg)] shadow-[var(--owl-shadow-lg)] border-white' : 'bg-transparent text-white border-white/60 hover:border-white hover:shadow-[var(--owl-shadow-md)]'}`}
             >
               Create account
             </Link>
