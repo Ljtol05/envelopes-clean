@@ -7,7 +7,7 @@ export interface RegisterRequest {
   password: string;
 }
 export interface RegisterResponse {
-  user: { id: string; email: string; name?: string; emailVerified?: boolean; phoneVerified?: boolean };
+  user: { id: string; email: string; name?: string; emailVerified?: boolean; phoneVerified?: boolean; kycApproved?: boolean };
   token?: string;
 }
 
@@ -15,10 +15,14 @@ export interface LoginRequest {
   email: string;
   password: string;
 }
+export type VerificationStep = 'email' | 'phone' | 'kyc' | 'complete';
 export interface LoginResponse {
   token: string;
-  user?: { id: string; email: string; name?: string; emailVerified?: boolean; phoneVerified?: boolean };
-  verificationStep?: 'email' | 'phone' | 'kyc' | 'done';
+  // Current verification step achieved (mirrors backend return). 'complete' means fully verified.
+  verificationStep?: VerificationStep;
+  // Explicit next action user must take (may duplicate verificationStep for clarity)
+  nextStep?: VerificationStep | undefined;
+  user?: { id: string; email: string; name?: string; phone?: string | null; emailVerified?: boolean; phoneVerified?: boolean; kycApproved?: boolean };
 }
 
 export interface HealthResponse {

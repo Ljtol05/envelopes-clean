@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 // Migrate to axios-based auth service (services/auth) while keeping legacy User type for now.
-import { login as svcLogin, register as svcRegister, getMe as svcGetMe } from '../services/auth';
+import { login as svcLogin, register as svcRegister, getMe as svcGetMe, type VerificationStep } from '../services/auth';
 import type { User } from "../lib/api"; // legacy User shape
 
 interface AuthServiceUser { id?: string | number; email: string; name?: string; emailVerified?: boolean; phoneVerified?: boolean }
@@ -22,7 +22,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   };
 
   const doLogin = useCallback(async (email: string, password: string) => {
-    const { token, user, verificationStep } = await svcLogin({ email, password });
+    const { token, user, verificationStep, nextStep } = await svcLogin({ email, password });
     if (token) persistToken(token);
     setToken(token || null);
     // service user may omit name; coerce to legacy User shape if present
@@ -37,7 +37,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       };
       setUser(coerced);
     }
-    return { verificationStep };
+  return { verificationStep: verificationStep as VerificationStep | undefined, nextStep };
   }, []);
 
   const doRegister = useCallback(async (name: string, email: string, password: string) => {

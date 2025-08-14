@@ -31,13 +31,14 @@ export default function LoginScreen() {
   const onSubmit = handleSubmit(async (vals: FormValues) => {
     try {
       const hadPrevious = !!localStorage.getItem("auth_token");
-      const { verificationStep } = await login(vals.email, vals.password);
+  const { verificationStep, nextStep } = await login(vals.email, vals.password);
       toast.success("Welcome back!");
       // Decide next route from backend-provided step for progressive verification
-      if (verificationStep === 'email') navigate('/auth/verify-email', { replace: true });
-      else if (verificationStep === 'phone') navigate('/auth/verify-phone', { replace: true });
-      else if (verificationStep === 'kyc') navigate('/auth/kyc', { replace: true });
-      else {
+  const step = nextStep || verificationStep;
+  if (step === 'email') navigate('/auth/verify-email', { replace: true });
+  else if (step === 'phone') navigate('/auth/verify-phone', { replace: true });
+  else if (step === 'kyc') navigate('/auth/kyc', { replace: true });
+  else { // 'complete' or undefined treated as fully verified
         // fully verified
         if (!hadPrevious) navigate('/onboarding/coach', { replace: true });
         else navigate(from || '/home', { replace: true });
