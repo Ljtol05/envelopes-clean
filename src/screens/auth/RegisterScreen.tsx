@@ -1,3 +1,5 @@
+import React, { useState } from "react";
+void React;
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
@@ -8,7 +10,10 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Button } from "../../components/ui/button";
 
-interface FormValues { name: string; email: string; password: string }
+// simple helper styling (kept as function returning className string to avoid custom li wrapper)
+const pwClass = (ok: boolean) => "flex items-center gap-1 " + (ok ? 'text-[color:var(--owl-success,#16a34a)]' : 'text-[color:var(--owl-text-secondary)]');
+
+interface FormValues { firstName: string; lastName: string; email: string; password: string }
 const EMAIL_RE = /.+@.+\..+/;
 
 export default function RegisterScreen() {
@@ -16,11 +21,24 @@ export default function RegisterScreen() {
   const apiBase = useApiBase();
   const navigate = useNavigate();
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({ defaultValues: { name: "", email: "", password: "" } });
+  const { register, watch, handleSubmit, formState: { errors, isSubmitting } } = useForm({ defaultValues: { firstName: "", lastName: "", email: "", password: "" } });
+  const values = watch();
+  const [showPw, setShowPw] = useState(false);
+
+  // Password requirement helpers
+  const pw = values.password || "";
+  const reqs = {
+    length: pw.length >= 8,
+    upper: /[A-Z]/.test(pw),
+    lower: /[a-z]/.test(pw),
+    digit: /\d/.test(pw),
+  };
+  const allReqs = Object.values(reqs).every(Boolean);
 
   const onSubmit = async (vals: FormValues) => {
     try {
-      await doRegister(vals.name, vals.email, vals.password);
+      const name = `${vals.firstName.trim()} ${vals.lastName.trim()}`.trim();
+      await doRegister(name, vals.email, vals.password);
       toast.success("Account created");
       navigate("/auth/verify-email", { replace: true });
     } catch (e) {
@@ -37,10 +55,17 @@ export default function RegisterScreen() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" aria-invalid={errors.name ? 'true' : undefined} aria-describedby={errors.name ? 'register-name-error' : undefined} autoComplete="name" {...register("name", { required: "Name is required" })} />
-              {errors.name && <p id="register-name-error" className="text-xs text-[color:var(--owl-accent)]">{errors.name.message}</p>}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="firstName">First name</Label>
+                <Input id="firstName" aria-invalid={errors.firstName ? 'true' : undefined} aria-describedby={errors.firstName ? 'register-first-error' : undefined} autoComplete="given-name" {...register("firstName", { required: "Required" })} />
+                {errors.firstName && <p id="register-first-error" className="text-xs text-[color:var(--owl-accent)]">{errors.firstName.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="lastName">Last name</Label>
+                <Input id="lastName" aria-invalid={errors.lastName ? 'true' : undefined} aria-describedby={errors.lastName ? 'register-last-error' : undefined} autoComplete="family-name" {...register("lastName", { required: "Required" })} />
+                {errors.lastName && <p id="register-last-error" className="text-xs text-[color:var(--owl-accent)]">{errors.lastName.message}</p>}
+              </div>
             </div>
             <div className="space-y-1">
               <Label htmlFor="email">Email</Label>
@@ -49,11 +74,25 @@ export default function RegisterScreen() {
             </div>
             <div className="space-y-1">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" aria-invalid={errors.password ? 'true' : undefined} aria-describedby={errors.password ? 'register-password-error' : undefined} autoComplete="new-password" {...register("password", { required: "Password is required", minLength: { value: 6, message: "Min length is 6" } })} />
+              <div className="relative">
+                <Input id="password" type={showPw ? 'text' : 'password'} aria-invalid={errors.password ? 'true' : undefined} aria-describedby={errors.password ? 'register-password-error' : undefined} autoComplete="new-password" {...register("password", { required: "Required", validate: {
+                  length: (v: string)=> v.length>=8 || 'At least 8 chars',
+                  upper: (v: string)=> /[A-Z]/.test(v) || 'Need uppercase',
+                  lower: (v: string)=> /[a-z]/.test(v) || 'Need lowercase',
+                  digit: (v: string)=> /\d/.test(v) || 'Need digit'
+                } })} />
+                <button type="button" onClick={()=>setShowPw(s=>!s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-[color:var(--owl-accent)] hover:underline select-none">{showPw? 'Hide':'Show'}</button>
+              </div>
+              <ul className="mt-1 space-y-0.5 text-[10px] leading-tight">
+                <li className={pwClass(reqs.length)}><span aria-hidden="true" className="inline-block w-3 text-center">{reqs.length?'✓':'•'}</span><span>At least 8 characters</span></li>
+                <li className={pwClass(reqs.upper)}><span aria-hidden="true" className="inline-block w-3 text-center">{reqs.upper?'✓':'•'}</span><span>One uppercase letter</span></li>
+                <li className={pwClass(reqs.lower)}><span aria-hidden="true" className="inline-block w-3 text-center">{reqs.lower?'✓':'•'}</span><span>One lowercase letter</span></li>
+                <li className={pwClass(reqs.digit)}><span aria-hidden="true" className="inline-block w-3 text-center">{reqs.digit?'✓':'•'}</span><span>One number</span></li>
+              </ul>
               {errors.password && <p id="register-password-error" className="text-xs text-[color:var(--owl-accent)]">{errors.password.message}</p>}
             </div>
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? "Creating…" : "Create account"}
+            <Button type="submit" disabled={isSubmitting || !allReqs} className="w-full">
+              {isSubmitting ? "Submitting…" : "Submit"}
             </Button>
             {isSubmitting && <p className="text-xs text-center text-[color:var(--owl-text-secondary)]">Submitting to {apiBase}…</p>}
           </form>
