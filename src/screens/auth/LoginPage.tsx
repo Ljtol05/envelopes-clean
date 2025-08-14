@@ -11,8 +11,13 @@ export default function LoginPage() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (hydrated && (user || token)) navigate('/', { replace: true });
-  }, [hydrated, user, token, navigate]);
+    if (!hydrated) return;
+    if (!(user || token)) return;
+    // If onboarding still in progress (email not verified) let flow proceed instead of
+    // bouncing to '/' which then immediately redirects back creating rapid replace loops.
+    if (location.pathname === '/auth/login' && user && !user.emailVerified) return;
+    navigate('/', { replace: true });
+  }, [hydrated, user, token, navigate, location.pathname]);
 
   const isLogin = location.pathname.includes('/auth/login');
 

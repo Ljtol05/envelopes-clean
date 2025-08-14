@@ -10,8 +10,14 @@ export default function RegisterPage() {
   const location = useLocation();
 
   useEffect(() => {
-    if (hydrated && (user || token)) navigate('/', { replace: true });
-  }, [hydrated, user, token, navigate]);
+    if (!hydrated) return;
+    if (!(user || token)) return;
+    // Avoid issuing an extra redirect immediately after registration which already
+    // pushes the user toward verify-email. Double navigations were triggering the
+    // browser's navigation throttling warning.
+    if (location.pathname === '/auth/register' && user && !user.emailVerified) return;
+    navigate('/', { replace: true });
+  }, [hydrated, user, token, navigate, location.pathname]);
 
   const isRegister = location.pathname.includes('/auth/register');
 
