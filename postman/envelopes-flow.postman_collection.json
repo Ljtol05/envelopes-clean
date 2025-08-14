@@ -4,7 +4,7 @@
     "_postman_id": "d4d9c2f8-2f5d-4f3f-9a0a-7f2b2ea9c1a3",
     "version": { "major": 1, "minor": 0, "patch": 0 },
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "End-to-end: register -> (optional resend) -> verify email -> login -> start KYC -> poll status -> final assert. One-click runner with self-managed variables."
+  "description": "End-to-end: register -> (optional resend) -> verify email -> login -> start KYC -> poll status -> final assert. One-click runner with self-managed variables.\n\nEnv Var Guidance (frontend):\n- Preferred: VITE_API_URL=<your backend root, no trailing slash>\n- Legacy supported: VITE_API_BASE_URL=<backend root>\nIf neither is set in dev, defaults to http://localhost:5000; in prod falls back to https://api.example.com until configured."
   },
   "event": [
     {
