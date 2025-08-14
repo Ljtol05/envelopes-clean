@@ -10,9 +10,9 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "// Normalize baseUrl (remove trailing slash) before every request",
-          "let b = pm.variables.get('baseUrl');",
-          "if (b) { b = b.replace(/\\/+$|\/$/, ''); pm.variables.set('baseUrl', b.replace(/\\/$/, '')); }",
+          "// Normalize baseUrl (remove single trailing slash) before every request",
+          "let b = pm.variables.get('baseUrl') || pm.environment.get('baseUrl');",
+          "if (b) { b = b.replace(/\/$/, ''); pm.variables.set('baseUrl', b); }",
           "// Initialize poll attempts counter if absent",
           "if (!pm.environment.get('kycPollAttempts')) pm.environment.set('kycPollAttempts', '0');"
         ]
@@ -31,6 +31,7 @@
       "event": [
         { "listen": "test", "script": { "type": "text/javascript", "exec": [
           "pm.test('Registered 200/201', () => [200,201].includes(pm.response.code));",
+          "if(![200,201].includes(pm.response.code)){ return; }",
           "const json = pm.response.json();",
           "pm.environment.set('email', json.user && json.user.email ? json.user.email : pm.environment.get('email'));",
           "// Some backends may not issue auth token until verification; store if present",
@@ -64,6 +65,7 @@
       "event": [
         { "listen": "test", "script": { "type": "text/javascript", "exec": [
           "pm.test('Verify email 200', () => pm.response.code === 200);",
+          "if(pm.response.code !== 200){ return; }",
           "pm.environment.set('emailVerified', 'true');"
         ] } }
       ]
@@ -79,6 +81,7 @@
       "event": [
         { "listen": "test", "script": { "type": "text/javascript", "exec": [
           "pm.test('Login 200', () => pm.response.code === 200);",
+          "if(pm.response.code !== 200){ return; }",
           "const json = pm.response.json();",
           "pm.environment.set('token', json.token);",
           "pm.test('Token present', () => !!pm.environment.get('token'));"
@@ -99,6 +102,7 @@
       "event": [
         { "listen": "test", "script": { "type": "text/javascript", "exec": [
           "pm.test('Start KYC 200', () => pm.response.code === 200);",
+          "if(pm.response.code !== 200){ return; }",
           "const json = pm.response.json();",
           "pm.environment.set('kycStatus', json.status || 'pending');",
           "pm.environment.set('kycPollAttempts', '0');"
@@ -150,7 +154,7 @@
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:5000" },
+  { "key": "baseUrl", "value": "https://d12fe605-62cb-49b0-b8ae-60c33cc2dc94-00-3mx79pg8q976x.janeway.replit.dev" },
     { "key": "verificationCode", "value": "123456" },
     { "key": "password", "value": "Passw0rd!" },
     { "key": "maxKycPollAttempts", "value": "10" }
