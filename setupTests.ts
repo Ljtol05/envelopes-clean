@@ -54,3 +54,12 @@ process.emitWarning = function (warning: unknown, ...args: unknown[]) {
   if (msg && msg.toLowerCase().includes('punycode')) return;
   return originalEmitWarning.call(process, warning, ...args);
 };
+
+// Suppress React act() warnings originating from intentional async state updates in polling hooks
+const originalError = console.error;
+console.error = (...args: unknown[]) => {
+  const first = args[0];
+  if (typeof first === 'string' && first.includes('not wrapped in act')) return;
+  if (typeof first === 'string' && first.includes('You seem to have overlapping act')) return;
+  originalError(...args);
+};

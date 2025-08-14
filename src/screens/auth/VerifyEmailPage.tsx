@@ -6,9 +6,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/ca
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Button } from '../../components/ui/button';
-import { verifyEmail, resendVerification } from '../../services/auth';
+import { verifyEmail, resendVerification, getMe } from '../../services/auth';
 import { useAuth } from '../../context/useAuth';
 import { Link, useLocation } from 'react-router-dom';
+import { PHONE_VERIFICATION_REQUIRED } from '../../lib/onboarding';
+const isPhoneRequired = () => PHONE_VERIFICATION_REQUIRED;
 import { toast } from 'sonner';
 
 export default function VerifyEmailPage() {
@@ -29,8 +31,10 @@ export default function VerifyEmailPage() {
   const finalEmail = editableEmail.trim();
   if (!finalEmail) throw new Error('Missing email');
   await verifyEmail(finalEmail, code.trim());
-      toast.success('Email verified');
-      navigate('/auth/kyc', { replace: true });
+  toast.success('Email verified');
+  // refresh user profile to pick up emailVerified flag
+  try { await getMe(); } catch { /* ignore */ }
+  navigate(isPhoneRequired() ? '/auth/verify-phone' : '/auth/kyc', { replace: true });
     } catch (e) {
       const err = e as Error;
       toast.error(err.message || 'Verification failed');

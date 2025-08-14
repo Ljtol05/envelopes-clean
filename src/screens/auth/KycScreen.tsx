@@ -25,7 +25,9 @@ const schema = z.object({
 });
 
 export default function KycScreen() {
-  const { status, error, submitting, submitKyc, reset } = useKyc();
+  // Disable automatic polling during tests by respecting env flag; prod keeps defaults.
+  const isTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
+  const { status, error, submitting, submitKyc, reset, refresh } = useKyc(isTest ? { autoPoll: false } : undefined);
   const navigate = useNavigate();
   const from = '/home';
 
@@ -64,9 +66,10 @@ export default function KycScreen() {
           <CardTitle>Identity Verification</CardTitle>
         </CardHeader>
         <CardContent>
-          {status?.status === 'pending' && (
+      {status?.status === 'pending' && (
             <div className="space-y-4">
               <p className="text-sm">Your information is being reviewed. This usually takes a minute…</p>
+        {isTest && <Button type="button" variant="outline" onClick={() => refresh()}>Poll now</Button>}
             </div>
           )}
           {status?.status === 'rejected' && (

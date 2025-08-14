@@ -7,7 +7,17 @@ import { apiStartKyc, apiGetKycStatus } from '../lib/kyc';
  * KYC form, poll for status changes, and reset or refresh the state.
  * Accepts an optional `pollMs` interval (default: 3000ms).
  */
-export function useKyc(pollMs: number = 3000) {
+export interface UseKycOptions {
+  pollMs?: number;
+  autoFetch?: boolean; // automatically fetch initial status (default true)
+  autoPoll?: boolean;  // automatically start polling when pending (default true)
+}
+
+export function useKyc(pollMsOrOptions: number | UseKycOptions = 3000) {
+  const opts: UseKycOptions = typeof pollMsOrOptions === 'number' ? { pollMs: pollMsOrOptions } : pollMsOrOptions;
+  const pollMs = opts.pollMs ?? 3000;
+  const autoFetch = opts.autoFetch !== false; // default true
+  const autoPoll = opts.autoPoll !== false;   // default true
   const [status, setStatus] = useState<KycStatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -43,6 +53,7 @@ export function useKyc(pollMs: number = 3000) {
 
   // Poll for updates when status is pending
   useEffect(() => {
+    if (!autoPoll) return; // tests may disable
     const shouldPoll = status?.status === 'pending';
     if (!shouldPoll) {
       if (timerRef.current) {
@@ -60,12 +71,11 @@ export function useKyc(pollMs: number = 3000) {
         timerRef.current = null;
       }
     };
-  }, [status?.status, pollMs, fetchStatus]);
+  }, [status?.status, pollMs, fetchStatus, autoPoll]);
 
   // Preload status on mount
   useEffect(() => {
-    fetchStatus();
-  }, [fetchStatus]);
-
+    if (autoFetch) fetchStatus();
+  }, [fetchStatus, autoFetch]);
   return { status, error, submitting, submitKyc, refresh: fetchStatus, reset };
 }

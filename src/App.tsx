@@ -24,6 +24,7 @@ import KycScreen from './screens/auth/KycScreen';
 import LoginPage from './screens/auth/LoginPage';
 import RegisterPage from './screens/auth/RegisterPage';
 import VerifyEmailPage from './screens/auth/VerifyEmailPage';
+import OnboardingRedirect from './routes/OnboardingRedirect';
 import PhoneVerificationPage from './screens/auth/PhoneVerificationPage';
 import ForgotPassword from './screens/auth/ForgotPassword';
 import AuthScaffold from './screens/auth/AuthScaffold';
@@ -94,7 +95,7 @@ export default function App() {
                   <Route path="/kyc" element={<Navigate to="/auth/kyc" replace />} />
                   <Route element={<KycGuard />}> {/* KYC approved only */}
                   <Route path="/onboarding/coach" element={<OnboardingCoach />} />
-                  <Route index element={<Navigate to="/home" replace />} />
+                  <Route index element={<OnboardingRedirect />} />
                   <Route path="/home" element={<HomeScreen />} />
                   <Route path="/card" element={<CardScreen />} />
                   <Route path="/rules" element={<RulesScreen />} />

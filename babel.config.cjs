@@ -5,7 +5,9 @@ module.exports = {
     require.resolve('@babel/preset-typescript')
   ],
   plugins: [
-    require.resolve('@babel/plugin-syntax-import-meta')
+    require.resolve('@babel/plugin-syntax-import-meta'),
+    // Local plugin to rewrite import.meta for Jest (CJS) execution
+    require.resolve('./babel-import-meta-transform.cjs')
   ],
   sourceType: 'unambiguous'
 };

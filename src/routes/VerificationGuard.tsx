@@ -2,18 +2,24 @@ import React from 'react';
 void React;
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
+import { PHONE_VERIFICATION_REQUIRED } from '../lib/onboarding';
 
 /**
- * Ensures the user has verified email (or phone) before proceeding deeper into onboarding.
- * Redirects to /auth/verify-email if neither email nor phone is verified yet.
+ * Sequential onboarding guard enforcing:
+ * 1. Email verification
+ * 2. Phone verification (if enabled via VITE_REQUIRE_PHONE_VERIFICATION !== 'false')
+ * Downstream routes (KYC + app) only render after both complete.
  */
 export default function VerificationGuard() {
   const { user, hydrated } = useAuth();
   const location = useLocation();
-  if (!hydrated) return null; // or spinner
-  const verified = !!(user?.emailVerified || user?.phoneVerified);
-  if (!verified) {
+  const requirePhone = PHONE_VERIFICATION_REQUIRED;
+  if (!hydrated) return null;
+  if (!user?.emailVerified) {
     return <Navigate to="/auth/verify-email" replace state={{ from: location }} />;
+  }
+  if (requirePhone && !user?.phoneVerified) {
+    return <Navigate to="/auth/verify-phone" replace state={{ from: location }} />;
   }
   return <Outlet />;
 }

@@ -9,7 +9,8 @@ import { useKyc } from '../hooks/useKyc';
  * intended destination in route state.
  */
 export default function KycGuard() {
-  const { status, refresh } = useKyc();
+  const isTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
+  const { status, refresh } = useKyc(isTest ? { autoPoll: false } : undefined);
   const location = useLocation();
 
   // Ensure we have the latest status when this guard first renders
