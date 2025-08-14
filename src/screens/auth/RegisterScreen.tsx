@@ -35,6 +35,7 @@ export default function RegisterScreen() {
   };
   const allReqs = Object.values(reqs).every(Boolean);
 
+  const [existingUser, setExistingUser] = useState(false);
   const onSubmit = async (vals: FormValues) => {
     try {
       const name = `${vals.firstName.trim()} ${vals.lastName.trim()}`.trim();
@@ -42,8 +43,18 @@ export default function RegisterScreen() {
       toast.success("Account created");
       navigate("/auth/verify-email", { replace: true });
     } catch (e) {
-      const err = e as Error & { status?: number };
-      toast.error(err.message || "Registration failed");
+      // Axios style error shape
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errAny: any = e;
+      const status = errAny?.response?.status;
+      const msg: string | undefined = errAny?.response?.data?.message || errAny?.message;
+      if (status === 400 && msg && /already exists/i.test(msg)) {
+        setExistingUser(true);
+        toast.dismiss(); // remove any pending toasts
+        toast.info("Account already exists. Please log in.");
+      } else {
+        toast.error(msg || "Registration failed");
+      }
     }
   };
 
@@ -91,6 +102,12 @@ export default function RegisterScreen() {
               </ul>
               {errors.password && <p id="register-password-error" className="text-xs text-[color:var(--owl-accent)]">{errors.password.message}</p>}
             </div>
+            {existingUser && (
+              <div role="alert" className="text-xs rounded-md border border-[color:var(--owl-accent)]/40 bg-[color:var(--owl-accent)]/10 p-2 text-[color:var(--owl-text-primary)]">
+                <p className="mb-2 font-medium">Hey, You are already apart of the budgeting program, Log in now.</p>
+                <Button type="button" variant="outline" className="w-full" onClick={()=>navigate('/auth/login',{replace:true})}>Go to Login</Button>
+              </div>
+            )}
             <Button type="submit" disabled={isSubmitting || !allReqs} className="w-full">
               {isSubmitting ? "Submitting…" : "Submit"}
             </Button>

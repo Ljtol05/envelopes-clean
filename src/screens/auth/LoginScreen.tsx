@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { useState } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ export default function LoginScreen() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues: { email: "", password: "" } });
+  const [showPw, setShowPw] = useState(false);
 
   const onSubmit = handleSubmit(async (vals: FormValues) => {
     try {
@@ -61,7 +63,12 @@ export default function LoginScreen() {
             </div>
             <div className="space-y-1">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" aria-invalid={errors.password ? 'true' : undefined} aria-describedby={errors.password ? 'login-password-error' : undefined} autoComplete="current-password" {...register("password", { required: "Password is required", minLength: { value: 6, message: "Min length is 6" } })} />
+              <div className="relative">
+                <Input id="password" type={showPw? 'text':'password'} aria-invalid={errors.password ? 'true' : undefined} aria-describedby={errors.password ? 'login-password-error' : undefined} autoComplete="current-password" {...register("password", { required: "Password is required", minLength: { value: 6, message: "Min length is 6" } })} />
+                <button type="button" onClick={()=>setShowPw(s=>!s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-xs select-none" aria-label={showPw? 'Hide password':'Show password'}>
+                  {showPw ? '🙈' : '👁️'}
+                </button>
+              </div>
               {errors.password && <p id="login-password-error" className="text-xs text-[color:var(--owl-accent)]">{errors.password.message}</p>}
             </div>
             <Button type="submit" disabled={isSubmitting} className="w-full">
