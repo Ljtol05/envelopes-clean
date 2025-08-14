@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { login as svcLogin, register as svcRegister, getMe as svcGetMe } from '../services/auth';
 import type { User } from "../lib/api"; // legacy User shape
 
-interface AuthServiceUser { id?: string | number; email: string; name?: string }
+interface AuthServiceUser { id?: string | number; email: string; name?: string; emailVerified?: boolean; phoneVerified?: boolean }
 import { AuthContext, type AuthState } from "./AuthContextBase";
 
 const TOKEN_KEY = "auth_token" as const;
@@ -28,10 +28,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     // service user may omit name; coerce to legacy User shape if present
     if (user) {
       const svcUser = user as AuthServiceUser;
-      const coerced: User = {
+      const coerced: User & { emailVerified?: boolean; phoneVerified?: boolean } = {
         id: typeof svcUser.id === 'number' ? svcUser.id : Number(svcUser.id) || 0,
         name: svcUser.name || svcUser.email.split('@')[0],
         email: svcUser.email,
+        emailVerified: (svcUser as AuthServiceUser).emailVerified,
+        phoneVerified: (svcUser as AuthServiceUser).phoneVerified,
       };
       setUser(coerced);
     }
@@ -43,12 +45,17 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     setToken(token || null);
     if (user) {
       const svcUser = user as AuthServiceUser;
-      const coerced: User = {
+      const coerced: User & { emailVerified?: boolean; phoneVerified?: boolean } = {
         id: typeof svcUser.id === 'number' ? svcUser.id : Number(svcUser.id) || 0,
         name: svcUser.name || name,
         email: svcUser.email,
+        emailVerified: (svcUser as AuthServiceUser).emailVerified,
+        phoneVerified: (svcUser as AuthServiceUser).phoneVerified,
       };
       setUser(coerced);
+    } else {
+      // Backend didn't return user; synthesize minimal user so verification flows have email context
+      setUser({ id: 0, name, email });
     }
   }, []);
 
@@ -72,10 +79,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         const name = 'name' in u && typeof (u as { name?: unknown }).name === 'string'
           ? (u as { name: string }).name
           : u.email.split('@')[0];
-        const coerced: User = {
+        const coerced: User & { emailVerified?: boolean; phoneVerified?: boolean } = {
           id: typeof u.id === 'number' ? u.id : Number(u.id) || 0,
           name,
           email: u.email,
+          emailVerified: (u as AuthServiceUser).emailVerified,
+          phoneVerified: (u as AuthServiceUser).phoneVerified,
         };
         setUser(coerced);
       })

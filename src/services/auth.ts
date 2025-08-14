@@ -7,7 +7,7 @@ export interface RegisterRequest {
   password: string;
 }
 export interface RegisterResponse {
-  user: { id: string; email: string; name?: string };
+  user: { id: string; email: string; name?: string; emailVerified?: boolean; phoneVerified?: boolean };
   token?: string;
 }
 
@@ -17,7 +17,7 @@ export interface LoginRequest {
 }
 export interface LoginResponse {
   token: string;
-  user?: { id: string; email: string; name?: string };
+  user?: { id: string; email: string; name?: string; emailVerified?: boolean; phoneVerified?: boolean };
 }
 
 export interface HealthResponse {
@@ -27,8 +27,26 @@ export interface HealthResponse {
 const AUTH_PREFIX = '/api/auth';
 
 export async function register(data: RegisterRequest) {
-  const res = await apiClient.post<RegisterResponse>(`${AUTH_PREFIX}/register`, data);
-  return res.data;
+  try {
+    if (import.meta.env.DEV) {
+      // Lightweight dev diagnostics (avoid leaking password contents fully)
+      console.debug('[auth.register] payload', { ...data, password: data.password ? '***len:' + data.password.length : '' }, 'base', API_BASE_URL);
+    }
+    const res = await apiClient.post<RegisterResponse>(`${AUTH_PREFIX}/register`, data);
+    return res.data;
+  } catch (err) {
+    // Surface server validation details
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e: any = err;
+    if (import.meta.env.DEV) {
+      console.error('[auth.register] failed', {
+        status: e?.response?.status,
+        data: e?.response?.data,
+        message: e?.message,
+      });
+    }
+    throw err;
+  }
 }
 
 export async function login(data: LoginRequest) {
@@ -45,6 +63,8 @@ export interface MeResponse {
   id: string | number;
   email: string;
   name?: string;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
 }
 
 export async function getMe() {
@@ -60,6 +80,20 @@ export async function verifyEmail(email: string, code: string) {
 
 export async function resendVerification(email: string) {
   const res = await apiClient.post<{ ok: boolean }>(`${AUTH_PREFIX}/resend-verification`, { email });
+  return res.data;
+}
+
+// Optional phone verification (stubs; backend must implement)
+export async function startPhoneVerification(phone: string) {
+  const res = await apiClient.post<{ ok: boolean }>(`${AUTH_PREFIX}/start-phone-verification`, { phone });
+  return res.data;
+}
+export async function verifyPhone(phone: string, code: string) {
+  const res = await apiClient.post<{ ok: boolean }>(`${AUTH_PREFIX}/verify-phone`, { phone, code });
+  return res.data;
+}
+export async function resendPhoneVerification(phone: string) {
+  const res = await apiClient.post<{ ok: boolean }>(`${AUTH_PREFIX}/resend-phone-code`, { phone });
   return res.data;
 }
 

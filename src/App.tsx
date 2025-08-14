@@ -18,11 +18,13 @@ import { EnvelopesProvider } from './contexts/EnvelopesContext';
 import AuthProvider from './context/AuthContext';
 import ApiBaseBanner from './components/system/ApiBaseBanner';
 import ProtectedRoute from './routes/ProtectedRoute';
+import VerificationGuard from './routes/VerificationGuard';
 import KycGuard from './routes/KycGuard';
 import KycScreen from './screens/auth/KycScreen';
 import LoginPage from './screens/auth/LoginPage';
 import RegisterPage from './screens/auth/RegisterPage';
 import VerifyEmailPage from './screens/auth/VerifyEmailPage';
+import PhoneVerificationPage from './screens/auth/PhoneVerificationPage';
 import ForgotPassword from './screens/auth/ForgotPassword';
 import AuthScaffold from './screens/auth/AuthScaffold';
 import OnboardingCoach from './screens/OnboardingCoach';
@@ -83,12 +85,14 @@ export default function App() {
             <Route path="/auth/login" element={<LoginPage />} />
             <Route path="/auth/register" element={<RegisterPage />} />
             <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/auth/verify-phone" element={<PhoneVerificationPage />} />
             <Route path="/auth/forgot" element={<AuthScaffold><ForgotPassword /></AuthScaffold>} />
             <Route element={<AppLayout />}> {/* shared chrome */}
               <Route element={<ProtectedRoute />}> {/* protected app (auth) */}
-                <Route path="/auth/kyc" element={<KycScreen />} />
-                <Route path="/kyc" element={<Navigate to="/auth/kyc" replace />} />
-                <Route element={<KycGuard />}> {/* KYC approved only */}
+                <Route element={<VerificationGuard />}> {/* require email/phone verified */}
+                  <Route path="/auth/kyc" element={<KycScreen />} />
+                  <Route path="/kyc" element={<Navigate to="/auth/kyc" replace />} />
+                  <Route element={<KycGuard />}> {/* KYC approved only */}
                   <Route path="/onboarding/coach" element={<OnboardingCoach />} />
                   <Route index element={<Navigate to="/home" replace />} />
                   <Route path="/home" element={<HomeScreen />} />
@@ -97,6 +101,7 @@ export default function App() {
                   <Route path="/activity" element={<ActivityScreen />} />
                   <Route path="/settings" element={<SettingsScreen />} />
                   <Route path="/tx/:id" element={<TxRoute />} />
+                  </Route>
                 </Route>
               </Route>
             </Route>

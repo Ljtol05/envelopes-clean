@@ -59,7 +59,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 // ===== Types (auth & coach) =====
-export type User = { id: number; name: string; email: string };
+export type User = { id: number; name: string; email: string; emailVerified?: boolean; phoneVerified?: boolean };
 export type AuthResponse = { token: string; user: User };
 export type CoachResponse = {
   response: string;
