@@ -106,6 +106,54 @@ describe('KYC Flow', () => {
   expect(resendVerification).toHaveBeenCalled();
   });
 
+  test('email edit updates payload for verification', async () => {
+    jest.useRealTimers(); usingFakeTimers = false;
+    (verifyEmail as jest.Mock).mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(
+      <MockAuthProvider>
+        <MemoryRouter initialEntries={['/auth/verify-email']}>
+          <Routes>
+            <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/auth/kyc" element={<div>KYC Page</div>} />
+          </Routes>
+        </MemoryRouter>
+      </MockAuthProvider>
+    );
+    const editBtn = await screen.findByRole('button', { name: /edit/i });
+    await user.click(editBtn);
+    const emailInput = await screen.findByLabelText(/email/i);
+    await user.clear(emailInput);
+    await user.type(emailInput, 'new@example.com');
+    const codeInput = await screen.findByLabelText(/6-digit code/i);
+    await user.type(codeInput, '654321');
+    await user.click(screen.getByRole('button', { name: /verify code/i }));
+    expect(verifyEmail).toHaveBeenCalledWith('new@example.com', '654321');
+  });
+
+  test('email edit updates payload for resend', async () => {
+    jest.useRealTimers(); usingFakeTimers = false;
+    (resendVerification as jest.Mock).mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(
+      <MockAuthProvider>
+        <MemoryRouter initialEntries={['/auth/verify-email']}>
+          <Routes>
+            <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+          </Routes>
+        </MemoryRouter>
+      </MockAuthProvider>
+    );
+    const editBtn = await screen.findByRole('button', { name: /edit/i });
+    await user.click(editBtn);
+    const emailInput = await screen.findByLabelText(/email/i);
+    await user.clear(emailInput);
+    await user.type(emailInput, 'resend@example.com');
+    const resendBtn = await screen.findByRole('button', { name: /resend code/i });
+    await user.click(resendBtn);
+    expect(resendVerification).toHaveBeenCalledWith('resend@example.com');
+  });
+
   afterEach(() => {
     if (usingFakeTimers) {
       // Wrap pending timer flush in act to avoid React act warnings from navigation timeout
