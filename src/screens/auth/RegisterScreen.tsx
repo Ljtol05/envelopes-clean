@@ -36,6 +36,12 @@ export default function RegisterScreen() {
   const allReqs = Object.values(reqs).every(Boolean);
 
   const [existingUser, setExistingUser] = useState(false);
+  // Reset inline existing-user prompt if user edits email after seeing it
+  React.useEffect(()=>{
+    if (existingUser) setExistingUser(false);
+    // deliberately only depend on the email value so we clear when they change it
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.email]);
   const onSubmit = async (vals: FormValues) => {
     try {
       const name = `${vals.firstName.trim()} ${vals.lastName.trim()}`.trim();
@@ -47,13 +53,22 @@ export default function RegisterScreen() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const errAny: any = e;
       const status = errAny?.response?.status;
-      const msg: string | undefined = errAny?.response?.data?.message || errAny?.message;
-      if (status === 400 && msg && /already exists/i.test(msg)) {
+      const serverMsg: string | undefined = errAny?.response?.data?.message || errAny?.response?.data?.error; // backend may use either key
+      const rootMsg: string | undefined = serverMsg || errAny?.message;
+      // Broaden detection: some backends may nest message differently or only provide a generic field
+      const composite = (serverMsg || "") + " " + JSON.stringify(errAny?.response?.data || {});
+      if (status === 400 && /already exists/i.test(composite)) {
+        if (import.meta.env.DEV) console.debug('[register] existing-user detected');
         setExistingUser(true);
-        toast.dismiss(); // remove any pending toasts
+        // focus the inline alert on next tick for a11y
+        setTimeout(()=>{
+          const el = document.getElementById('existing-user-alert');
+          el?.focus();
+        }, 0);
+        toast.dismiss();
         toast.info("Account already exists. Please log in.");
       } else {
-        toast.error(msg || "Registration failed");
+        toast.error(rootMsg || "Registration failed");
       }
     }
   };
@@ -103,8 +118,13 @@ export default function RegisterScreen() {
               {errors.password && <p id="register-password-error" className="text-xs text-[color:var(--owl-accent)]">{errors.password.message}</p>}
             </div>
             {existingUser && (
-              <div role="alert" className="text-xs rounded-md border border-[color:var(--owl-accent)]/40 bg-[color:var(--owl-accent)]/10 p-2 text-[color:var(--owl-text-primary)]">
-                <p className="mb-2 font-medium">Hey, You are already apart of the budgeting program, Log in now.</p>
+              <div
+                id="existing-user-alert"
+                tabIndex={-1}
+                role="alert"
+                className="text-xs rounded-md border border-[color:var(--owl-accent)]/40 bg-[color:var(--owl-accent)]/10 p-2 text-[color:var(--owl-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--owl-accent)]/60"
+              >
+                <p className="mb-2 font-medium">You already have an account. Please log in instead.</p>
                 <Button type="button" variant="outline" className="w-full" onClick={()=>navigate('/auth/login',{replace:true})}>Go to Login</Button>
               </div>
             )}
