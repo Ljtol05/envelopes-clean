@@ -2,59 +2,87 @@
   "info": {
     "name": "Envelopes Auth + KYC Flow",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Automated registration -> verify email -> login -> start KYC -> status polling"
+    "description": "End-to-end: register -> (optional resend) -> verify email -> login -> start KYC -> poll status -> final assert. One-click runner with self-managed variables."
   },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Normalize baseUrl (remove trailing slash) before every request",
+          "let b = pm.variables.get('baseUrl');",
+          "if (b) { b = b.replace(/\\/+$|\/$/, ''); pm.variables.set('baseUrl', b.replace(/\\/$/, '')); }",
+          "// Initialize poll attempts counter if absent",
+          "if (!pm.environment.get('kycPollAttempts')) pm.environment.set('kycPollAttempts', '0');"
+        ]
+      }
+    }
+  ],
   "item": [
     {
       "name": "Register",
       "request": {
         "method": "POST",
-        "header": [
-          {"key": "Content-Type", "value": "application/json"}
-        ],
-        "url": {"raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"]},
-        "body": {"mode": "raw", "raw": "{\n  \"name\": \"{{$randomFullName}}\",\n  \"email\": \"{{$randomInt}}-tester@example.com\",\n  \"password\": \"Passw0rd!\"\n}"}
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] },
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"{{$randomFullName}}\",\n  \"email\": \"{{$randomInt}}-tester@example.com\",\n  \"password\": \"{{password}}\"\n}" }
       },
       "event": [
-        {"listen": "test", "script": {"exec": [
-          "pm.test('Registered OK', () => pm.response.code === 200 || pm.response.code === 201);",
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Registered 200/201', () => [200,201].includes(pm.response.code));",
           "const json = pm.response.json();",
-          "pm.environment.set('email', json.user.email);",
-          "pm.environment.set('token', json.token);"
-        ], "type": "text/javascript"}}
+          "pm.environment.set('email', json.user && json.user.email ? json.user.email : pm.environment.get('email'));",
+          "// Some backends may not issue auth token until verification; store if present",
+          "if (json.token) pm.environment.set('token', json.token);",
+          "pm.environment.set('registered', 'true');"
+        ] } }
       ]
     },
     {
       "name": "Resend Verification (optional)",
       "request": {
         "method": "POST",
-        "header": [ {"key": "Content-Type", "value": "application/json"} ],
-        "url": {"raw": "{{baseUrl}}/api/auth/resend-verification", "host": ["{{baseUrl}}"], "path": ["api","auth","resend-verification"]},
-        "body": {"mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}"}
-      }
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/auth/resend-verification", "host": ["{{baseUrl}}"], "path": ["api","auth","resend-verification"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Resend 200', () => pm.response.code === 200);"
+        ] } }
+      ]
     },
     {
       "name": "Verify Email",
       "request": {
         "method": "POST",
-        "header": [ {"key": "Content-Type", "value": "application/json"} ],
-        "url": {"raw": "{{baseUrl}}/api/auth/verify-email", "host": ["{{baseUrl}}"], "path": ["api","auth","verify-email"]},
-        "body": {"mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"code\": \"{{verificationCode}}\"\n}"}
-      }
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/auth/verify-email", "host": ["{{baseUrl}}"], "path": ["api","auth","verify-email"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"code\": \"{{verificationCode}}\"\n}" }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Verify email 200', () => pm.response.code === 200);",
+          "pm.environment.set('emailVerified', 'true');"
+        ] } }
+      ]
     },
     {
       "name": "Login",
       "request": {
         "method": "POST",
-        "header": [ {"key": "Content-Type", "value": "application/json"} ],
-        "url": {"raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"]},
-        "body": {"mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"Passw0rd!\"\n}"}
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}" }
       },
       "event": [
-        {"listen": "test", "script": {"exec": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Login 200', () => pm.response.code === 200);",
           "const json = pm.response.json();",
-          "pm.environment.set('token', json.token);"
-        ], "type": "text/javascript"}}
+          "pm.environment.set('token', json.token);",
+          "pm.test('Token present', () => !!pm.environment.get('token'));"
+        ] } }
       ]
     },
     {
@@ -62,24 +90,69 @@
       "request": {
         "method": "POST",
         "header": [
-          {"key": "Content-Type", "value": "application/json"},
-          {"key": "Authorization", "value": "Bearer {{token}}"}
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
         ],
-        "url": {"raw": "{{baseUrl}}/api/kyc/start", "host": ["{{baseUrl}}"], "path": ["api","kyc","start"]},
-        "body": {"mode": "raw", "raw": "{\n  \"legalFirstName\": \"Jane\",\n  \"legalLastName\": \"Doe\",\n  \"dob\": \"1990-01-01\",\n  \"ssnLast4\": \"1234\",\n  \"addressLine1\": \"123 Main St\",\n  \"city\": \"Austin\",\n  \"state\": \"TX\",\n  \"postalCode\": \"78701\"\n}"}
-      }
+        "url": { "raw": "{{baseUrl}}/api/kyc/start", "host": ["{{baseUrl}}"], "path": ["api","kyc","start"] },
+        "body": { "mode": "raw", "raw": "{\n  \"legalFirstName\": \"Jane\",\n  \"legalLastName\": \"Doe\",\n  \"dob\": \"1990-01-01\",\n  \"ssnLast4\": \"1234\",\n  \"addressLine1\": \"123 Main St\",\n  \"city\": \"Austin\",\n  \"state\": \"TX\",\n  \"postalCode\": \"78701\"\n}" }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Start KYC 200', () => pm.response.code === 200);",
+          "const json = pm.response.json();",
+          "pm.environment.set('kycStatus', json.status || 'pending');",
+          "pm.environment.set('kycPollAttempts', '0');"
+        ] } }
+      ]
     },
     {
-      "name": "KYC Status",
+      "name": "KYC Status (Poll)",
       "request": {
         "method": "GET",
-        "header": [ {"key": "Authorization", "value": "Bearer {{token}}"} ],
-        "url": {"raw": "{{baseUrl}}/api/kyc/status", "host": ["{{baseUrl}}"], "path": ["api","kyc","status"]}
-      }
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{baseUrl}}/api/kyc/status", "host": ["{{baseUrl}}"], "path": ["api","kyc","status"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.code === 200);",
+          "const json = pm.response.json();",
+          "const status = json.status || 'unknown';",
+          "pm.environment.set('kycStatus', status);",
+          "let attempts = parseInt(pm.environment.get('kycPollAttempts') || '0',10);",
+          "attempts++; pm.environment.set('kycPollAttempts', attempts.toString());",
+          "const max = parseInt(pm.environment.get('maxKycPollAttempts') || pm.collectionVariables.get('maxKycPollAttempts') || '10',10);",
+          "if (status === 'pending' && attempts < max) {",
+          "  console.log('KYC still pending (attempt '+attempts+')');",
+          "  postman.setNextRequest('KYC Status (Poll)');",
+          "} else {",
+          "  postman.setNextRequest('KYC Final Assert');",
+          "}"
+        ] } }
+      ]
+    },
+    {
+      "name": "KYC Final Assert",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{baseUrl}}/api/kyc/status", "host": ["{{baseUrl}}"], "path": ["api","kyc","status"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Final status 200', () => pm.response.code === 200);",
+          "const json = pm.response.json();",
+          "const status = json.status || pm.environment.get('kycStatus');",
+          "pm.test('KYC reached terminal state', () => ['approved','rejected','pending'].includes(status));",
+          "if (status === 'pending') { pm.test('Pending exceeded max attempts', () => false); }",
+          "pm.environment.set('kycStatus', status);"
+        ] } }
+      ]
     }
   ],
   "variable": [
-    {"key": "baseUrl", "value": "http://localhost:5000"},
-    {"key": "verificationCode", "value": "123456"}
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "verificationCode", "value": "123456" },
+    { "key": "password", "value": "Passw0rd!" },
+    { "key": "maxKycPollAttempts", "value": "10" }
   ]
 }
