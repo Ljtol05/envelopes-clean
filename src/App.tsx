@@ -16,6 +16,7 @@ import { SettingsScreen } from "./screens/Mobile/SettingsScreen";
 import { TransactionDetailsScreen } from "./screens/Mobile/TransactionDetailsScreen";
 import { EnvelopesProvider } from './contexts/EnvelopesContext';
 import AuthProvider from './context/AuthContext';
+import ApiBaseBanner from './components/system/ApiBaseBanner';
 import ProtectedRoute from './routes/ProtectedRoute';
 import KycGuard from './routes/KycGuard';
 import KycScreen from './screens/auth/KycScreen';
@@ -25,6 +26,7 @@ import VerifyEmailPage from './screens/auth/VerifyEmailPage';
 import ForgotPassword from './screens/auth/ForgotPassword';
 import AuthScaffold from './screens/auth/AuthScaffold';
 import OnboardingCoach from './screens/OnboardingCoach';
+import DevApiSwitcher from './components/system/DevApiSwitcher';
 
 function AppLayout() {
   const location = useLocation();
@@ -73,7 +75,7 @@ function TxRoute() {
 
 export default function App() {
   return (
-    <AuthProvider>
+  <AuthProvider>
       <EnvelopesProvider mockLatencyMs={[120,300]}>
         <BrowserRouter>
           <Routes>
@@ -99,7 +101,9 @@ export default function App() {
               </Route>
             </Route>
           </Routes>
-        </BrowserRouter>
+  </BrowserRouter>
+  <ApiBaseBanner />
+  <DevApiSwitcher />
       </EnvelopesProvider>
     </AuthProvider>
   );

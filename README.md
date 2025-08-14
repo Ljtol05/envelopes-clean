@@ -47,8 +47,9 @@ Centralized reference for all frontend runtime variables. Defined in `.env.examp
 ### Core
 | Variable | Required | Purpose |
 |----------|----------|---------|
-| VITE_API_BASE_URL | Prod* | Backend base URL (e.g. `https://envelopes-backend.ashb786.repl.co/api`). Optional in dev (auto-detects current origin). |
-| VITE_EVENTS_URL | No | SSE events stream URL (defaults to `${VITE_API_BASE_URL}/events` if unset). |
+| VITE_API_URL | Prod* | Canonical backend base URL (e.g. `https://envelopes-backend.ashb786.repl.co/api`). Optional in dev (falls back to `http://localhost:5000`). |
+| VITE_API_BASE_URL | Legacy | Deprecated alias (only read if `VITE_API_URL` unset). Will be removed in a future release. |
+| VITE_EVENTS_URL | No | SSE events stream URL (defaults to `${VITE_API_URL || VITE_API_BASE_URL}/events` if unset). |
 
 ### Developer / Convenience
 | Variable | Required | Purpose |
@@ -64,12 +65,16 @@ Centralized reference for all frontend runtime variables. Defined in `.env.examp
 
 ### Example `.env`
 ```env
-VITE_API_BASE_URL=https://envelopes-backend.ashb786.repl.co/api
+# Preferred new variable name
+VITE_API_URL=https://envelopes-backend.ashb786.repl.co/api
 # For local backend development:
-# VITE_API_BASE_URL=http://localhost:5000/api
+# VITE_API_URL=http://localhost:5000/api
 
-# Optional real-time events (SSE)
-VITE_EVENTS_URL=https://envelopes-backend.ashb786.repl.co/api/events
+# (Optional) Legacy alias still recognized if VITE_API_URL is absent
+# VITE_API_BASE_URL=https://envelopes-backend.ashb786.repl.co/api
+
+# Optional real-time events (SSE) (falls back automatically if omitted)
+# VITE_EVENTS_URL=https://envelopes-backend.ashb786.repl.co/api/events
 
 # Dev helpers
 VITE_REPLIT_USER_ID=123
@@ -204,7 +209,7 @@ Dependabot weekly updates (npm + Actions). Major React updates ignored for manua
 | Missing icons | Re-run `npm run gen:assets`. |
 | Unexpected ESLint/Babel behavior | Check duplicate guard output; ensure no stray config files. |
 | Auth bypass not working | Confirm `VITE_DEV_BYPASS_AUTH=true` and dev server restart. |
-| Runtime error: VITE_API_BASE_URL is not configured | (Legacy) Supply `VITE_API_BASE_URL` or rely on auto-origin (restart dev). |
+| Runtime error: base API URL is not configured | Supply `VITE_API_URL` (preferred) or legacy `VITE_API_BASE_URL`, then restart dev. |
 | 401 Unauthorized on known good creds | Confirm headers: Authorization Bearer token and (if dev) Replit x-replit-* values present. |
 
 ## GitHub Notes
@@ -234,14 +239,14 @@ Content-Type: application/json
 ```
 
 ### Environment Variables
-See consolidated [Environment Variables](#environment-variables) section.
+See consolidated [Environment Variables](#environment-variables) section. Prefer `VITE_API_URL`; `VITE_API_BASE_URL` is a transitional alias.
 
 ### Authentication & User Management
 | Method & Path | Purpose | Body (JSON) |
 |---------------|---------|-------------|
 | POST `/api/auth/register` | Register new user | `{ name, email, password }` |
-| POST `/api/auth/verify-email` | Verify email with code | `{ email, code }` |
-| POST `/api/auth/resend-verification` | Resend verification email | `{ email }` |
+| POST `/api/auth/verify-email` | Verify email with code (frontend must send BOTH) | `{ email, code }` |
+| POST `/api/auth/resend-verification` | Resend verification email (requires email body) | `{ email }` |
 | POST `/api/auth/login` | Login user | `{ email, password }` |
 | GET `/api/auth/me` | Get current user (auth) | – |
 
@@ -328,7 +333,8 @@ See consolidated [Environment Variables](#environment-variables) section.
 
 Client usage example:
 ```ts
-const eventsUrl = import.meta.env.VITE_EVENTS_URL || `${import.meta.env.VITE_API_BASE_URL}/events`;
+const apiBase = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
+const eventsUrl = import.meta.env.VITE_EVENTS_URL || `${apiBase}/events`;
 const token = localStorage.getItem('auth_token');
 // If backend expects Bearer token via query param (fallback when headers not supported for SSE):
 const es = new EventSource(`${eventsUrl}?token=${encodeURIComponent(token ?? '')}`);
@@ -359,6 +365,17 @@ es.onerror = (err) => {
 | Method & Path | Purpose |
 |---------------|---------|
 | GET `/healthz` | System health check |
+
+### Runtime API Base Overrides (Dev Only)
+Ephemeral backend URLs (e.g. Replit) can change between restarts. In development you can switch the active API base at runtime without rebuilding:
+
+1. Query param: append `?api=<base-url>` (or legacy `?apiBase=`). Example: `http://localhost:5173/?api=https://my-backend.replit.dev/api`.
+2. Dev console helper: `window.__setApiBase('https://my-backend.replit.dev/api')`.
+3. Floating switcher: The `DevApiSwitcher` panel (top-right) lets you test + persist a new base after a health check.
+
+Precedence order (highest first): runtime override (query param or persisted override) > `VITE_API_URL` > legacy `VITE_API_BASE_URL` > dev fallback `http://localhost:5000/api` > production fallback.
+
+When verifying or resending email codes ensure the frontend payload includes the `email` field. The `verifyEmail` service has been updated to send `{ email, code }` and `resendVerification` sends `{ email }`.
 
 ### Authentication Flow – Example (TypeScript)
 ```ts
@@ -399,7 +416,7 @@ const envelopes = await fetch(`${API_BASE_URL}/envelopes`, {
 ```
 
 ### Notes
-* All endpoints prefixed with `/api` under `VITE_API_BASE_URL`.
+* All endpoints prefixed with `/api` under `VITE_API_URL` (preferred) or legacy `VITE_API_BASE_URL`.
 * SSE endpoint (`/api/events`) should be opened with `EventSource` (no auth header if token in cookie; else append `?token=` or use fetch polyfill strategy if required by backend implementation).
 * Webhook endpoints are for server → server callbacks; do not call from browser.
 * KYC workflow (detailed):
@@ -494,21 +511,20 @@ Rejected example:
 
 ## Environment & API Diagnostics
 Use these steps to ensure environment variables and headers are applied before manual QA.
-
 ### 1. Validate .env
-Run:
+Run (prefer new var, fall back to legacy):
 ```bash
-grep VITE_API_BASE_URL .env || echo "Missing VITE_API_BASE_URL"
+grep VITE_API_URL .env || grep VITE_API_BASE_URL .env || echo "Missing VITE_API_URL (or legacy VITE_API_BASE_URL)"
 ```
-Ensure value matches backend (e.g. `https://envelopes-backend.ashb786.repl.co/api`).
+Ensure one of them matches the backend (e.g. `https://envelopes-backend.ashb786.repl.co/api`).
 
 ### 2. Inspect Built-Time Vars
 In browser devtools console:
 ```js
-import.meta.env.VITE_API_BASE_URL
+import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL
 import.meta.env.VITE_EVENTS_URL
 ```
-They should output the configured strings (or `undefined` for unset optional ones).
+They should output the configured strings (or `undefined` for unset optional ones). Remember: if both base vars are set, `VITE_API_URL` wins.
 
 ### 3. Confirm Request Headers
 Network tab → first POST /api/auth/login:
@@ -527,7 +543,8 @@ Key `auth_token` should appear after successful login.
 ### 5. SSE Stream Test
 In console:
 ```js
-new EventSource((import.meta.env.VITE_EVENTS_URL||import.meta.env.VITE_API_BASE_URL+"/events")+"?token="+localStorage.getItem('auth_token'))
+const apiBase = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
+new EventSource((import.meta.env.VITE_EVENTS_URL||apiBase+"/events")+"?token="+localStorage.getItem('auth_token'))
 ```
 Expect readyState 0→1; observe messages if backend emits.
 
@@ -543,8 +560,8 @@ Expect readyState 0→1; observe messages if backend emits.
 Add a lightweight runtime assertion at app bootstrap if desired:
 ```ts
 // main.tsx
-if(!import.meta.env.VITE_API_BASE_URL) {
-	console.warn('VITE_API_BASE_URL missing – API calls will fail');
+if(!(import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL)) {
+	console.warn('API base URL missing – set VITE_API_URL');
 }
 ```
 

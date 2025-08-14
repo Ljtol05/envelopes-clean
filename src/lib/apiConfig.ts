@@ -1,12 +1,12 @@
-// Centralized API base URL resolution logic.
-// Production uses a fixed constant (edit PROD_API when real host is known).
-// Development auto-detects origin (Replit *.replit.dev or localhost) so we avoid manual .env churn.
+// Backward-compatible API base URL resolution (Jest-friendly) that now also honors the
+// new preferred env variable VITE_API_URL while keeping legacy VITE_API_BASE_URL support.
+// This file is still referenced by legacy fetch-based utilities. The new axios-based
+// configuration lives in `src/config/api.ts`. We keep this module so existing imports
+// continue to work, delegating to the same precedence rules.
 
 const PROD_API = "https://api.my-prod-domain.com"; // TODO: replace with real production host
 
-// We avoid direct `import.meta.env` (breaks Jest CJS). Instead we rely on a global snapshot
-// assigned once in the app entry (`main.tsx`): `globalThis.__VITE_META_ENV = import.meta.env`.
-interface MetaEnvLike { [k: string]: unknown; PROD?: boolean; VITE_API_BASE_URL?: string }
+interface MetaEnvLike { [k: string]: unknown; PROD?: boolean; VITE_API_BASE_URL?: string; VITE_API_URL?: string }
 declare global { var __VITE_META_ENV: MetaEnvLike | undefined; }
 
 function safeMetaEnv(): MetaEnvLike {
@@ -14,33 +14,31 @@ function safeMetaEnv(): MetaEnvLike {
 }
 
 export function isProd(): boolean {
-  const env = safeMetaEnv();
-  return env.PROD === true;
+  return safeMetaEnv().PROD === true;
 }
 
-function stripTrailingSlash(u: string) {
-  return u.endsWith("/") ? u.slice(0, -1) : u;
-}
+function stripTrailingSlash(u: string) { return u.endsWith('/') ? u.slice(0, -1) : u; }
 
-// Internal pure function so tests can exercise logic without relying on import.meta (which Jest CJS can't evaluate at runtime)
+// Exported for tests. Precedence:
+// 1. VITE_API_URL (new)
+// 2. VITE_API_BASE_URL (legacy)
+// 3. If PROD flag -> PROD_API
+// 4. currentOrigin (dev convenience)
+// 5. PROD_API fallback
 export function __computeBaseUrl(env: Partial<MetaEnvLike>, currentOrigin?: string): string {
-  const explicit = env?.VITE_API_BASE_URL && String(env.VITE_API_BASE_URL).trim();
-  if (explicit) return stripTrailingSlash(explicit);
-
+  const explicitNew = env?.VITE_API_URL && String(env.VITE_API_URL).trim();
+  if (explicitNew) return stripTrailingSlash(explicitNew);
+  const explicitLegacy = env?.VITE_API_BASE_URL && String(env.VITE_API_BASE_URL).trim();
+  if (explicitLegacy) return stripTrailingSlash(explicitLegacy);
   if (env?.PROD) return stripTrailingSlash(PROD_API);
-
   if (currentOrigin) return stripTrailingSlash(currentOrigin);
-
   return stripTrailingSlash(PROD_API);
 }
 
 export function getApiBaseUrl(): string {
   let origin: string | undefined;
-  if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
-    origin = window.location.origin;
-  }
+  if (typeof window !== 'undefined' && window.location) origin = window.location.origin;
   return __computeBaseUrl(safeMetaEnv(), origin);
 }
 
-// Optionally expose the production constant if needed elsewhere.
 export const __PROD_API_PLACEHOLDER = PROD_API;

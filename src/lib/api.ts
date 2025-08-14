@@ -1,8 +1,6 @@
 // API utilities: existing mock endpoints for envelopes + real auth/coach wrappers.
-
-// ===== Config & helpers =====
-import { getApiBaseUrl as resolveApiBaseUrl } from './apiConfig';
-const API_BASE_URL: string = resolveApiBaseUrl();
+// Delegate base URL to unified axios config (single source of truth).
+import { API_BASE_URL } from '../config/api';
 const EVENTS_URL = (import.meta.env.VITE_EVENTS_URL || `${API_BASE_URL}/events`).replace(/\/$/, "");
 const REPLIT_USER_ID = import.meta.env.VITE_REPLIT_USER_ID || "";
 const REPLIT_USER_NAME = import.meta.env.VITE_REPLIT_USER_NAME || "";
@@ -70,54 +68,20 @@ export type CoachResponse = {
   isNewUser?: boolean;
 };
 
-// ===== Endpoints =====
+// ===== Endpoints (non-auth) =====
 const PATHS = {
-  auth: {
-    login: "/api/auth/login",
-    register: "/api/auth/register",
-    me: "/api/auth/me",
-  verifyEmail: "/api/auth/verify-email",
-  resendVerification: "/api/auth/resend-verification",
-  },
   coach: "/api/ai/coach",
-  ai: {
-    setup: "/api/ai/setup-envelopes",
-    execute: "/api/ai/execute-action",
-  },
+  ai: { setup: "/api/ai/setup-envelopes", execute: "/api/ai/execute-action" },
+  auth: { verifyEmail: '/api/auth/verify-email', resendVerification: '/api/auth/resend-verification', me: '/api/auth/me' }
 } as const;
 
 // ===== Public API (auth & coach) =====
-export async function apiLogin(email: string, password: string): Promise<AuthResponse> {
-  return request<AuthResponse>(PATHS.auth.login, {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
-}
-
-export async function apiRegister(name: string, email: string, password: string): Promise<AuthResponse> {
-  return request<AuthResponse>(PATHS.auth.register, {
-    method: "POST",
-    body: JSON.stringify({ name, email, password }),
-  });
-}
-
+// Auth login/register/verify/resend now handled by services/auth (axios).
 export async function apiGetMe(): Promise<User> {
-  return request<User>(PATHS.auth.me, { method: "GET" });
+  return request<User>(PATHS.auth.me, { method: 'GET' });
 }
 
-export async function apiVerifyEmail(code: string): Promise<{ ok: boolean }> {
-  return request<{ ok: boolean }>(PATHS.auth.verifyEmail, {
-    method: "POST",
-    body: JSON.stringify({ code }),
-  });
-}
-
-export async function apiResendVerification(email: string): Promise<{ ok: boolean }> {
-  return request<{ ok: boolean }>(PATHS.auth.resendVerification, {
-    method: "POST",
-    body: JSON.stringify({ email }),
-  });
-}
+// (verify/resend migrated to services/auth)
 
 export async function askCoach(question: string, context?: Record<string, unknown>): Promise<CoachResponse> {
   return request<CoachResponse>(PATHS.coach, {
@@ -143,9 +107,7 @@ export async function setupEnvelopes(params: Record<string, unknown>): Promise<{
 }
 
 // Also export with canonical names used in requirements
-export const login = apiLogin;
-export const register = apiRegister;
-export const getMe = apiGetMe;
+// Removed legacy named re-export (getMe) to encourage using services/auth.
 
 // ===== Types =====
 export type EnvelopeId = string;

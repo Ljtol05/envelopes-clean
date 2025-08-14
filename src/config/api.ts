@@ -18,9 +18,48 @@ interface MetaEnv {
   DEV?: boolean;
 }
 
-// Vite provides import.meta.env at runtime (build-time replacement)
-// Cast import.meta.env with a narrow interface; avoid any
-const env = (import.meta as unknown as { env: MetaEnv }).env || {} as MetaEnv;
+// Resolve environment variables.
+// In Vite, import.meta.env is available (and statically replaced in build output).
+// In Jest (CJS), import.meta is unavailable; fall back to process.env or an optional global shim.
+// We avoid directly referencing `import.meta` so that transformed CJS code does not crash.
+const resolvedImportMetaEnv = (() => {
+  try {
+    // Use dynamic function to avoid static syntax in CJS environments.
+    const meta = new Function('return (typeof import !== "undefined" ? import.meta : undefined)')();
+    if (meta && typeof meta === 'object' && 'env' in (meta as Record<string, unknown>)) {
+      const maybeEnv = (meta as { env?: unknown }).env;
+      if (maybeEnv && typeof maybeEnv === 'object') return maybeEnv as MetaEnv;
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+})();
+
+// Allow tests to inject a shim: (globalThis as any).__VITE_JEST_ENV__
+const testShimEnv: MetaEnv | undefined = (globalThis as Record<string, unknown>).__VITE_JEST_ENV__ as MetaEnv | undefined;
+
+const env: MetaEnv = resolvedImportMetaEnv || (() => {
+  // Avoid referencing process in the browser where it is undefined.
+  // This block only runs when import.meta.env isn't available (e.g. Jest / Node tooling),
+  // never in a normal Vite browser runtime.
+  // Narrow typing: Node's process.env is Record<string,string|undefined>
+  type EnvMap = { [k: string]: string | undefined };
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore process global may not exist in browser
+  const nodeEnv: EnvMap | undefined = (typeof process !== 'undefined' && process && process.env) ? process.env : undefined;
+  const p: EnvMap = nodeEnv || {};
+  return {
+    VITE_API_URL: p.VITE_API_URL,
+    VITE_API_BASE_URL: p.VITE_API_BASE_URL,
+    MODE: p.MODE || p.NODE_ENV,
+    PROD: p.NODE_ENV === 'production',
+    DEV: p.NODE_ENV !== 'production'
+  } as MetaEnv;
+})();
+
+// Merge in test shim (shim takes precedence if provided)
+Object.assign(env, testShimEnv);
 
 // TODO: Replace with your real production API hostname
 const PROD_FALLBACK = 'https://api.example.com';
@@ -37,15 +76,54 @@ function stripTrailingSlash(u: string) {
   return u.replace(/\/$/, '');
 }
 
+function readRuntimeOverride(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const qp = params.get('api') || params.get('apiBase');
+    const ls = localStorage.getItem('api_base_url_override');
+    let chosen = qp?.trim() || ls?.trim() || undefined;
+    if (qp && qp !== ls) {
+      // Persist new query param override
+      localStorage.setItem('api_base_url_override', qp.trim());
+      chosen = qp.trim();
+    }
+    if (chosen) return stripTrailingSlash(chosen.replace(/\/$/, ''));
+  } catch {
+    /* ignore */
+  }
+  return undefined;
+}
+
+// Expose a dev helper for manual override from console
+declare global { interface Window { __setApiBase?: (url: string) => void } }
+if (typeof window !== 'undefined' && !window.__setApiBase) {
+  window.__setApiBase = (url: string) => {
+    try {
+      if (!url) {
+        localStorage.removeItem('api_base_url_override');
+        console.info('[API] override cleared');
+        return;
+      }
+      localStorage.setItem('api_base_url_override', url);
+  console.info('[API] override set ->', url, '(reload to apply)');
+    } catch (e) {
+      console.warn('[API] failed to persist override', e);
+    }
+  };
+}
+
 function computeBaseUrl(): string {
-  // Prefer new var, then legacy var
+  const runtime = readRuntimeOverride();
+  if (runtime) return runtime;
   const configured = (env.VITE_API_URL || env.VITE_API_BASE_URL)?.trim();
   if (configured) return stripTrailingSlash(configured);
   if (mode === 'development') return 'http://localhost:5000';
   return PROD_FALLBACK;
 }
 
-export const API_BASE_URL = computeBaseUrl();
+// Mutable base URL (was const). Update via setApiBase / applyRuntimeOverride.
+export let API_BASE_URL = computeBaseUrl();
 
 // One-time debug log
 if (typeof console !== 'undefined' && mode !== 'test') {
@@ -60,5 +138,29 @@ export const apiClient: AxiosInstance = axios.create({
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000
 });
+
+export async function testApiHealth(base: string, signal?: AbortSignal): Promise<boolean> {
+  const url = base.replace(/\/$/, '') + '/healthz';
+  try {
+    const res = await fetch(url, { method: 'GET', mode: 'cors', signal });
+    return res.ok;
+  } catch { return false; }
+}
+
+export function setApiBase(next: string, opts: { persist?: boolean; silent?: boolean } = {}) {
+  const clean = stripTrailingSlash(next.trim());
+  if (!clean) return;
+  API_BASE_URL = clean;
+  apiClient.defaults.baseURL = clean;
+  if (opts.persist) {
+    try { localStorage.setItem('api_base_url_override', clean); } catch { /* ignore */ }
+  }
+  if (!opts.silent) console.info('[API] base updated at runtime ->', clean);
+}
+
+// Apply runtime override immediately if computed earlier (query/localStorage) differs from initial const fallback
+// Already saved by computeBaseUrl() via readRuntimeOverride; nothing else needed here.
+
+export function getApiBase(): string { return API_BASE_URL; }
 
 export default apiClient;

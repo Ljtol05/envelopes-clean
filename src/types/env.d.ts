@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL?: string; // optional in dev (auto-detected origin)
+  readonly VITE_API_URL?: string; // new preferred short variable name
   readonly VITE_EVENTS_URL?: string;
   readonly VITE_REPLIT_USER_ID?: string;
   readonly VITE_REPLIT_USER_NAME?: string;

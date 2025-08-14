@@ -9,13 +9,10 @@ import { ThemeProvider } from './theme'
 (globalThis as unknown as { __VITE_META_ENV: unknown }).__VITE_META_ENV = import.meta.env;
 
 if (import.meta.env.DEV) {
-  const required = ['VITE_API_BASE_URL'] as const
-  const missing = required.filter((k) => !import.meta.env[k])
-  if (missing.length) {
-    console.warn(
-      `Missing env var(s): ${missing.join(', ')}. Copy .env.example to .env and fill them in.\n` +
-      'The app will still run, but API calls may fail until configured.'
-    )
+  // Soft guidance: prefer VITE_API_URL now. Accept legacy VITE_API_BASE_URL.
+  const haveAny = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
+  if (!haveAny) {
+    console.warn('[env] Neither VITE_API_URL nor VITE_API_BASE_URL set. Using origin/fallback; remote API calls may fail.');
   }
 }
 

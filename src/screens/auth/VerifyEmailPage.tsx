@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/ca
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Button } from '../../components/ui/button';
-import { apiVerifyEmail, apiResendVerification } from '../../lib/api';
+import { verifyEmail, resendVerification } from '../../services/auth';
 import { useAuth } from '../../context/useAuth';
 import { toast } from 'sonner';
 
@@ -22,7 +22,8 @@ export default function VerifyEmailPage() {
     if (!code.trim()) return;
     setSubmitting(true);
     try {
-      await apiVerifyEmail(code.trim());
+  if (!user?.email) throw new Error('Missing email');
+  await verifyEmail(user.email, code.trim());
       toast.success('Email verified');
       navigate('/auth/kyc', { replace: true });
     } catch (e) {
@@ -38,7 +39,7 @@ export default function VerifyEmailPage() {
     if (!user?.email) return toast.error('Missing email');
     setResending(true);
     try {
-      await apiResendVerification(user.email);
+  await resendVerification(user.email);
       toast.success('Code resent');
     } catch (e) {
       const err = e as Error;

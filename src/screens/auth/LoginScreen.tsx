@@ -7,6 +7,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Button } from "../../components/ui/button";
 import { Link } from "react-router-dom";
+import useApiBase from "../../hooks/useApiBase";
 
 type FormValues = { email: string; password: string };
 
@@ -14,6 +15,7 @@ const EMAIL_RE = /.+@.+\..+/;
 
 export default function LoginScreen() {
   const { login } = useAuth();
+  const apiBase = useApiBase();
   const navigate = useNavigate();
   const location = useLocation() as { state?: { from?: { pathname?: string } } };
   const from = location.state?.from?.pathname;
@@ -58,7 +60,7 @@ export default function LoginScreen() {
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Signing in…" : "Sign in"}
             </Button>
-            {isSubmitting && <p className="text-xs text-center text-[color:var(--owl-text-secondary)]">Contacting {import.meta.env.VITE_API_BASE_URL || 'API (configure VITE_API_BASE_URL)'}…</p>}
+            {isSubmitting && <p className="text-xs text-center text-[color:var(--owl-text-secondary)]">Contacting {apiBase}…</p>}
           </form>
           <div className="mt-3 text-center">
             <Link to="/auth/forgot" className="text-sm text-[color:var(--owl-accent)] hover:underline">Forgot password?</Link>

@@ -41,6 +41,28 @@ export async function health() {
   return res.data;
 }
 
+export interface MeResponse {
+  id: string | number;
+  email: string;
+  name?: string;
+}
+
+export async function getMe() {
+  const res = await apiClient.get<MeResponse>(`${AUTH_PREFIX}/me`);
+  return res.data;
+}
+
+export async function verifyEmail(email: string, code: string) {
+  // Backend expects both email + code in payload
+  const res = await apiClient.post<{ ok: boolean }>(`${AUTH_PREFIX}/verify-email`, { email, code });
+  return res.data;
+}
+
+export async function resendVerification(email: string) {
+  const res = await apiClient.post<{ ok: boolean }>(`${AUTH_PREFIX}/resend-verification`, { email });
+  return res.data;
+}
+
 // Helper for diagnostics
 export function getResolvedApiBase(): string {
   return API_BASE_URL;

@@ -12,13 +12,13 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import KycGuard from '../routes/KycGuard';
 import VerifyEmailPage from '../screens/auth/VerifyEmailPage';
 import { AuthContext } from '../context/AuthContextBase';
-// Mock api module to avoid import.meta env usage in tests
-jest.mock('../lib/api', () => ({
-  apiVerifyEmail: jest.fn(async () => ({ ok: true })),
-  apiResendVerification: jest.fn(async () => ({ ok: true })),
-  // For other imports maybe used elsewhere
+// Mock new auth service module used by VerifyEmailPage
+jest.mock('../services/auth', () => ({
+  // Updated verifyEmail signature (email, code)
+  verifyEmail: jest.fn(async () => ({ ok: true })),
+  resendVerification: jest.fn(async () => ({ ok: true })),
 }));
-import { apiVerifyEmail, apiResendVerification } from '../lib/api';
+import { verifyEmail, resendVerification } from '../services/auth';
 
 // Utility to mock fetch sequences
 // (No network fetch needed because API layer is mocked)
@@ -48,7 +48,7 @@ describe('KYC Flow', () => {
 
   test('email verification success navigates to /auth/kyc', async () => {
     jest.useRealTimers(); usingFakeTimers = false;
-    (apiVerifyEmail as jest.Mock).mockResolvedValue({ ok: true });
+  (verifyEmail as jest.Mock).mockResolvedValue({ ok: true });
     const user = userEvent.setup();
     render(
       <MockAuthProvider>
@@ -64,11 +64,13 @@ describe('KYC Flow', () => {
     await user.type(input,'123456');
     await user.click(screen.getByRole('button', { name: /verify code/i }));
     expect(await screen.findByText(/kyc page/i)).toBeInTheDocument();
+  // Assert verifyEmail called with email + code
+  expect(verifyEmail).toHaveBeenCalledWith('test@example.com', '123456');
   });
 
   test('email verification failure shows error', async () => {
     jest.useRealTimers(); usingFakeTimers = false;
-    (apiVerifyEmail as jest.Mock).mockRejectedValue(new Error('Bad code'));
+  (verifyEmail as jest.Mock).mockRejectedValue(new Error('Bad code'));
     const user = userEvent.setup();
     render(
       <MockAuthProvider>
@@ -88,7 +90,7 @@ describe('KYC Flow', () => {
 
   test('resend code triggers API call', async () => {
     jest.useRealTimers(); usingFakeTimers = false;
-    (apiResendVerification as jest.Mock).mockResolvedValue({ ok: true });
+  (resendVerification as jest.Mock).mockResolvedValue({ ok: true });
     const user = userEvent.setup();
     render(
       <MockAuthProvider>
@@ -101,7 +103,7 @@ describe('KYC Flow', () => {
     );
     const resendBtn = await screen.findByRole('button', { name: /resend code/i });
     await user.click(resendBtn);
-  expect(apiResendVerification).toHaveBeenCalled();
+  expect(resendVerification).toHaveBeenCalled();
   });
 
   afterEach(() => {

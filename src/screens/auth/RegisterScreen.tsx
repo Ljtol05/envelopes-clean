@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
+import useApiBase from "../../hooks/useApiBase";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
@@ -12,6 +13,7 @@ const EMAIL_RE = /.+@.+\..+/;
 
 export default function RegisterScreen() {
   const { register: doRegister } = useAuth();
+  const apiBase = useApiBase();
   const navigate = useNavigate();
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({ defaultValues: { name: "", email: "", password: "" } });
@@ -53,7 +55,7 @@ export default function RegisterScreen() {
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Creating…" : "Create account"}
             </Button>
-            {isSubmitting && <p className="text-xs text-center text-[color:var(--owl-text-secondary)]">Submitting to {import.meta.env.VITE_API_BASE_URL || 'API (configure VITE_API_BASE_URL)'}…</p>}
+            {isSubmitting && <p className="text-xs text-center text-[color:var(--owl-text-secondary)]">Submitting to {apiBase}…</p>}
           </form>
         </CardContent>
       </Card>
