@@ -11,7 +11,8 @@ import axios from 'axios';
 import type { AxiosInstance } from 'axios';
 
 interface MetaEnv {
-  VITE_API_URL?: string;
+  VITE_API_URL?: string;            // new preferred (shorter)
+  VITE_API_BASE_URL?: string;       // legacy variable still used elsewhere in repo
   MODE?: string;
   PROD?: boolean;
   DEV?: boolean;
@@ -37,7 +38,8 @@ function stripTrailingSlash(u: string) {
 }
 
 function computeBaseUrl(): string {
-  const configured = env.VITE_API_URL?.trim();
+  // Prefer new var, then legacy var
+  const configured = (env.VITE_API_URL || env.VITE_API_BASE_URL)?.trim();
   if (configured) return stripTrailingSlash(configured);
   if (mode === 'development') return 'http://localhost:5000';
   return PROD_FALLBACK;
@@ -47,7 +49,10 @@ export const API_BASE_URL = computeBaseUrl();
 
 // One-time debug log
 if (typeof console !== 'undefined' && mode !== 'test') {
-  console.log(`[API] base URL detected: ${API_BASE_URL} (mode=${mode})`);
+  const source = env.VITE_API_URL ? 'VITE_API_URL'
+    : env.VITE_API_BASE_URL ? 'VITE_API_BASE_URL'
+    : mode === 'development' ? 'default-dev' : 'fallback-prod';
+  console.log(`[API] base URL detected: ${API_BASE_URL} (mode=${mode}, source=${source})`);
 }
 
 export const apiClient: AxiosInstance = axios.create({
