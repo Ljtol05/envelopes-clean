@@ -18,10 +18,9 @@ export default function RegisterScreen() {
 
   const onSubmit = async (vals: FormValues) => {
     try {
-  await doRegister(vals.name, vals.email, vals.password);
-  toast.success("Account created");
-  // Redirect into KYC flow; that will handle onward navigation once approved
-  navigate("/auth/verify-email", { replace: true });
+      await doRegister(vals.name, vals.email, vals.password);
+      toast.success("Account created");
+      navigate("/auth/verify-email", { replace: true });
     } catch (e) {
       const err = e as Error & { status?: number };
       toast.error(err.message || "Registration failed");
@@ -54,6 +53,7 @@ export default function RegisterScreen() {
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Creating…" : "Create account"}
             </Button>
+            {isSubmitting && <p className="text-xs text-center text-[color:var(--owl-text-secondary)]">Submitting to {import.meta.env.VITE_API_BASE_URL || 'API (configure VITE_API_BASE_URL)'}…</p>}
           </form>
         </CardContent>
       </Card>

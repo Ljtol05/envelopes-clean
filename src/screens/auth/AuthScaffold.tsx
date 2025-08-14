@@ -1,5 +1,6 @@
-import { useContext, useEffect, type PropsWithChildren } from 'react';
-import owlBg from '../../assets/branding/owl.svg';
+import React, { useContext, useEffect, type PropsWithChildren } from 'react';
+void React; // ensure React in scope for test environment
+import './auth-scaffold.css';
 import { ThemeContext } from '../../theme/context';
 
 export default function AuthScaffold({ children, subtitle = 'Welcome back to budgeting that feels right.' }: PropsWithChildren<{ subtitle?: string }>) {
@@ -18,8 +19,7 @@ export default function AuthScaffold({ children, subtitle = 'Welcome back to bud
       {/* Background illustration */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(55%_55%_at_50%_38%,black,transparent)]"
-        style={{ backgroundImage: `url(${owlBg})`, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 16%', backgroundSize: '800px' }}
+        className="pointer-events-none absolute inset-0 opacity-40 auth-owl-bg [mask-image:radial-gradient(55%_55%_at_50%_38%,black,transparent)]"
       />
       <div className="relative w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">

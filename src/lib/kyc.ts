@@ -1,6 +1,8 @@
 // Minimal KYC API wrapper. Expects a `VITE_API_BASE_URL` environment variable.
 
-const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL || '';
+// Minimal: rely on Vite's import.meta.env during app runtime; tests mock this module so import.meta usage won't execute there.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const API_BASE_URL: string = ((import.meta as any).env?.VITE_API_BASE_URL || '') as string;
 
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem('auth_token');

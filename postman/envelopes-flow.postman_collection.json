@@ -1,0 +1,85 @@
+{
+  "info": {
+    "name": "Envelopes Auth + KYC Flow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Automated registration -> verify email -> login -> start KYC -> status polling"
+  },
+  "item": [
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": {"raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"]},
+        "body": {"mode": "raw", "raw": "{\n  \"name\": \"{{$randomFullName}}\",\n  \"email\": \"{{$randomInt}}-tester@example.com\",\n  \"password\": \"Passw0rd!\"\n}"}
+      },
+      "event": [
+        {"listen": "test", "script": {"exec": [
+          "pm.test('Registered OK', () => pm.response.code === 200 || pm.response.code === 201);",
+          "const json = pm.response.json();",
+          "pm.environment.set('email', json.user.email);",
+          "pm.environment.set('token', json.token);"
+        ], "type": "text/javascript"}}
+      ]
+    },
+    {
+      "name": "Resend Verification (optional)",
+      "request": {
+        "method": "POST",
+        "header": [ {"key": "Content-Type", "value": "application/json"} ],
+        "url": {"raw": "{{baseUrl}}/api/auth/resend-verification", "host": ["{{baseUrl}}"], "path": ["api","auth","resend-verification"]},
+        "body": {"mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}"}
+      }
+    },
+    {
+      "name": "Verify Email",
+      "request": {
+        "method": "POST",
+        "header": [ {"key": "Content-Type", "value": "application/json"} ],
+        "url": {"raw": "{{baseUrl}}/api/auth/verify-email", "host": ["{{baseUrl}}"], "path": ["api","auth","verify-email"]},
+        "body": {"mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"code\": \"{{verificationCode}}\"\n}"}
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [ {"key": "Content-Type", "value": "application/json"} ],
+        "url": {"raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"]},
+        "body": {"mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"Passw0rd!\"\n}"}
+      },
+      "event": [
+        {"listen": "test", "script": {"exec": [
+          "const json = pm.response.json();",
+          "pm.environment.set('token', json.token);"
+        ], "type": "text/javascript"}}
+      ]
+    },
+    {
+      "name": "Start KYC",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"},
+          {"key": "Authorization", "value": "Bearer {{token}}"}
+        ],
+        "url": {"raw": "{{baseUrl}}/api/kyc/start", "host": ["{{baseUrl}}"], "path": ["api","kyc","start"]},
+        "body": {"mode": "raw", "raw": "{\n  \"legalFirstName\": \"Jane\",\n  \"legalLastName\": \"Doe\",\n  \"dob\": \"1990-01-01\",\n  \"ssnLast4\": \"1234\",\n  \"addressLine1\": \"123 Main St\",\n  \"city\": \"Austin\",\n  \"state\": \"TX\",\n  \"postalCode\": \"78701\"\n}"}
+      }
+    },
+    {
+      "name": "KYC Status",
+      "request": {
+        "method": "GET",
+        "header": [ {"key": "Authorization", "value": "Bearer {{token}}"} ],
+        "url": {"raw": "{{baseUrl}}/api/kyc/status", "host": ["{{baseUrl}}"], "path": ["api","kyc","status"]}
+      }
+    }
+  ],
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:5000"},
+    {"key": "verificationCode", "value": "123456"}
+  ]
+}

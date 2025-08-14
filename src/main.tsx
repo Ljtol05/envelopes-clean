@@ -4,6 +4,10 @@ import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from './theme'
 // Dev-only: validate presence of critical env vars to aid onboarding
+// Expose Vite meta env to modules that avoid direct import.meta (Jest compatibility)
+// Assign for apiConfig runtime (Jest-friendly) without relying on import.meta in modules.
+(globalThis as unknown as { __VITE_META_ENV: unknown }).__VITE_META_ENV = import.meta.env;
+
 if (import.meta.env.DEV) {
   const required = ['VITE_API_BASE_URL'] as const
   const missing = required.filter((k) => !import.meta.env[k])

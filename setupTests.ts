@@ -1,6 +1,12 @@
 import '@testing-library/jest-dom';
 // Accessibility testing helpers
 import 'jest-axe/extend-expect';
+// Polyfill TextEncoder/TextDecoder required by react-router / underlying libs in Node test env
+import { TextEncoder, TextDecoder } from 'util';
+interface EncoderGlobal { TextEncoder?: typeof TextEncoder; TextDecoder?: typeof TextDecoder; }
+const eg = globalThis as unknown as EncoderGlobal;
+if (!eg.TextEncoder) eg.TextEncoder = TextEncoder;
+if (!eg.TextDecoder) eg.TextDecoder = TextDecoder;
 
 // Provide matchMedia if missing (jsdom doesn't implement fully)
 if (typeof window !== 'undefined' && !window.matchMedia) {

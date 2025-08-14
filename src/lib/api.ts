@@ -1,7 +1,9 @@
 // API utilities: existing mock endpoints for envelopes + real auth/coach wrappers.
 
 // ===== Config & helpers =====
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+import { getApiBaseUrl as resolveApiBaseUrl } from './apiConfig';
+const API_BASE_URL: string = resolveApiBaseUrl();
+const EVENTS_URL = (import.meta.env.VITE_EVENTS_URL || `${API_BASE_URL}/events`).replace(/\/$/, "");
 const REPLIT_USER_ID = import.meta.env.VITE_REPLIT_USER_ID || "";
 const REPLIT_USER_NAME = import.meta.env.VITE_REPLIT_USER_NAME || "";
 const AUTH_HEADER_KEY = "Authorization";
@@ -16,8 +18,13 @@ function getToken(): string | null {
   }
 }
 
+export function getApiBaseUrl(): string { return API_BASE_URL; }
+export function getEventsUrl() { return EVENTS_URL; }
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE_URL}${path}`;
+  const base = getApiBaseUrl();
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  const url = `${base}${normalized}`;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),

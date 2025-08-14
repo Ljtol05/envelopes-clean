@@ -1,5 +1,5 @@
 import React from 'react';
-void React; // silence unused React for JSX transform where not auto
+void React; // ensure React in scope
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 jest.mock('../lib/kyc', () => ({
@@ -10,28 +10,113 @@ import KycScreen from '../screens/auth/KycScreen';
 import { apiGetKycStatus, apiStartKyc } from '../lib/kyc';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import KycGuard from '../routes/KycGuard';
+import VerifyEmailPage from '../screens/auth/VerifyEmailPage';
+import { AuthContext } from '../context/AuthContextBase';
+// Mock api module to avoid import.meta env usage in tests
+jest.mock('../lib/api', () => ({
+  apiVerifyEmail: jest.fn(async () => ({ ok: true })),
+  apiResendVerification: jest.fn(async () => ({ ok: true })),
+  // For other imports maybe used elsewhere
+}));
+import { apiVerifyEmail, apiResendVerification } from '../lib/api';
 
 // Utility to mock fetch sequences
 // (No network fetch needed because API layer is mocked)
 
+// Simple mock auth provider to satisfy useAuth in email verification page without invoking real API/env
+type MockUser = { id: number; name: string; email: string; emailVerified: boolean };
+function MockAuthProvider({ children }: { children: React.ReactNode }) {
+  const value = {
+  user: { id: 1, name: 'Tester', email: 'test@example.com', emailVerified: false } as MockUser,
+    token: 'mock-token',
+    login: jest.fn(),
+    register: jest.fn(),
+    logout: jest.fn(),
+    hydrated: true,
+  };
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
 describe('KYC Flow', () => {
   jest.setTimeout(15000);
+  let usingFakeTimers = false;
   beforeEach(() => {
     jest.useFakeTimers();
+    usingFakeTimers = true;
   global.fetch = jest.fn();
   });
 
+  test('email verification success navigates to /auth/kyc', async () => {
+    jest.useRealTimers(); usingFakeTimers = false;
+    (apiVerifyEmail as jest.Mock).mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(
+      <MockAuthProvider>
+        <MemoryRouter initialEntries={['/auth/verify-email']}>
+          <Routes>
+            <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/auth/kyc" element={<div>KYC Page</div>} />
+          </Routes>
+        </MemoryRouter>
+      </MockAuthProvider>
+    );
+    const input = await screen.findByLabelText(/6-digit code/i);
+    await user.type(input,'123456');
+    await user.click(screen.getByRole('button', { name: /verify code/i }));
+    expect(await screen.findByText(/kyc page/i)).toBeInTheDocument();
+  });
+
+  test('email verification failure shows error', async () => {
+    jest.useRealTimers(); usingFakeTimers = false;
+    (apiVerifyEmail as jest.Mock).mockRejectedValue(new Error('Bad code'));
+    const user = userEvent.setup();
+    render(
+      <MockAuthProvider>
+        <MemoryRouter initialEntries={['/auth/verify-email']}>
+          <Routes>
+            <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+          </Routes>
+        </MemoryRouter>
+      </MockAuthProvider>
+    );
+    const input = await screen.findByLabelText(/6-digit code/i);
+    await user.type(input,'123456');
+    await user.click(screen.getByRole('button', { name: /verify code/i }));
+    // toast error not directly in DOM; we can assert button re-enabled
+    await waitFor(() => expect(screen.getByRole('button', { name: /verify code/i })).not.toBeDisabled());
+  });
+
+  test('resend code triggers API call', async () => {
+    jest.useRealTimers(); usingFakeTimers = false;
+    (apiResendVerification as jest.Mock).mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(
+      <MockAuthProvider>
+        <MemoryRouter initialEntries={['/auth/verify-email']}>
+          <Routes>
+            <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+          </Routes>
+        </MemoryRouter>
+      </MockAuthProvider>
+    );
+    const resendBtn = await screen.findByRole('button', { name: /resend code/i });
+    await user.click(resendBtn);
+  expect(apiResendVerification).toHaveBeenCalled();
+  });
+
   afterEach(() => {
-    // Wrap pending timer flush in act to avoid React act warnings from navigation timeout
-    act(() => {
-      jest.runOnlyPendingTimers();
-    });
-    jest.useRealTimers();
+    if (usingFakeTimers) {
+      // Wrap pending timer flush in act to avoid React act warnings from navigation timeout
+      act(() => {
+        jest.runOnlyPendingTimers();
+      });
+      jest.useRealTimers();
+    }
     jest.resetAllMocks();
   });
 
   function renderInApp(ui: React.ReactElement) {
-    return render(<MemoryRouter initialEntries={['/kyc']}>{ui}</MemoryRouter>);
+    return render(<MockAuthProvider><MemoryRouter initialEntries={['/kyc']}>{ui}</MemoryRouter></MockAuthProvider>);
   }
 
   async function fillValidForm() {
@@ -52,6 +137,7 @@ describe('KYC Flow', () => {
   // apiGetKycStatus returns not_started on mount; after submission polling returns approved
   const sequence = ['not_started', 'pending', 'approved'];
   (apiGetKycStatus as jest.Mock).mockImplementation(async () => ({ status: sequence.shift() || 'approved' }));
+  (apiStartKyc as jest.Mock).mockResolvedValue({ status: 'pending' });
 
   renderInApp(<Routes><Route path="/kyc" element={<KycScreen />} /><Route path="/home" element={<div>Home Screen</div>} /></Routes>);
 

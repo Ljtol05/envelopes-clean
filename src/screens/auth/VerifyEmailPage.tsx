@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+void React; // ensure React in scope for tests using classic runtime
 import { useNavigate } from 'react-router-dom';
 import AuthScaffold from './AuthScaffold';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';

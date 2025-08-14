@@ -6,6 +6,24 @@
 
 Modern budgeting / envelopes UI built with React 19, Vite 7, TypeScript 5, Tailwind + shadcn/ui (Radix primitives), strong theming via semantic CSS vars, automated quality gates (contrast, accent-usage lint, coverage ratchet, Lighthouse), and a clean testable architecture (Jest + Testing Library).
 
+## Table of Contents
+1. [Key Features](#key-features)
+2. [Quick Start](#quick-start)
+3. [Environment Variables](#environment-variables)
+4. [Scripts](#scripts-npm-run-)
+5. [Auth & Routing](#auth--routing)
+6. [Theming & Branding](#theming--branding)
+7. [Quality & Tooling](#quality--tooling)
+8. [CI & Automation](#ci--automation)
+9. [Roadmap](#roadmap-selected)
+10. [Contributing](#contributing)
+11. [Troubleshooting](#troubleshooting)
+12. [Backend API Reference](#backend-api-reference-envelopes-backend)
+	* [Sample Responses](#sample-responses)
+	* [Real-time Events](#real-time-events)
+13. [GitHub Notes](#github-notes)
+14. [Environment & API Diagnostics](#environment--api-diagnostics)
+
 ## Key Features
 * Semantic theming system (`--owl-*`) with enforced contrast & accent foreground pairing
 * Auth + protected routing with optional explicit dev bypass flag
@@ -24,18 +42,45 @@ npm run dev
 ```
 
 ## Environment Variables
-Defined in `.env.example` and validated by `scripts/env-validate.mjs` (runs in `predev` and `prebuild`).
+Centralized reference for all frontend runtime variables. Defined in `.env.example` and validated by `scripts/env-validate.mjs` (runs automatically in `predev` and `prebuild`).
 
+### Core
 | Variable | Required | Purpose |
 |----------|----------|---------|
-| VITE_API_BASE_URL | Yes | Backend base URL for API client. |
-| VITE_REPLIT_USER_ID | Dev | Dev-only header to emulate a user (backend convenience). |
-| VITE_REPLIT_USER_NAME | Dev | Display name header for backend. |
-| VITE_DEV_BYPASS_AUTH | No | If `true`, ProtectedRoute allows bypass (must be intentionally enabled). |
+| VITE_API_BASE_URL | Prod* | Backend base URL (e.g. `https://envelopes-backend.ashb786.repl.co/api`). Optional in dev (auto-detects current origin). |
+| VITE_EVENTS_URL | No | SSE events stream URL (defaults to `${VITE_API_BASE_URL}/events` if unset). |
 
-Notes:
-* Only `VITE_` prefixed vars are exposed to client via `import.meta.env`.
-* Env validation will fail build in `--strict` mode if required vars missing.
+### Developer / Convenience
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| VITE_REPLIT_USER_ID | Dev | Simulate a Replit user (header passthrough for backend multi-user testing). |
+| VITE_REPLIT_USER_NAME | Dev | Display name for simulated user. |
+| VITE_DEV_BYPASS_AUTH | No | Enables guarded dev bypass for protected routes. Must be consciously enabled. |
+
+### Environment / Misc
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| VITE_NODE_ENV | No | Explicit environment override (mirrors `import.meta.env.MODE`). |
+
+### Example `.env`
+```env
+VITE_API_BASE_URL=https://envelopes-backend.ashb786.repl.co/api
+# For local backend development:
+# VITE_API_BASE_URL=http://localhost:5000/api
+
+# Optional real-time events (SSE)
+VITE_EVENTS_URL=https://envelopes-backend.ashb786.repl.co/api/events
+
+# Dev helpers
+VITE_REPLIT_USER_ID=123
+VITE_REPLIT_USER_NAME=Dev User
+# VITE_DEV_BYPASS_AUTH=true
+```
+
+### Validation Notes
+* Only `VITE_` prefixed vars are exposed to the client.
+* Validation script can be tightened to fail missing optional dev vars in CI (currently soft).
+* Keep this section authoritative—other references (e.g. Backend API section) point here.
 
 ## Scripts (npm run ...)
 | Script | Description |
@@ -159,6 +204,8 @@ Dependabot weekly updates (npm + Actions). Major React updates ignored for manua
 | Missing icons | Re-run `npm run gen:assets`. |
 | Unexpected ESLint/Babel behavior | Check duplicate guard output; ensure no stray config files. |
 | Auth bypass not working | Confirm `VITE_DEV_BYPASS_AUTH=true` and dev server restart. |
+| Runtime error: VITE_API_BASE_URL is not configured | (Legacy) Supply `VITE_API_BASE_URL` or rely on auto-origin (restart dev). |
+| 401 Unauthorized on known good creds | Confirm headers: Authorization Bearer token and (if dev) Replit x-replit-* values present. |
 
 ## GitHub Notes
 * Monitor Lighthouse artifacts for performance regressions.
@@ -167,3 +214,337 @@ Dependabot weekly updates (npm + Actions). Major React updates ignored for manua
 
 ---
 Keep this README current whenever scripts, env vars, or guard rules change.
+
+## Backend API Reference (envelopes-backend)
+The deployed Replit backend (name: `envelopes-backend`, username: `ashb786`) exposes the following REST endpoints. Base URL examples:
+
+Production (Replit):
+```
+https://envelopes-backend.ashb786.repl.co/api
+```
+Local dev:
+```
+http://localhost:5000/api
+```
+
+All authenticated requests require header:
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+### Environment Variables
+See consolidated [Environment Variables](#environment-variables) section.
+
+### Authentication & User Management
+| Method & Path | Purpose | Body (JSON) |
+|---------------|---------|-------------|
+| POST `/api/auth/register` | Register new user | `{ name, email, password }` |
+| POST `/api/auth/verify-email` | Verify email with code | `{ email, code }` |
+| POST `/api/auth/resend-verification` | Resend verification email | `{ email }` |
+| POST `/api/auth/login` | Login user | `{ email, password }` |
+| GET `/api/auth/me` | Get current user (auth) | – |
+
+### KYC (Know Your Customer)
+| Method & Path | Purpose | Body (JSON) |
+|---------------|---------|-------------|
+| POST `/api/kyc/start` | Start KYC process (auth) | `{ legalFirstName, legalLastName, dob, ssnLast4, addressLine1, addressLine2?, city, state, postalCode }` |
+| GET `/api/kyc/status` | Get KYC status (auth) | – |
+| POST `/api/webhooks/kyc` | KYC webhook callback (server to server) | `{ providerRef, decision, reason? }` |
+
+### Envelopes (Budget Categories)
+| Method & Path | Purpose | Body (JSON) |
+|---------------|---------|-------------|
+| GET `/api/envelopes` | List all envelopes with balances (auth) | – |
+| GET `/api/envelopes/analytics` | Envelope spending analytics (auth) | – |
+| GET `/api/envelopes/:id` | Get envelope by ID (auth) | – |
+| POST `/api/envelopes` | Create envelope (auth) | `{ name, startingBalanceCents, icon?, color?, order? }` |
+| PATCH `/api/envelopes/:id` | Update envelope (auth) | Partial above |
+| DELETE `/api/envelopes/:id` | Delete envelope (auth) | – |
+
+### Transactions
+| Method & Path | Purpose | Query / Body |
+|---------------|---------|--------------|
+| GET `/api/transactions` | List transactions (auth) | `?month=YYYY-MM&envelopeId=&merchant=&page=&limit=` |
+| GET `/api/transactions/:id` | Get transaction by ID (auth) | – |
+| GET `/api/transactions/analytics/spending` | Spending analytics (auth) | – |
+| GET `/api/transactions/pending` | Get pending tx for approval (auth) | – |
+| POST `/api/transactions` | Create transaction (auth) | `{ ...transaction }` |
+| PATCH `/api/transactions/:id/status` | Update transaction status (auth) | `{ status }` |
+| POST `/api/transactions/import` | Import & auto-route (auth) | `{ file?, entries? }` |
+
+### Transfers (Money Movement)
+| Method & Path | Purpose | Body (JSON) |
+|---------------|---------|-------------|
+| GET `/api/transfers` | List transfers (auth) | – |
+| POST `/api/transfers` | Move money between envelopes (auth) | `{ fromId?, toId?, amountCents, note? }` |
+
+### Cards (Virtual Cards)
+| Method & Path | Purpose | Body (JSON) |
+|---------------|---------|-------------|
+| GET `/api/cards` | Get all virtual cards (auth) | – |
+| GET `/api/cards/analytics` | Card usage analytics (auth) | – |
+| GET `/api/cards/:id` | Get card by ID (auth) | – |
+| GET `/api/cards/:id/spending` | Card spending by envelope (auth) | – |
+| POST `/api/cards` | Create virtual card (auth) | `{ name, envelopeId?, limitCents?, ... }` |
+| PATCH `/api/cards/:id` | Update card (auth) | Partial card fields |
+| POST `/api/cards/:id/wallet` | Add/remove from wallet (auth) | `{ inWallet: boolean }` |
+| DELETE `/api/cards/:id` | Delete card (auth) | – |
+
+### Routing Rules
+| Method & Path | Purpose | Body (JSON) |
+|---------------|---------|-------------|
+| GET `/api/rules` | Get routing rules (auth) | – |
+| GET `/api/rules/:id` | Get rule by ID (auth) | – |
+| POST `/api/rules` | Create routing rule (auth) | `{ ...rule }` |
+| PATCH `/api/rules/:id` | Update rule (auth) | Partial rule |
+| DELETE `/api/rules/:id` | Delete rule (auth) | – |
+| POST `/api/rules/reorder` | Reorder rules by priority (auth) | `{ order: string[] }` |
+
+### Routing Configuration
+| Method & Path | Purpose | Body (JSON) |
+|---------------|---------|-------------|
+| GET `/api/routing/config` | Get routing configuration (auth) | – |
+| PATCH `/api/routing/config` | Update routing settings (auth) | `{ ...settings }` |
+| POST `/api/routing/preview` | Preview routing decision (auth) | `{ transaction }` |
+| POST `/api/routing/commit` | Commit transaction to envelope (auth) | `{ transactionId, envelopeId }` |
+
+### AI Features (Requires OpenAI API key configured server-side)
+| Method & Path | Purpose | Body (JSON) |
+|---------------|---------|-------------|
+| GET `/api/ai/health` | AI service health check | – |
+| POST `/api/ai/test` | Test AI functionality | `{ prompt? }` |
+| POST `/api/ai/coach` | Get AI budget coaching (auth) | `{ question, context? }` |
+| POST `/api/ai/explain-routing` | Explain routing decisions (auth) | `{ transactionId }` |
+| POST `/api/ai/setup-envelopes` | AI-powered envelope setup (auth) | `{ goals?, income?, prefs? }` |
+| POST `/api/ai/execute-action` | Execute AI-suggested action (auth) | `{ action, payload? }` |
+| GET `/api/ai/pending-approvals` | Get pending transaction approvals (auth) | – |
+| POST `/api/ai/approve-transaction/:id` | Approve / reassign transaction (auth) | `{ envelopeId?, note? }` |
+
+### Real-time Events
+| Method & Path | Purpose |
+|---------------|---------|
+| GET `/api/events` | Server-Sent Events stream for real-time balance / status updates |
+
+Client usage example:
+```ts
+const eventsUrl = import.meta.env.VITE_EVENTS_URL || `${import.meta.env.VITE_API_BASE_URL}/events`;
+const token = localStorage.getItem('auth_token');
+// If backend expects Bearer token via query param (fallback when headers not supported for SSE):
+const es = new EventSource(`${eventsUrl}?token=${encodeURIComponent(token ?? '')}`);
+
+es.addEventListener('message', (e) => {
+	// Generic message
+	console.log('event', e.data);
+});
+
+es.addEventListener('balance.update', (e) => {
+	const payload = JSON.parse(e.data);
+	// Update app state with new envelope balance
+});
+
+es.onerror = (err) => {
+	console.warn('SSE error – will retry automatically', err);
+};
+```
+
+### Webhooks (External Integration)
+| Method & Path | Purpose | Body (JSON) |
+|---------------|---------|-------------|
+| POST `/api/webhooks/transactions` | Transaction webhook handler | `{ provider, events[] }` |
+| POST `/api/webhooks/kyc` | KYC status webhook handler | `{ providerRef, decision, reason? }` |
+| GET `/api/webhooks/health` | Webhook health check | – |
+
+### System
+| Method & Path | Purpose |
+|---------------|---------|
+| GET `/healthz` | System health check |
+
+### Authentication Flow – Example (TypeScript)
+```ts
+// Register user
+const registerResponse = await fetch(`${API_BASE_URL}/auth/register`, {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({ name, email, password })
+});
+
+// Verify email
+const verifyResponse = await fetch(`${API_BASE_URL}/auth/verify-email`, {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({ email, code })
+});
+
+// Login
+const loginResponse = await fetch(`${API_BASE_URL}/auth/login`, {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({ email, password })
+});
+
+// Store token and use in subsequent requests
+const { token } = await loginResponse.json();
+localStorage.setItem('auth_token', token); // repository uses 'auth_token'
+// (If following example naming from backend docs you may also see 'authToken')
+
+// Authenticated request
+const stored = localStorage.getItem('auth_token');
+const envelopes = await fetch(`${API_BASE_URL}/envelopes`, {
+	headers: {
+		'Authorization': `Bearer ${stored}`,
+		'Content-Type': 'application/json'
+	}
+});
+```
+
+### Notes
+* All endpoints prefixed with `/api` under `VITE_API_BASE_URL`.
+* SSE endpoint (`/api/events`) should be opened with `EventSource` (no auth header if token in cookie; else append `?token=` or use fetch polyfill strategy if required by backend implementation).
+* Webhook endpoints are for server → server callbacks; do not call from browser.
+* KYC workflow (detailed):
+	1. Register (`POST /auth/register`)
+	2. Verify email (`POST /auth/verify-email`)
+	3. Start KYC (`POST /kyc/start`)
+	4. Poll status (`GET /kyc/status`) every N seconds until `approved` (or receive webhook → UI refresh)
+	5. Unlock full app features (envelopes, transactions, AI coaching)
+
+### Sample Responses
+Representative (approximate) schema excerpts; fields may evolve—treat unspecified props as optional.
+
+#### Login (`POST /auth/login`)
+```json
+{
+	"token": "<jwt>",
+	"user": {
+		"id": "usr_123",
+		"name": "Jane Doe",
+		"email": "jane@example.com",
+		"kycStatus": "pending", // one of: unstarted | pending | approved | rejected
+		"createdAt": "2025-08-13T10:21:33.000Z"
+	}
+}
+```
+
+#### KYC Status (`GET /kyc/status`)
+```json
+{ "status": "pending", "lastUpdated": "2025-08-13T10:25:11.000Z" }
+```
+Approved example:
+```json
+{ "status": "approved", "approvedAt": "2025-08-13T10:29:44.000Z" }
+```
+Rejected example:
+```json
+{ "status": "rejected", "reason": "Document mismatch" }
+```
+
+#### Envelopes List (`GET /envelopes`)
+```json
+[
+	{
+		"id": "env_groceries",
+		"name": "Groceries",
+		"balanceCents": 452300,
+		"color": "teal",
+		"icon": "shopping-cart",
+		"updatedAt": "2025-08-12T17:05:00.000Z"
+	},
+	{
+		"id": "env_rent",
+		"name": "Rent",
+		"balanceCents": 0,
+		"color": "indigo",
+		"icon": "home"
+	}
+]
+```
+
+#### Transaction (`GET /transactions/:id`)
+```json
+{
+	"id": "tx_789",
+	"amountCents": -1299,
+	"merchant": "Coffee Shop",
+	"envelopeId": "env_groceries",
+	"status": "cleared", // pending | cleared | flagged
+	"createdAt": "2025-08-11T08:12:00.000Z"
+}
+```
+
+#### AI Coach (`POST /ai/coach`)
+```json
+{
+	"answer": "You can reallocate $50 from Dining Out to Savings to stay on track.",
+	"sources": ["envelopes:env_dining", "envelopes:env_savings"],
+	"suggestedActions": [
+		{"action": "transfer", "from": "env_dining", "to": "env_savings", "amountCents": 5000}
+	]
+}
+```
+
+#### Events Stream (`GET /events` – sample messages)
+```jsonc
+// event: balance.update
+{"type": "balance.update", "envelopeId": "env_groceries", "balanceCents": 450000}
+
+// event: kyc.status
+{"type": "kyc.status", "status": "approved"}
+```
+
+## Environment & API Diagnostics
+Use these steps to ensure environment variables and headers are applied before manual QA.
+
+### 1. Validate .env
+Run:
+```bash
+grep VITE_API_BASE_URL .env || echo "Missing VITE_API_BASE_URL"
+```
+Ensure value matches backend (e.g. `https://envelopes-backend.ashb786.repl.co/api`).
+
+### 2. Inspect Built-Time Vars
+In browser devtools console:
+```js
+import.meta.env.VITE_API_BASE_URL
+import.meta.env.VITE_EVENTS_URL
+```
+They should output the configured strings (or `undefined` for unset optional ones).
+
+### 3. Confirm Request Headers
+Network tab → first POST /api/auth/login:
+Headers should include:
+```
+Content-Type: application/json
+Authorization: Bearer <token>        (after initial login)
+x-replit-user-id: <value>            (dev only if set)
+x-replit-user-name: <value>          (dev only if set)
+```
+
+### 4. Verify Token Persistence
+Open Application > Local Storage:
+Key `auth_token` should appear after successful login.
+
+### 5. SSE Stream Test
+In console:
+```js
+new EventSource((import.meta.env.VITE_EVENTS_URL||import.meta.env.VITE_API_BASE_URL+"/events")+"?token="+localStorage.getItem('auth_token'))
+```
+Expect readyState 0→1; observe messages if backend emits.
+
+### 6. Common Misconfigs
+| Issue | Fix |
+|-------|-----|
+| Missing preceding https:// in base URL | Add protocol. |
+| Trailing slash double // in requests | Base is sanitized in api.ts (trailing slash removed). |
+| Invalid token after redeploy | Clear `localStorage.auth_token` and login again. |
+| CORS failure | Confirm backend allows origin; adjust server or run via proxy. |
+
+### 7. Programmatic Environment Checks (Optional)
+Add a lightweight runtime assertion at app bootstrap if desired:
+```ts
+// main.tsx
+if(!import.meta.env.VITE_API_BASE_URL) {
+	console.warn('VITE_API_BASE_URL missing – API calls will fail');
+}
+```
+

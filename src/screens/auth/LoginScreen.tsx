@@ -58,6 +58,7 @@ export default function LoginScreen() {
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Signing in…" : "Sign in"}
             </Button>
+            {isSubmitting && <p className="text-xs text-center text-[color:var(--owl-text-secondary)]">Contacting {import.meta.env.VITE_API_BASE_URL || 'API (configure VITE_API_BASE_URL)'}…</p>}
           </form>
           <div className="mt-3 text-center">
             <Link to="/auth/forgot" className="text-sm text-[color:var(--owl-accent)] hover:underline">Forgot password?</Link>
