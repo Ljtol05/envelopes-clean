@@ -24,10 +24,11 @@
   "item": [
     {
       "name": "Register",
+      "id": "c1f1c6c0-6c4c-4b6e-9c4e-1e5f2c1a9b01",
       "request": {
         "method": "POST",
         "header": [ { "key": "Content-Type", "value": "application/json" } ],
-        "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] },
+        "url": "{{baseUrl}}/api/auth/register",
         "body": { "mode": "raw", "raw": "{\n  \"name\": \"{{$randomFullName}}\",\n  \"email\": \"{{$randomInt}}-tester@example.com\",\n  \"password\": \"{{password}}\"\n}" }
       },
       "event": [
@@ -44,10 +45,11 @@
     },
     {
       "name": "Resend Verification (optional)",
+      "id": "e2b2cf22-1d1d-4e2f-b3c3-2b2f1d1e2c2f",
       "request": {
         "method": "POST",
         "header": [ { "key": "Content-Type", "value": "application/json" } ],
-        "url": { "raw": "{{baseUrl}}/api/auth/resend-verification", "host": ["{{baseUrl}}"], "path": ["api","auth","resend-verification"] },
+        "url": "{{baseUrl}}/api/auth/resend-verification",
         "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" }
       },
       "event": [
@@ -58,10 +60,11 @@
     },
     {
       "name": "Verify Email",
+      "id": "a3d3ef44-5a5a-4c4d-9e9f-7b7a6c6d5e5f",
       "request": {
         "method": "POST",
         "header": [ { "key": "Content-Type", "value": "application/json" } ],
-        "url": { "raw": "{{baseUrl}}/api/auth/verify-email", "host": ["{{baseUrl}}"], "path": ["api","auth","verify-email"] },
+        "url": "{{baseUrl}}/api/auth/verify-email",
         "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"code\": \"{{verificationCode}}\"\n}" }
       },
       "event": [
@@ -74,10 +77,11 @@
     },
     {
       "name": "Login",
+      "id": "b4e4fa55-6b6b-5d5e-afaf-8c8b7d7e6f6a",
       "request": {
         "method": "POST",
         "header": [ { "key": "Content-Type", "value": "application/json" } ],
-        "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] },
+        "url": "{{baseUrl}}/api/auth/login",
         "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}" }
       },
       "event": [
@@ -92,13 +96,14 @@
     },
     {
       "name": "Start KYC",
+      "id": "c5f50b66-7c7c-6e6f-b0b0-9d9c8e8f7a7b",
       "request": {
         "method": "POST",
         "header": [
           { "key": "Content-Type", "value": "application/json" },
           { "key": "Authorization", "value": "Bearer {{token}}" }
         ],
-        "url": { "raw": "{{baseUrl}}/api/kyc/start", "host": ["{{baseUrl}}"], "path": ["api","kyc","start"] },
+        "url": "{{baseUrl}}/api/kyc/start",
         "body": { "mode": "raw", "raw": "{\n  \"legalFirstName\": \"Jane\",\n  \"legalLastName\": \"Doe\",\n  \"dob\": \"1990-01-01\",\n  \"ssnLast4\": \"1234\",\n  \"addressLine1\": \"123 Main St\",\n  \"city\": \"Austin\",\n  \"state\": \"TX\",\n  \"postalCode\": \"78701\"\n}" }
       },
       "event": [
@@ -113,10 +118,11 @@
     },
     {
       "name": "KYC Status (Poll)",
+      "id": "d6a61c77-8d8d-7f70-c1c1-aeaea9a9b8b8",
       "request": {
         "method": "GET",
         "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
-        "url": { "raw": "{{baseUrl}}/api/kyc/status", "host": ["{{baseUrl}}"], "path": ["api","kyc","status"] }
+        "url": "{{baseUrl}}/api/kyc/status"
       },
       "event": [
         { "listen": "test", "script": { "type": "text/javascript", "exec": [
@@ -138,10 +144,11 @@
     },
     {
       "name": "KYC Final Assert",
+      "id": "e7b72d88-9e9e-8081-d2d2-bfbfb0b0c9c9",
       "request": {
         "method": "GET",
         "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
-        "url": { "raw": "{{baseUrl}}/api/kyc/status", "host": ["{{baseUrl}}"], "path": ["api","kyc","status"] }
+        "url": "{{baseUrl}}/api/kyc/status"
       },
       "event": [
         { "listen": "test", "script": { "type": "text/javascript", "exec": [
