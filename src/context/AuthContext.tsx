@@ -22,7 +22,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   };
 
   const doLogin = useCallback(async (email: string, password: string) => {
-    const { token, user } = await svcLogin({ email, password });
+    const { token, user, verificationStep } = await svcLogin({ email, password });
     if (token) persistToken(token);
     setToken(token || null);
     // service user may omit name; coerce to legacy User shape if present
@@ -37,6 +37,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       };
       setUser(coerced);
     }
+    return { verificationStep };
   }, []);
 
   const doRegister = useCallback(async (name: string, email: string, password: string) => {

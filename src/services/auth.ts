@@ -18,6 +18,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string;
   user?: { id: string; email: string; name?: string; emailVerified?: boolean; phoneVerified?: boolean };
+  verificationStep?: 'email' | 'phone' | 'kyc' | 'done';
 }
 
 export interface HealthResponse {

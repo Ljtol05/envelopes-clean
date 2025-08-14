@@ -29,10 +29,17 @@ export default function LoginScreen() {
   const onSubmit = handleSubmit(async (vals: FormValues) => {
     try {
       const hadPrevious = !!localStorage.getItem("auth_token");
-      await login(vals.email, vals.password);
+      const { verificationStep } = await login(vals.email, vals.password);
       toast.success("Welcome back!");
-      if (!hadPrevious) navigate("/onboarding/coach", { replace: true });
-      else navigate(from || "/", { replace: true });
+      // Decide next route from backend-provided step for progressive verification
+      if (verificationStep === 'email') navigate('/auth/verify-email', { replace: true });
+      else if (verificationStep === 'phone') navigate('/auth/verify-phone', { replace: true });
+      else if (verificationStep === 'kyc') navigate('/auth/kyc', { replace: true });
+      else {
+        // fully verified
+        if (!hadPrevious) navigate('/onboarding/coach', { replace: true });
+        else navigate(from || '/home', { replace: true });
+      }
     } catch (e) {
       const err = e as Error;
       toast.error(err.message || "Login failed");
