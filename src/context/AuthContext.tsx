@@ -71,13 +71,31 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const applyAuth = useCallback((t: string | null, u?: Partial<User> & { emailVerified?: boolean; phoneVerified?: boolean; kycApproved?: boolean }) => {
-    if (t) {
-      persistToken(t);
-      setToken(t);
-    } else {
-      persistToken(null);
-      setToken(null);
-    }
+    /*
+     * Robust token + user updater used by verification flows.
+     * Previous implementation: passing (null, userUpdate) cleared an existing token when a backend
+     * verification endpoint returned only updated user flags (no new token). That caused the auth
+     * token to be dropped after email/phone verification responses that omit `token`, leading to:
+     *   1. Subsequent /api/auth/me requests without Authorization header (401)
+     *   2. Redirect loops between guarded routes (navigation throttling warnings)
+     * New behavior:
+     *   - If t is a non-empty string, replace the token.
+     *   - If t is strictly null AND no user update provided, clear the token (explicit logout intent).
+     *   - If t is null BUT a user update object is provided AND an existing token is present, retain
+     *     the current token (treat absence of new token as "unchanged").
+     */
+    setToken(prev => {
+      if (t && typeof t === 'string') {
+        persistToken(t);
+        return t;
+      }
+      if (t === null && !u) { // explicit clear (no user update implies caller intends logout/reset)
+        persistToken(null);
+        return null;
+      }
+      // Else retain previous token (no new token provided but user update present)
+      return prev;
+    });
     if (u) {
       const coerced: User & { emailVerified?: boolean; phoneVerified?: boolean; kycApproved?: boolean } = {
         id: typeof u.id === 'number' ? u.id : Number(u?.id) || 0,
