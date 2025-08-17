@@ -11,12 +11,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Button } from '../../components/ui/button';
+import { fetchAddressSuggestions, applySuggestion, type AddressSuggestion } from '../../lib/addressAutocomplete';
 
-// Zod schema for form validation.
+// Zod schema for form validation with age refinement (18+)
+function isAdult(dob: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) return false;
+  const [y,m,d] = dob.split('-').map(Number);
+  const birth = new Date(Date.UTC(y, m-1, d));
+  if (isNaN(birth.getTime())) return false;
+  const now = new Date();
+  let age = now.getUTCFullYear() - birth.getUTCFullYear();
+  const mDiff = now.getUTCMonth() - birth.getUTCMonth();
+  if (mDiff < 0 || (mDiff === 0 && now.getUTCDate() < birth.getUTCDate())) age--;
+  return age >= 18;
+}
 const schema = z.object({
   legalFirstName: z.string().min(1, 'Required'),
   legalLastName: z.string().min(1, 'Required'),
-  dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/,'Must be YYYY-MM-DD'),
+  dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/,'Must be YYYY-MM-DD').refine(isAdult, 'Must be 18 or older'),
   ssnLast4: z.string().length(4,'Must be 4 digits'),
   addressLine1: z.string().min(1,'Required'),
   addressLine2: z.string().optional(),
@@ -24,6 +36,54 @@ const schema = z.object({
   state: z.string().length(2,'2-letter state code'),
   postalCode: z.string().min(5,'Too short'),
 });
+
+// Inline component for address line 1 autocomplete (kept local to file for now)
+interface AddressLine1Props {
+  register: ReturnType<typeof useForm>['register'];
+  watch: ReturnType<typeof useForm>['watch'];
+  setValue: ReturnType<typeof useForm>['setValue'];
+  error?: string;
+}
+function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressLine1Props) {
+  const [q, setQ] = React.useState('');
+  const [suggestions, setSuggestions] = React.useState<AddressSuggestion[]>([]);
+  const [open, setOpen] = React.useState(false);
+  const abortRef = React.useRef<AbortController | null>(null);
+  const val = watch('addressLine1') as string;
+  React.useEffect(() => { setQ(val || ''); }, [val]);
+  React.useEffect(() => {
+    if (!q || q.trim().length < 3) { setSuggestions([]); setOpen(false); return; }
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    const t = setTimeout(async () => {
+      const res = await fetchAddressSuggestions(q, { signal: ctrl.signal });
+      setSuggestions(res);
+      setOpen(res.length > 0);
+    }, 180);
+    return () => { clearTimeout(t); ctrl.abort(); };
+  }, [q]);
+  function choose(s: AddressSuggestion) {
+    const current = { city: watch('city'), state: watch('state'), postalCode: watch('postalCode') } as Record<string,string>;
+    const merged = applySuggestion(current, s);
+  Object.entries(merged).forEach(([k,v]) => setValue(k as keyof KycFormData, v as string, { shouldDirty: true }));
+    setOpen(false); setSuggestions([]);
+  }
+  return (
+    <div className="col-span-2 relative">
+      <Label htmlFor="addressLine1">Address line 1</Label>
+      <Input id="addressLine1" autoComplete="off" aria-autocomplete="list" aria-expanded={open? 'true':'false'} aria-controls="addressLine1-suggestions" aria-invalid={error ? 'true' : undefined} aria-describedby={error ? 'addressLine1-error' : undefined} {...register('addressLine1')} onChange={(e)=>{ setQ(e.target.value); register('addressLine1').onChange(e); }} />
+      {error && <p id="addressLine1-error" className="text-xs text-red-500">{error}</p>}
+      {open && suggestions.length > 0 && (
+  <ul aria-label="Address suggestions" id="addressLine1-suggestions" role="listbox" className="absolute z-20 mt-1 w-full max-h-56 overflow-auto rounded-md border border-[color:var(--owl-border)] bg-[color:var(--owl-popover-bg)] shadow-[var(--owl-shadow-md)] text-sm">
+          {suggestions.map(s => (
+            <li key={s.id} role="option" tabIndex={0} className="px-2 py-1 cursor-pointer hover:bg-[color:var(--owl-accent-bg)] focus:bg-[color:var(--owl-accent-bg)]" onMouseDown={e=>e.preventDefault()} onClick={()=>choose(s)} onKeyDown={e=>{ if (e.key==='Enter'){ e.preventDefault(); choose(s);} }}>{s.description}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export default function KycScreen() {
   // Disable automatic polling during tests by respecting env flag; prod keeps defaults.
@@ -143,11 +203,7 @@ export default function KycScreen() {
                 <Input id="ssnLast4" inputMode="numeric" maxLength={4} aria-invalid={errors.ssnLast4 ? 'true' : undefined} aria-describedby={errors.ssnLast4 ? 'ssnLast4-error' : undefined} {...register('ssnLast4')} />
                 {errors.ssnLast4 && (<p id="ssnLast4-error" className="text-xs text-red-500">{errors.ssnLast4.message}</p>)}
               </div>
-              <div className="col-span-2">
-                <Label htmlFor="addressLine1">Address line 1</Label>
-                <Input id="addressLine1" aria-invalid={errors.addressLine1 ? 'true' : undefined} aria-describedby={errors.addressLine1 ? 'addressLine1-error' : undefined} {...register('addressLine1')} />
-                {errors.addressLine1 && (<p id="addressLine1-error" className="text-xs text-red-500">{errors.addressLine1.message}</p>)}
-              </div>
+              <AddressLine1Autocomplete register={register} watch={watch} setValue={setValue} error={errors.addressLine1?.message as string | undefined} />
               <div className="col-span-2">
                 <Label htmlFor="addressLine2">Address line 2</Label>
                 <Input id="addressLine2" aria-invalid={errors.addressLine2 ? 'true' : undefined} aria-describedby={errors.addressLine2 ? 'addressLine2-error' : undefined} {...register('addressLine2')} />
