@@ -6,7 +6,9 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Button } from '../../components/ui/button';
 import { startPhoneVerification, verifyPhone, resendPhoneVerification, getMe, type VerifyPhoneResponse } from '../../services/auth';
-import { formatPhoneE164, isLikelyE164 } from '../../lib/phone';
+import { formatPhoneE164, isLikelyE164, getCountryOptions, autoPrependCountry } from '../../lib/phone';
+import type { CountryCode } from 'libphonenumber-js';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../components/ui/select';
 import { nextRouteFromSteps } from '../../lib/authRouting';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/useAuth';
@@ -40,10 +42,13 @@ export default function PhoneVerificationPage() {
   const [step, setStep] = useState<'enter'|'code'>('enter');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [country, setCountry] = useState<CountryCode>('US');
+  const countriesRef = useRef(getCountryOptions());
 
   function computeNormalized(): string | null {
-    const norm = formatPhoneE164(phone);
-    return norm;
+    // If user typed national digits without +, try auto-prepend using selected country then parse.
+  const candidate = phone.startsWith('+') ? phone : autoPrependCountry(phone, country);
+  return formatPhoneE164(candidate, { defaultCountry: country });
   }
 
   async function start(e: React.FormEvent) {
@@ -117,24 +122,47 @@ export default function PhoneVerificationPage() {
       {step === 'enter' && (
             <form onSubmit={start} className="space-y-4">
               <div>
-                <Label htmlFor="phone">Phone number</Label>
-                <Input id="phone" placeholder="+16892243543" value={phone} onChange={e=>setPhone(e.target.value)} />
+                <Label htmlFor="phone" className="block text-center">Phone number</Label>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex w-full items-center gap-2">
+                    <div className="w-40">
+                      <Select value={country} onValueChange={(v)=>setCountry(v as CountryCode)}>
+                        <SelectTrigger aria-label="Country" size="sm">
+                          <SelectValue placeholder="Country" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-64">
+                          {countriesRef.current.slice(0,40).map(c => (
+                            <SelectItem key={c.code} value={c.code}>{c.flag} +{c.callingCode} {c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Input id="phone" placeholder="(689) 224-3543" value={phone} onChange={e=>setPhone(e.target.value)} />
+                  </div>
+                  {normalizedPhone && <p className="text-[10px] text-[color:var(--owl-text-secondary)]">Will send: {normalizedPhone}</p>}
+                </div>
                 {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
               </div>
-              <Button type="submit" disabled={loading}>{loading ? 'Sending…' : 'Send code'}</Button>
+              <div className="flex flex-col items-center">
+                <Button type="submit" disabled={loading}>{loading ? 'Sending…' : 'Send code'}</Button>
+              </div>
         <Link to="/auth/verify-email" className="block text-center text-xs text-[color:var(--owl-text-secondary)] hover:underline">Back to email verification</Link>
             </form>
           )}
           {step === 'code' && (
             <form onSubmit={submitCode} className="space-y-4">
-              <p className="text-xs text-[color:var(--owl-text-secondary)]">We sent a code to {normalizedPhone || phone}</p>
+              <p className="text-xs text-center text-[color:var(--owl-text-secondary)]">We sent a code to {normalizedPhone || phone}</p>
               <div>
                 <Label htmlFor="code">Code</Label>
-                <Input id="code" value={code} onChange={e=>setCode(e.target.value)} />
+                <div className="flex flex-col items-center gap-2">
+                  <Input id="code" className="text-center" value={code} onChange={e=>setCode(e.target.value)} />
+                </div>
               </div>
-              <Button type="submit" disabled={loading}>{loading ? 'Verifying…' : 'Verify phone'}</Button>
-              <button type="button" onClick={resend} className="text-xs text-[color:var(--owl-accent)] hover:underline">Resend code</button>
-        <button type="button" onClick={()=>setStep('enter')} className="block w-full text-center text-xs text-[color:var(--owl-text-secondary)] hover:underline">Change number</button>
+              <div className="flex flex-col items-center gap-2">
+                <Button type="submit" disabled={loading}>{loading ? 'Verifying…' : 'Verify phone'}</Button>
+                <button type="button" onClick={resend} className="text-xs text-[color:var(--owl-accent)] hover:underline">Resend code</button>
+                <button type="button" onClick={()=>setStep('enter')} className="block w-full text-center text-xs text-[color:var(--owl-text-secondary)] hover:underline">Change number</button>
+              </div>
             </form>
           )}
         </CardContent>

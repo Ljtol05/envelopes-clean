@@ -169,35 +169,53 @@ Token & user propagation:
 
 ### Phone Verification & Twilio Formatting
 
-Phone numbers entered by users are normalized client-side to E.164 (Twilio‑friendly) format before hitting:
+Phone numbers are now parsed & normalized with `libphonenumber-js` for robust international support, then sent in E.164 format (Twilio‑friendly) to:
 * `POST /api/auth/start-phone-verification`
 * `POST /api/auth/verify-phone`
 * `POST /api/auth/resend-phone-code`
 
-Utility: `src/lib/phone.ts`
-* `formatPhoneE164(raw)` – strips formatting characters. If input starts with `+`, keeps plus and digits only. If exactly 10 digits (assumed US/CA) prefixes `+1`. Length 11–15 digits becomes `+<digits>`. Otherwise returns `null`.
-* `isLikelyE164(phone)` – regex validation `^\+[1-9]\d{9,14}$`.
+UI Enhancements:
+* Country selector (Radix Select) defaults to US; user can change before entering a number.
+* When user types national digits (no leading `+`), we automatically prepend the selected country's calling code before parsing.
+* A live "Will send: +123456..." preview shows the computed E.164 or an error state.
+* Layout centered for clearer progressive auth UX.
 
-Service payloads now send both `phone` and `phoneNumber` keys for backend compatibility.
+Utilities: `src/lib/phone.ts`
+* `formatPhoneE164(raw, { defaultCountry })` – Attempts library parse (international or national with provided default). Returns canonical `+E.164` or `null`.
+* `autoPrependCountry(raw, country)` – If the user typed a national number without `+`, produce a candidate `+<countryCode><digits>` prior to parsing.
+* `getCountryOptions()` – Country metadata (`code`, `name`, `callingCode`, emoji `flag`) for building the selector (prioritizes common countries first).
+* `isLikelyE164(phone)` – Lightweight regex gate (`^\+[1-9]\d{9,14}$`).
 
-Examples (accepted → sent to backend):
+Fallback Heuristic:
+If library parsing fails (e.g. partially entered but plausibly valid international digits starting with `+`), we retain a minimal validation path that accepts `+` followed by 10–15 digits (no leading zero after plus). This keeps UX forgiving while still guiding to valid formats.
+
+Service Payloads:
+All phone endpoints send both `phone` and `phoneNumber` fields for backward compatibility with earlier backend expectations.
+
+Examples (raw input → normalized E.164):
 ```
-"(689) 224-3543"   -> +16892243543
-"6892243543"       -> +16892243543
-"+1 689 224 3543"  -> +16892243543
-"+442071234567"    -> +442071234567
+"(689) 224-3543"        -> +16892243543   (auto country prepend US)
+"6892243543"            -> +16892243543   (plain national digits)
+"+1 689 224 3543"       -> +16892243543   (already international)
+"020 7123 4567" (GB)    -> +442071234567  (after switching selector to UK)
+"+44 20 7123 4567"      -> +442071234567
+"+918888777666"         -> +918888777666  (India)
 ```
-Invalid / rejected (display error):
+Rejected examples:
 ```
-"12345"            // too short
-"+000123456789"    // invalid country code pattern
+"12345"                 // too short
+"+000123456789"         // invalid country code pattern
+"0044 20 7123 4567"     // user must use + or select country (leading 00 not accepted directly)
 ```
 
 Tests:
-* `phoneUtil.test.ts` – unit coverage for formatter & validator.
-* `PhoneVerificationFlow.test.tsx` – asserts normalized `+16892243543` is passed when user types various raw US formats.
+* `phoneUtil.test.ts` – Parsing, auto-prepend, validation across multiple countries.
+* `PhoneVerificationFlow.test.tsx` – Ensures normalized `+E.164` is sent for varied raw formats and that service calls fire once valid.
 
-Future enhancement: adopt `libphonenumber-js` for full international parsing and dynamic default country selection.
+Implementation Notes:
+* We do not guess an E.164 for arbitrary 10–15 digit strings without context—callers first apply `autoPrependCountry` with the selected country for national input.
+* Library parsing ensures region-specific length & pattern validation; the fallback only accepts clearly formed international digit strings.
+* The previous custom regex heuristic has been fully replaced; docs updated accordingly.
 
 Throttling / multiple navigation prevention:
 * Login / Register pages use a `useRef` latch (`redirectedRef`) so redirect side-effects only fire once after hydration and verification conditions are satisfied.
