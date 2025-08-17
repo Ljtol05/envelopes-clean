@@ -24,6 +24,7 @@ Modern budgeting / envelopes UI built with React 19, Vite 7, TypeScript 5, Tailw
 13. [GitHub Notes](#github-notes)
 14. [Environment & API Diagnostics](#environment--api-diagnostics)
 15. [Endpoint Diagnostics Panel](#endpoint-diagnostics-panel)
+16. [Address Autocomplete & KYC UX](#address-autocomplete--kyc-ux)
 
 ## Key Features
 * Semantic theming system (`--owl-*`) with enforced contrast & accent foreground pairing
@@ -64,6 +65,8 @@ Centralized reference for all frontend runtime variables. Defined in `.env.examp
 | Variable | Required | Purpose |
 |----------|----------|---------|
 | VITE_NODE_ENV | No | Explicit environment override (mirrors `import.meta.env.MODE`). |
+| VITE_GOOGLE_PLACES_API_KEY | No | Enables Google Places Autocomplete + Place Details enrichment on the KYC form (address autofill). Gracefully optional. |
+| VITE_PLACES_PROXY_BASE | No | Frontend will call this base (e.g. `http://localhost:5055`) instead of Google directly; pair with `npm run places:proxy`. |
 
 ### Example `.env`
 ```env
@@ -82,6 +85,9 @@ VITE_API_URL=https://envelopes-backend.ashb786.repl.co/api
 VITE_REPLIT_USER_ID=123
 VITE_REPLIT_USER_NAME=Dev User
 # VITE_DEV_BYPASS_AUTH=true
+
+# Optional address autocomplete (Google Places)
+# VITE_GOOGLE_PLACES_API_KEY=YOUR_KEY_HERE
 
 # (Optional) Individual endpoint overrides (defaults shown). Uncomment to customize only if backend path differs.
 # VITE_REGISTER_ENDPOINT=/api/auth/register
@@ -230,6 +236,58 @@ Dev bypass:
 
 Endpoint resolution:
 * All auth, KYC, core resource, realtime events, and AI feature paths funnel through `src/config/endpoints.ts` which maps optional per-endpoint `VITE_*` overrides to defaults. Legacy alias `VITE_AI_CHAT_ENDPOINT` still maps to the coach endpoint if `VITE_AI_COACH_ENDPOINT` is unset.
+
+## Address Autocomplete & KYC UX
+
+The KYC form uses a lightweight Google Places integration to reduce manual input:
+
+Features
+* Debounced address line 1 suggestions via direct HTTPS fetch (no SDK script tag).
+* Selecting a suggestion triggers a Place Details fetch to populate: line1 (street number + route), city, state (short), postal code.
+* ZIP fallback: if user types a 5 digit ZIP and city/state blank, `lookupZip` (Zippopotam.us) fills them.
+* Capped in‑memory caches for suggestions, place details, and ZIP lookups (size 50 / 100) for snappy UX and quota conservation.
+* Google attribution line required by Maps Platform.
+* Age (18+) validation and DOB auto‑formatter (digits → YYYY-MM-DD) to reduce error friction.
+* First/Last name auto‑prefill from `user.name` when both blank.
+
+Env Variable
+* `VITE_GOOGLE_PLACES_API_KEY` optional; if absent, suggestions silently return `[]` (user still completes form manually).
+
+Core Utilities
+* `src/lib/addressAutocomplete.ts` – fetchAddressSuggestions / fetchPlaceDetails / applySuggestion + caches.
+* `src/lib/zipLookup.ts` – public ZIP → city/state fallback with caching.
+
+Tests
+* `addressAutocomplete.test.ts` – query guard, parsing & caching, details extraction, non‑destructive merging.
+* `KycFlow.test.tsx` – overall screen integration stays stable.
+
+Why add (and now use) a server proxy?
+1. Hide the real key (harder to abuse even with referrer restrictions).
+2. Central rate limiting + logging, anomaly detection.
+3. Easier rotation & multi‑provider abstraction.
+4. Response trimming / normalization server‑side.
+5. Potential to attach authenticated user context to audit usage.
+
+Implemented Minimal Proxy
+* File: `server/placesProxy.mjs` (start with `npm run places:proxy`).
+* Endpoints:
+	* `GET /places/autocomplete?q=...&country=us&limit=5&sessiontoken=...`
+	* `GET /places/details/:id?sessiontoken=...`
+* Adds lightweight in-memory TTL cache (2m) and propagates session tokens.
+* Set `VITE_PLACES_PROXY_BASE=http://localhost:5055` to enable from the client.
+* Hardening TODO (prod): auth, rate limiting, structured logging, stricter CORS, provider abstraction.
+
+Failure Handling
+* Network or quota errors: fall back to manual entry; optional subtle UI notice if persistent.
+
+Enhancements (Implemented)
+* Keyboard arrow navigation (Up/Down/Enter/Escape) for suggestion list.
+* Single Places session token reused across autocomplete + details for improved relevance & billing grouping.
+Remaining
+* Internationalization (current heuristic tuned for US addresses).
+
+Privacy Note
+* Avoid storing full user-entered address queries with PII unless required; consider hashing or truncating at persistence layer.
 
 ## Theming & Branding
 Semantic CSS variables (`--owl-*`) define color tokens for light & dark modes. Theme preference stored in `localStorage` (`owl-theme`) and synced across tabs. Accent usage rules and contrast are automatically audited.

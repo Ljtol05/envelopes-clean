@@ -11,7 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Button } from '../../components/ui/button';
-import { fetchAddressSuggestions, applySuggestion, type AddressSuggestion } from '../../lib/addressAutocomplete';
+import { fetchAddressSuggestions, applySuggestion, fetchPlaceDetails, type AddressSuggestion } from '../../lib/addressAutocomplete';
+import { lookupZip } from '../../lib/zipLookup';
 
 // Zod schema for form validation with age refinement (18+)
 function isAdult(dob: string): boolean {
@@ -48,6 +49,7 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
   const [q, setQ] = React.useState('');
   const [suggestions, setSuggestions] = React.useState<AddressSuggestion[]>([]);
   const [open, setOpen] = React.useState(false);
+  const [activeIndex, setActiveIndex] = React.useState<number>(-1);
   const abortRef = React.useRef<AbortController | null>(null);
   const val = watch('addressLine1') as string;
   React.useEffect(() => { setQ(val || ''); }, [val]);
@@ -63,22 +65,48 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
     }, 180);
     return () => { clearTimeout(t); ctrl.abort(); };
   }, [q]);
-  function choose(s: AddressSuggestion) {
+  async function choose(s: AddressSuggestion) {
+    // Merge basic suggestion first (city/state/postalCode if present)
     const current = { city: watch('city'), state: watch('state'), postalCode: watch('postalCode') } as Record<string,string>;
     const merged = applySuggestion(current, s);
-  Object.entries(merged).forEach(([k,v]) => setValue(k as keyof KycFormData, v as string, { shouldDirty: true }));
+    Object.entries(merged).forEach(([k,v]) => v && setValue(k as keyof KycFormData, v as string, { shouldDirty: true }));
+    setValue('addressLine1', s.description.split(',')[0] || s.description, { shouldDirty: true });
+    // Attempt structured place details enrichment (street number, route, postal code variations)
+    try {
+      const details = await fetchPlaceDetails(s.id);
+      if (details) {
+        if (details.addressLine1) setValue('addressLine1', details.addressLine1, { shouldDirty: true });
+        if (details.city && !watch('city')) setValue('city', details.city, { shouldDirty: true });
+        if (details.state && !watch('state')) setValue('state', details.state, { shouldDirty: true });
+        if (details.postalCode && !watch('postalCode')) setValue('postalCode', details.postalCode, { shouldDirty: true });
+      }
+    } catch {
+      // Silent failure; user can complete manually
+    }
     setOpen(false); setSuggestions([]);
+    setActiveIndex(-1);
+  }
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!open || suggestions.length === 0) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => (i + 1) % suggestions.length); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => (i - 1 + suggestions.length) % suggestions.length); }
+    else if (e.key === 'Enter') { if (activeIndex >= 0) { e.preventDefault(); choose(suggestions[activeIndex]); } }
+    else if (e.key === 'Escape') { setOpen(false); setActiveIndex(-1); }
   }
   return (
     <div className="col-span-2 relative">
       <Label htmlFor="addressLine1">Address line 1</Label>
-      <Input id="addressLine1" autoComplete="off" aria-autocomplete="list" aria-expanded={open? 'true':'false'} aria-controls="addressLine1-suggestions" aria-invalid={error ? 'true' : undefined} aria-describedby={error ? 'addressLine1-error' : undefined} {...register('addressLine1')} onChange={(e)=>{ setQ(e.target.value); register('addressLine1').onChange(e); }} />
+      <Input id="addressLine1" autoComplete="off" aria-autocomplete="list" aria-expanded={open? 'true':'false'} aria-controls="addressLine1-suggestions" aria-invalid={error ? 'true' : undefined} aria-describedby={error ? 'addressLine1-error' : undefined} {...register('addressLine1')} onChange={(e)=>{ setQ(e.target.value); register('addressLine1').onChange(e); }} onKeyDown={onKeyDown} />
       {error && <p id="addressLine1-error" className="text-xs text-red-500">{error}</p>}
       {open && suggestions.length > 0 && (
-  <ul aria-label="Address suggestions" id="addressLine1-suggestions" role="listbox" className="absolute z-20 mt-1 w-full max-h-56 overflow-auto rounded-md border border-[color:var(--owl-border)] bg-[color:var(--owl-popover-bg)] shadow-[var(--owl-shadow-md)] text-sm">
-          {suggestions.map(s => (
-            <li key={s.id} role="option" tabIndex={0} className="px-2 py-1 cursor-pointer hover:bg-[color:var(--owl-accent-bg)] focus:bg-[color:var(--owl-accent-bg)]" onMouseDown={e=>e.preventDefault()} onClick={()=>choose(s)} onKeyDown={e=>{ if (e.key==='Enter'){ e.preventDefault(); choose(s);} }}>{s.description}</li>
-          ))}
+        <ul aria-label="Address suggestions" id="addressLine1-suggestions" role="listbox" className="absolute z-20 mt-1 w-full max-h-56 overflow-auto rounded-md border border-[color:var(--owl-border)] bg-[color:var(--owl-popover-bg)] shadow-[var(--owl-shadow-md)] text-sm">
+          {suggestions.map((s,i) => {
+            const active = i === activeIndex;
+            return (
+              <li key={s.id} role="option" aria-selected={active ? true : undefined} tabIndex={-1} className={`px-2 py-1 cursor-pointer ${active ? 'bg-[color:var(--owl-accent-bg)]' : 'hover:bg-[color:var(--owl-accent-bg)] focus:bg-[color:var(--owl-accent-bg)]'}`} onMouseDown={e=>e.preventDefault()} onMouseEnter={()=>setActiveIndex(i)} onClick={()=>choose(s)}>{s.description}</li>
+            );
+          })}
+          <li className="px-2 py-1 text-[10px] opacity-70 select-none" aria-hidden="true">Powered by Google</li>
         </ul>
       )}
     </div>
@@ -132,22 +160,25 @@ export default function KycScreen() {
     setValue('dob', formatted);
   }
 
-  // Simple ZIP -> city/state lookup (placeholder). Real impl should call an address API.
-  const zipVal = watch('postalCode');
+  // ZIP fallback enrichment (only fills missing city/state)
+  const zipVal = watch('postalCode') as string;
   React.useEffect(() => {
-    if (zipVal && zipVal.length === 5) {
-      // Minimal demo mapping (extend or replace with fetch to external service)
-      const stub: Record<string, { city: string; state: string }> = {
-        '30301': { city: 'Atlanta', state: 'GA' },
-        '37013': { city: 'Antioch', state: 'TN' },
-      };
-      const hit = stub[zipVal];
-      if (hit) {
-        setValue('city', hit.city, { shouldDirty: true });
-        setValue('state', hit.state, { shouldDirty: true });
+    let active = true;
+    (async () => {
+      if (zipVal && zipVal.length === 5) {
+        const currentCity = watch('city') as string;
+        const currentState = watch('state') as string;
+        if (currentCity && currentState) return; // already set
+        const info = await lookupZip(zipVal);
+        if (info && active) {
+          if (!currentCity && info.city) setValue('city', info.city, { shouldDirty: true });
+          if (!currentState && info.state) setValue('state', info.state, { shouldDirty: true });
+        }
       }
-    }
-  }, [zipVal, setValue]);
+    })();
+    return () => { active = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zipVal]);
 
   const onSubmit = handleSubmit(async (values: Record<string, unknown>) => {
     await submitKyc(values as unknown as KycFormData);

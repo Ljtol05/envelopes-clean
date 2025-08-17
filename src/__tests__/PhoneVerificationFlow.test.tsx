@@ -56,9 +56,9 @@ describe('Phone Verification Flow', () => {
     );
 
     const phoneInput = await screen.findByLabelText(/phone number/i);
-    await user.type(phoneInput, '+15555555555');
+  await user.type(phoneInput, '+15555555555');
     await user.click(screen.getByRole('button', { name: /send code/i }));
-    await waitFor(() => expect(startPhoneVerification).toHaveBeenCalledWith('+15555555555'));
+  await waitFor(() => expect(startPhoneVerification).toHaveBeenCalledWith('+15555555555'));
 
     // After code step displayed
     const codeInput = await screen.findByLabelText(/code/i);
@@ -82,9 +82,9 @@ describe('Phone Verification Flow', () => {
     );
 
     const phoneInput = await screen.findByLabelText(/phone number/i);
-    await user.type(phoneInput, '+14444444444');
+  await user.type(phoneInput, '+14444444444');
     await user.click(screen.getByRole('button', { name: /send code/i }));
-    await waitFor(() => expect(startPhoneVerification).toHaveBeenCalledWith('+14444444444'));
+  await waitFor(() => expect(startPhoneVerification).toHaveBeenCalledWith('+14444444444'));
     await user.click(screen.getByRole('button', { name: /resend code/i }));
     await waitFor(() => expect(resendPhoneVerification).toHaveBeenCalledWith('+14444444444'));
   });

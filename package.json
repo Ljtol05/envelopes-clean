@@ -20,6 +20,7 @@
     "perf:bundle": "node scripts/bundle-report.mjs",
     "perf:compare": "node scripts/compare-lhci.mjs",
     "coverage:ratchet": "node scripts/coverage-ratchet.mjs",
+  "places:proxy": "node server/placesProxy.mjs",
     "prepare": "husky"
   },
   "dependencies": {
