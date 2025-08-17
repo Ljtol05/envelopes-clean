@@ -12,6 +12,8 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import KycGuard from '../routes/KycGuard';
 // Provide minimal env polyfill for components reading import.meta.env
 (global as unknown as { importMetaEnv?: Record<string,string> }).importMetaEnv = { VITE_REQUIRE_PHONE_VERIFICATION: 'false' }; // explicit disable for tests
+// Force PHONE_VERIFICATION_REQUIRED to false for these tests (they assert direct navigation to /auth/kyc)
+jest.mock('../lib/onboarding', () => ({ PHONE_VERIFICATION_REQUIRED: false }));
 import VerifyEmailPage from '../screens/auth/VerifyEmailPage';
 import { AuthContext } from '../context/AuthContextBase';
 // Mock new auth service module used by VerifyEmailPage

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AuthScaffold from './AuthScaffold';
 import LoginScreen from './LoginScreen';
@@ -10,12 +10,19 @@ export default function LoginPage() {
   const location = useLocation();
 
   // Redirect if already logged in
+  const redirectedRef = useRef(false);
   useEffect(() => {
+    if (redirectedRef.current) return;
     if (!hydrated) return;
-    if (!(user || token)) return;
-    // If onboarding still in progress (email not verified) let flow proceed instead of
-    // bouncing to '/' which then immediately redirects back creating rapid replace loops.
-    if (location.pathname === '/auth/login' && user && !user.emailVerified) return;
+    if (!(user || token)) return; // not logged in
+    // Only redirect away from the explicit login route; leave other auth pages alone
+    if (location.pathname !== '/auth/login') return;
+    // Require email verified
+    if (user && !user.emailVerified) return;
+    // If phone required and not yet verified, don't bounce (prevents loop with verification guards)
+    const phoneRequired = (import.meta as unknown as { env?: Record<string,string|undefined> }).env?.VITE_REQUIRE_PHONE_VERIFICATION !== 'false';
+    if (phoneRequired && user && !user.phoneVerified) return;
+    redirectedRef.current = true;
     navigate('/', { replace: true });
   }, [hydrated, user, token, navigate, location.pathname]);
 

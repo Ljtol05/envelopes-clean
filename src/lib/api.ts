@@ -1,6 +1,7 @@
 // API utilities: existing mock endpoints for envelopes + real auth/coach wrappers.
 // Delegate base URL to unified axios config (single source of truth).
 import { API_BASE_URL } from '../config/api';
+import { ENDPOINTS } from '../config/endpoints';
 const EVENTS_URL = (import.meta.env.VITE_EVENTS_URL || `${API_BASE_URL}/events`).replace(/\/$/, "");
 const REPLIT_USER_ID = import.meta.env.VITE_REPLIT_USER_ID || "";
 const REPLIT_USER_NAME = import.meta.env.VITE_REPLIT_USER_NAME || "";
@@ -70,9 +71,9 @@ export type CoachResponse = {
 
 // ===== Endpoints (non-auth) =====
 const PATHS = {
-  coach: "/api/ai/coach",
-  ai: { setup: "/api/ai/setup-envelopes", execute: "/api/ai/execute-action" },
-  auth: { verifyEmail: '/api/auth/verify-email', resendVerification: '/api/auth/resend-verification', me: '/api/auth/me' }
+  coach: ENDPOINTS.aiCoach,
+  ai: { setup: ENDPOINTS.aiSetup, execute: ENDPOINTS.aiExecute },
+  auth: { verifyEmail: ENDPOINTS.verifyEmail, resendVerification: ENDPOINTS.resendEmail, me: ENDPOINTS.me }
 } as const;
 
 // ===== Public API (auth & coach) =====

@@ -30,6 +30,8 @@ import ForgotPassword from './screens/auth/ForgotPassword';
 import AuthScaffold from './screens/auth/AuthScaffold';
 import OnboardingCoach from './screens/OnboardingCoach';
 import DevApiSwitcher from './components/system/DevApiSwitcher';
+// Endpoint diagnostics (dev only, gated by VITE_SHOW_ENDPOINT_DIAGNOSTICS=true)
+import EndpointDiagnostics from './components/system/EndpointDiagnostics';
 
 function AppLayout() {
   const location = useLocation();
@@ -110,6 +112,7 @@ export default function App() {
   </BrowserRouter>
   <ApiBaseBanner />
   <DevApiSwitcher />
+  <EndpointDiagnostics />
       </EnvelopesProvider>
     </AuthProvider>
   );

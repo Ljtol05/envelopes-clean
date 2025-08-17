@@ -139,6 +139,33 @@ export const apiClient: AxiosInstance = axios.create({
   timeout: 15000
 });
 
+// Attach Authorization + dev headers on every request.
+apiClient.interceptors.request.use((cfg) => {
+  type HeaderMap = Record<string, string>;
+  const headers: HeaderMap = (cfg.headers || {}) as HeaderMap;
+  try {
+    let t: string | null = null;
+    if (typeof localStorage !== 'undefined') {
+      // Prefer namespaced key but fall back to generic 'token' for compatibility with docs / external scripts.
+      t = localStorage.getItem('auth_token') || localStorage.getItem('token');
+    }
+    if (t) headers.Authorization = `Bearer ${t}`;
+  } catch { /* ignore */ }
+  // Narrow access to env (build-time replaced by Vite); cast minimally.
+  const metaEnv = (import.meta as unknown as { env?: Record<string,string|undefined> }).env || {};
+  const uid = metaEnv.VITE_REPLIT_USER_ID;
+  const uname = metaEnv.VITE_REPLIT_USER_NAME;
+  if (uid) headers['x-replit-user-id'] = uid;
+  if (uname) headers['x-replit-user-name'] = uname;
+  // Merge back into existing Axios headers object (preserves prototype methods of AxiosHeaders)
+  if (cfg.headers) {
+    Object.entries(headers).forEach(([k,v]) => { (cfg.headers as Record<string, unknown>)[k] = v; });
+  } else {
+    cfg.headers = headers as unknown as typeof cfg.headers;
+  }
+  return cfg;
+});
+
 export async function testApiHealth(base: string, signal?: AbortSignal): Promise<boolean> {
   const url = base.replace(/\/$/, '') + '/healthz';
   try {

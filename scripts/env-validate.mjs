@@ -63,6 +63,14 @@ if (!SILENT) {
     for (const i of issues) console.log(`- ${i}`);
     if (!STRICT) console.log('Tip: Copy .env.example to .env and fill required variables.');
   }
+  // Soft legacy usage notices
+  const legacyNotices = [];
+  if (fileKeys.has('VITE_API_BASE_URL') && !fileKeys.has('VITE_API_URL')) legacyNotices.push('Legacy VITE_API_BASE_URL used without VITE_API_URL (prefer VITE_API_URL).');
+  if (fileKeys.has('VITE_AI_CHAT_ENDPOINT') && !fileKeys.has('VITE_AI_COACH_ENDPOINT')) legacyNotices.push('Legacy VITE_AI_CHAT_ENDPOINT present (prefer VITE_AI_COACH_ENDPOINT).');
+  if (legacyNotices.length) {
+    console.log('[env-validate:legacy]');
+    for (const n of legacyNotices) console.log('- ' + n);
+  }
 }
 
 if (STRICT && issues.length) process.exit(1);

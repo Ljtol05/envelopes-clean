@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AuthScaffold from './AuthScaffold';
 import RegisterScreen from './RegisterScreen';
@@ -9,13 +9,16 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const redirectedRef = useRef(false);
   useEffect(() => {
+    if (redirectedRef.current) return;
     if (!hydrated) return;
     if (!(user || token)) return;
-    // Avoid issuing an extra redirect immediately after registration which already
-    // pushes the user toward verify-email. Double navigations were triggering the
-    // browser's navigation throttling warning.
-    if (location.pathname === '/auth/register' && user && !user.emailVerified) return;
+    if (location.pathname !== '/auth/register') return; // Only auto-redirect off register page itself
+    if (user && !user.emailVerified) return; // stay until email verified
+    const phoneRequired = (import.meta as unknown as { env?: Record<string,string|undefined> }).env?.VITE_REQUIRE_PHONE_VERIFICATION !== 'false';
+    if (phoneRequired && user && !user.phoneVerified) return; // stay until phone verified if required
+    redirectedRef.current = true;
     navigate('/', { replace: true });
   }, [hydrated, user, token, navigate, location.pathname]);
 

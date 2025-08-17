@@ -16,8 +16,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const persistToken = (t: string | null) => {
     if (!t) {
       localStorage.removeItem(TOKEN_KEY);
+  // Maintain compatibility with backend docs / examples referencing 'token'
+  localStorage.removeItem('token');
     } else {
       localStorage.setItem(TOKEN_KEY, t);
+  // Alias key so vanilla fetch examples using localStorage.getItem('token') work
+  localStorage.setItem('token', t);
     }
   };
 
@@ -66,6 +70,27 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     persistToken(null);
   }, []);
 
+  const applyAuth = useCallback((t: string | null, u?: Partial<User> & { emailVerified?: boolean; phoneVerified?: boolean; kycApproved?: boolean }) => {
+    if (t) {
+      persistToken(t);
+      setToken(t);
+    } else {
+      persistToken(null);
+      setToken(null);
+    }
+    if (u) {
+      const coerced: User & { emailVerified?: boolean; phoneVerified?: boolean; kycApproved?: boolean } = {
+        id: typeof u.id === 'number' ? u.id : Number(u?.id) || 0,
+        name: u.name || (u.email ? u.email.split('@')[0] : 'user'),
+        email: u.email || 'unknown',
+        emailVerified: u.emailVerified,
+        phoneVerified: u.phoneVerified,
+        kycApproved: (u as { kycApproved?: boolean }).kycApproved,
+      };
+      setUser(coerced);
+    }
+  }, []);
+
   useEffect(() => {
     // restore token and hydrate user
     const t = localStorage.getItem(TOKEN_KEY);
@@ -97,7 +122,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       .finally(() => setHydrated(true));
   }, []);
 
-  const value = useMemo<AuthState>(() => ({ user, token, login: doLogin, register: doRegister, logout, hydrated }), [user, token, doLogin, doRegister, logout, hydrated]);
+  const value = useMemo<AuthState>(() => ({ user, token, login: doLogin, register: doRegister, logout, hydrated, applyAuth }), [user, token, doLogin, doRegister, logout, hydrated, applyAuth]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

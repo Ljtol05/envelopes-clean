@@ -1,5 +1,6 @@
 /* Authentication + health service wrappers */
 import apiClient, { API_BASE_URL } from '../config/api';
+import { ENDPOINTS } from '../config/endpoints';
 
 export interface RegisterRequest {
   name: string;
@@ -29,7 +30,7 @@ export interface HealthResponse {
   status: string;
 }
 
-const AUTH_PREFIX = '/api/auth';
+// All auth endpoints now sourced from ENDPOINTS; legacy AUTH_PREFIX removed.
 
 export async function register(data: RegisterRequest) {
   try {
@@ -37,7 +38,7 @@ export async function register(data: RegisterRequest) {
       // Lightweight dev diagnostics (avoid leaking password contents fully)
       console.debug('[auth.register] payload', { ...data, password: data.password ? '***len:' + data.password.length : '' }, 'base', API_BASE_URL);
     }
-    const res = await apiClient.post<RegisterResponse>(`${AUTH_PREFIX}/register`, data);
+  const res = await apiClient.post<RegisterResponse>(ENDPOINTS.register, data);
     return res.data;
   } catch (err) {
     // Surface server validation details
@@ -55,7 +56,7 @@ export async function register(data: RegisterRequest) {
 }
 
 export async function login(data: LoginRequest) {
-  const res = await apiClient.post<LoginResponse>(`${AUTH_PREFIX}/login`, data);
+  const res = await apiClient.post<LoginResponse>(ENDPOINTS.login, data);
   return res.data;
 }
 
@@ -73,32 +74,48 @@ export interface MeResponse {
 }
 
 export async function getMe() {
-  const res = await apiClient.get<MeResponse>(`${AUTH_PREFIX}/me`);
+  const res = await apiClient.get<MeResponse>(ENDPOINTS.me);
   return res.data;
 }
 
-export async function verifyEmail(email: string, code: string) {
-  // Backend expects both email + code in payload
-  const res = await apiClient.post<{ ok: boolean }>(`${AUTH_PREFIX}/verify-email`, { email, code });
+export interface VerifyEmailResponse {
+  ok?: boolean; // legacy
+  message?: string;
+  token?: string;
+  nextStep?: VerificationStep;
+  verificationStep?: VerificationStep; // some backends echo current stage
+  user?: { id: string | number; email: string; name?: string; emailVerified?: boolean; phoneVerified?: boolean; kycApproved?: boolean };
+}
+export async function verifyEmail(email: string, code: string): Promise<VerifyEmailResponse> {
+  const res = await apiClient.post<VerifyEmailResponse>(ENDPOINTS.verifyEmail, { email, code });
   return res.data;
 }
 
 export async function resendVerification(email: string) {
-  const res = await apiClient.post<{ ok: boolean }>(`${AUTH_PREFIX}/resend-verification`, { email });
+  const res = await apiClient.post<{ ok: boolean }>(ENDPOINTS.resendEmail, { email });
   return res.data;
 }
 
 // Optional phone verification (stubs; backend must implement)
 export async function startPhoneVerification(phone: string) {
-  const res = await apiClient.post<{ ok: boolean }>(`${AUTH_PREFIX}/start-phone-verification`, { phone });
+  const res = await apiClient.post<{ ok: boolean }>(ENDPOINTS.startPhone, { phone });
   return res.data;
 }
-export async function verifyPhone(phone: string, code: string) {
-  const res = await apiClient.post<{ ok: boolean }>(`${AUTH_PREFIX}/verify-phone`, { phone, code });
+
+export interface VerifyPhoneResponse {
+  ok?: boolean; // legacy simple shape
+  message?: string;
+  token?: string; // backend may return fresh JWT after phone verification
+  nextStep?: VerificationStep;
+  verificationStep?: VerificationStep;
+  user?: { id: string | number; email: string; name?: string; emailVerified?: boolean; phoneVerified?: boolean; kycApproved?: boolean };
+}
+export async function verifyPhone(phone: string, code: string): Promise<VerifyPhoneResponse> {
+  const res = await apiClient.post<VerifyPhoneResponse>(ENDPOINTS.verifyPhone, { phone, code });
   return res.data;
 }
 export async function resendPhoneVerification(phone: string) {
-  const res = await apiClient.post<{ ok: boolean }>(`${AUTH_PREFIX}/resend-phone-code`, { phone });
+  const res = await apiClient.post<{ ok: boolean }>(ENDPOINTS.resendPhone, { phone });
   return res.data;
 }
 

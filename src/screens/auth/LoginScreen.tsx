@@ -34,6 +34,7 @@ export default function LoginScreen() {
   const { verificationStep, nextStep } = await login(vals.email, vals.password);
       toast.success("Welcome back!");
       // Decide next route from backend-provided step for progressive verification
+  // Derive step; if backend omitted fields, infer from stored user record in localStorage refresh via guards later.
   const step = nextStep || verificationStep;
   if (step === 'email') navigate('/auth/verify-email', { replace: true });
   else if (step === 'phone') navigate('/auth/verify-phone', { replace: true });

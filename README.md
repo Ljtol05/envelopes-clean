@@ -23,6 +23,7 @@ Modern budgeting / envelopes UI built with React 19, Vite 7, TypeScript 5, Tailw
 	* [Real-time Events](#real-time-events)
 13. [GitHub Notes](#github-notes)
 14. [Environment & API Diagnostics](#environment--api-diagnostics)
+15. [Endpoint Diagnostics Panel](#endpoint-diagnostics-panel)
 
 ## Key Features
 * Semantic theming system (`--owl-*`) with enforced contrast & accent foreground pairing
@@ -50,6 +51,7 @@ Centralized reference for all frontend runtime variables. Defined in `.env.examp
 | VITE_API_URL | Prod* | Canonical backend base URL (e.g. `https://envelopes-backend.ashb786.repl.co/api`). Optional in dev (falls back to `http://localhost:5000`). |
 | VITE_API_BASE_URL | Legacy | Deprecated alias (only read if `VITE_API_URL` unset). Will be removed in a future release. |
 | VITE_EVENTS_URL | No | SSE events stream URL (defaults to `${VITE_API_URL || VITE_API_BASE_URL}/events` if unset). |
+| VITE_*_ENDPOINT (auth/core/AI overrides) | No | Optional fine-grained endpoint path overrides (see below). Use rarely—prefer backend defaults. |
 
 ### Developer / Convenience
 | Variable | Required | Purpose |
@@ -80,6 +82,29 @@ VITE_API_URL=https://envelopes-backend.ashb786.repl.co/api
 VITE_REPLIT_USER_ID=123
 VITE_REPLIT_USER_NAME=Dev User
 # VITE_DEV_BYPASS_AUTH=true
+
+# (Optional) Individual endpoint overrides (defaults shown). Uncomment to customize only if backend path differs.
+# VITE_REGISTER_ENDPOINT=/api/auth/register
+# VITE_LOGIN_ENDPOINT=/api/auth/login
+# VITE_VERIFY_EMAIL_ENDPOINT=/api/auth/verify-email
+# VITE_RESEND_EMAIL_ENDPOINT=/api/auth/resend-verification
+# VITE_START_PHONE_VERIFICATION_ENDPOINT=/api/auth/start-phone-verification
+# VITE_VERIFY_PHONE_ENDPOINT=/api/auth/verify-phone
+# VITE_RESEND_PHONE_ENDPOINT=/api/auth/resend-phone-code
+# VITE_ME_ENDPOINT=/api/auth/me
+# VITE_START_KYC_ENDPOINT=/api/kyc/start
+# VITE_KYC_STATUS_ENDPOINT=/api/kyc/status
+# VITE_ENVELOPES_ENDPOINT=/api/envelopes
+# VITE_TRANSACTIONS_ENDPOINT=/api/transactions
+# VITE_TRANSFERS_ENDPOINT=/api/transfers
+# VITE_CARDS_ENDPOINT=/api/cards
+# VITE_RULES_ENDPOINT=/api/rules
+# VITE_EVENTS_ENDPOINT=/api/events
+# VITE_AI_COACH_ENDPOINT=/api/ai/coach
+# (Legacy alias accepted: VITE_AI_CHAT_ENDPOINT)
+# VITE_AI_SETUP_ENDPOINT=/api/ai/setup-envelopes
+# VITE_AI_EXECUTE_ENDPOINT=/api/ai/execute-action
+# VITE_AI_EXPLAIN_ROUTING_ENDPOINT=/api/ai/explain-routing
 ```
 
 ### Validation Notes
@@ -121,9 +146,40 @@ Guard Fails If (examples):
 Rationale: Ensures deterministic tooling; avoids accidental divergence when experimenting with ESM vs CJS or multiple config variants.
 
 ## Auth & Routing
-* `ProtectedRoute` checks for an auth token (and optionally explicit `VITE_DEV_BYPASS_AUTH=true`).
-* Dev bypass is opt-in to avoid accidental unsecured sessions.
-* After registration the user is redirected into AI onboarding flow.
+Progressive verification pipeline (frontend enforced):
+1. Email verification (must succeed first)
+2. Phone verification (required by default – can be disabled via env)
+3. KYC identity verification
+4. Full app / AI features
+
+Guards:
+* `VerificationGuard` + `OnboardingRedirect` orchestrate required step redirects.
+* `PHONE_VERIFICATION_REQUIRED` constant (in `src/lib/onboarding.ts`) defaults to `true` unless `VITE_REQUIRE_PHONE_VERIFICATION="false"` is explicitly set (string literal false).
+* Setting `VITE_REQUIRE_PHONE_VERIFICATION=false` (in `.env`) collapses flow to Email -> KYC.
+
+Backend-driven step routing:
+* Auth endpoints (`/login`, `/verify-email`, `/verify-phone`) can return two optional fields: `verificationStep` (current achieved stage) and `nextStep` (explicit required next action).
+* A small helper `nextRouteFromSteps(nextStep, verificationStep)` (see `src/lib/authRouting.ts`) normalizes these into the client route.
+* Priority: `nextStep` if present, otherwise `verificationStep`; unknown/omitted values default to `/auth/kyc` as a safe gate; `complete` maps to `/home`.
+
+Token & user propagation:
+* Both email and phone verification endpoints may return a `token` and/or updated `user` object. The pages call a shared `applyAuth` helper (AuthContext) to persist the token (localStorage `auth_token`).
+* For compatibility with backend docs / external snippets, the token is also mirrored under a generic `token` key. The Axios interceptor looks up `auth_token` first, then falls back to `token` so either storage key works for `Authorization: Bearer <token>`.
+* Interceptor validated in `src/__tests__/apiInterceptor.test.ts` (ensures header injected, no Authorization when missing).
+
+Throttling / multiple navigation prevention:
+* Login / Register pages use a `useRef` latch (`redirectedRef`) so redirect side-effects only fire once after hydration and verification conditions are satisfied.
+* `PhoneVerificationPage` and `OnboardingRedirect` also guard repeated `navigate` calls with a ref to avoid React Router's "navigation throttled" warnings.
+* If you add new onboarding steps, follow the same pattern: compute target route, check a ref flag, then navigate inside an effect.
+
+KYC status:
+* After earlier steps the app queries `/api/kyc/status`; non-approved status routes user to `/auth/kyc` until approved (`approved` then unlocks `/home`).
+
+Dev bypass:
+* `ProtectedRoute` respects `VITE_DEV_BYPASS_AUTH=true` (opt-in) for local iteration without performing the verification flow.
+
+Endpoint resolution:
+* All auth, KYC, core resource, realtime events, and AI feature paths funnel through `src/config/endpoints.ts` which maps optional per-endpoint `VITE_*` overrides to defaults. Legacy alias `VITE_AI_CHAT_ENDPOINT` still maps to the coach endpoint if `VITE_AI_COACH_ENDPOINT` is unset.
 
 ## Theming & Branding
 Semantic CSS variables (`--owl-*`) define color tokens for light & dark modes. Theme preference stored in `localStorage` (`owl-theme`) and synced across tabs. Accent usage rules and contrast are automatically audited.
@@ -219,6 +275,34 @@ Dependabot weekly updates (npm + Actions). Major React updates ignored for manua
 
 ---
 Keep this README current whenever scripts, env vars, or guard rules change.
+
+## Endpoint Diagnostics Panel
+The optional floating panel that enumerates all resolved endpoint paths is useful for quickly verifying per-endpoint overrides and spotting legacy env usage.
+
+Enable it by setting in your `.env`:
+```
+VITE_SHOW_ENDPOINT_DIAGNOSTICS=true
+```
+Then restart `npm run dev`. A small "Endpoints ▼" button appears bottom-left:
+
+* Toggle open to view each endpoint key (e.g. `login`, `aiCoach`) with its resolved path.
+* The Env Source column shows the specific `VITE_*_ENDPOINT` variable used if you overrode the default.
+* Legacy notices appear in amber if you're still relying on deprecated aliases (e.g. `VITE_API_BASE_URL`, `VITE_AI_CHAT_ENDPOINT`).
+
+### When to Use
+* Backend changed a route and you added a temporary override – confirm it's picked up.
+* Debugging a 404 – ensure the path matches what the backend expects.
+* Auditing cleanup – remove per-endpoint overrides once backend matches defaults (panel should then show blank Env Source values).
+
+### Acting on Warnings / Errors
+| Panel Message | Action |
+|---------------|--------|
+| `Legacy VITE_API_BASE_URL in use` | Rename variable to `VITE_API_URL` and remove the legacy one. |
+| `Legacy VITE_AI_CHAT_ENDPOINT in use` | Replace with `VITE_AI_COACH_ENDPOINT`. |
+| Unexpected path (you didn't set an override) | Search your `.env` for a stray `VITE_*_ENDPOINT` or inspect build-time replacement (restart dev server). |
+| 404 responses despite correct path | Check backend deployment base URL / health; verify leading `/api` consistency. |
+
+Disable the panel by setting `VITE_SHOW_ENDPOINT_DIAGNOSTICS=false` (default) or omitting the variable (production builds should keep it disabled). The component is gated at runtime and tree-shaken from prod bundles when the flag is false.
 
 ## Backend API Reference (envelopes-backend)
 The deployed Replit backend (name: `envelopes-backend`, username: `ashb786`) exposes the following REST endpoints. Base URL examples:

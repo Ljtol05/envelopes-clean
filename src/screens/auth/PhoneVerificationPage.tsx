@@ -5,14 +5,15 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/ca
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Button } from '../../components/ui/button';
-import { startPhoneVerification, verifyPhone, resendPhoneVerification, getMe } from '../../services/auth';
+import { startPhoneVerification, verifyPhone, resendPhoneVerification, getMe, type VerifyPhoneResponse } from '../../services/auth';
+import { nextRouteFromSteps } from '../../lib/authRouting';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/useAuth';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { PHONE_VERIFICATION_REQUIRED } from '../../lib/onboarding';
 
 export default function PhoneVerificationPage() {
-  const { user } = useAuth(); // may contain existing phone flags
+  const { user, applyAuth } = useAuth(); // may contain existing phone flags
   const navigate = useNavigate();
   const location = useLocation();
   const requirePhone = PHONE_VERIFICATION_REQUIRED;
@@ -55,10 +56,20 @@ export default function PhoneVerificationPage() {
     if (!code.trim()) return;
     setLoading(true);
     try {
-  await verifyPhone(phone.trim(), code.trim());
+  const resp: VerifyPhoneResponse = await verifyPhone(phone.trim(), code.trim());
+  if (resp.token || resp.user) {
+    const u = resp.user;
+    if (u) {
+      const coerced = { ...u, id: typeof u.id === 'number' ? u.id : Number(u.id) || undefined } as { id?: number; email: string; name?: string; emailVerified?: boolean; phoneVerified?: boolean; kycApproved?: boolean };
+      try { applyAuth?.(resp.token || null, coerced); } catch { /* ignore */ }
+    } else if (resp.token) {
+      try { applyAuth?.(resp.token || null); } catch { /* ignore */ }
+    }
+  }
   toast.success('Phone verified');
   try { await getMe(); } catch { /* ignore refresh errors */ }
-  navigate('/auth/kyc', { replace: true });
+  const target = nextRouteFromSteps(resp.nextStep, resp.verificationStep);
+  navigate(target, { replace: true });
     } catch (err) {
       toast.error((err as Error).message || 'Verification failed');
     } finally { setLoading(false); }
