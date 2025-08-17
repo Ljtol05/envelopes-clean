@@ -67,15 +67,27 @@ export default function VerifyEmailPage() {
     }
   }
 
-  const verified = !!(user?.emailVerified || user?.phoneVerified);
-  if (verified) {
+  const emailVerified = !!user?.emailVerified;
+  const phoneVerified = !!user?.phoneVerified;
+  const phoneRequired = isPhoneRequired();
+  if (emailVerified) {
+    // Decide the immediate next required step.
+    const needsPhoneFirst = phoneRequired && !phoneVerified;
+    const buttonLabel = needsPhoneFirst ? 'Continue to phone verification' : 'Continue to KYC';
+    const buttonTarget = needsPhoneFirst ? '/auth/verify-phone' : '/auth/kyc';
+    const body = needsPhoneFirst
+      ? 'Proceed to phone verification to finish onboarding.'
+      : 'Proceed to identity verification to finish onboarding.';
     return (
-      <AuthScaffold subtitle="You're verified">
+      <AuthScaffold subtitle={needsPhoneFirst ? 'Email verified' : "You're verified"}>
         <Card className="w-full max-w-md mx-auto bg-[color:var(--owl-surface)] shadow-[var(--owl-shadow-md)] border border-[color:var(--owl-border)]">
           <CardHeader><CardTitle>Email Verified</CardTitle></CardHeader>
           <CardContent>
-            <p className="text-sm mb-4">Proceed to identity verification to finish onboarding.</p>
-            <Button onClick={()=>navigate('/auth/kyc',{replace:true})} className="w-full">Continue to KYC</Button>
+            <p className="text-sm mb-4">{body}</p>
+            <Button onClick={()=>navigate(buttonTarget,{replace:true})} className="w-full">{buttonLabel}</Button>
+            {needsPhoneFirst && (
+              <button type="button" onClick={()=>navigate('/auth/register')} className="block w-full text-center text-xs text-[color:var(--owl-text-secondary)] hover:underline mt-3">Back to registration</button>
+            )}
           </CardContent>
         </Card>
       </AuthScaffold>
