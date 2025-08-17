@@ -167,6 +167,38 @@ Token & user propagation:
 * For compatibility with backend docs / external snippets, the token is also mirrored under a generic `token` key. The Axios interceptor looks up `auth_token` first, then falls back to `token` so either storage key works for `Authorization: Bearer <token>`.
 * Interceptor validated in `src/__tests__/apiInterceptor.test.ts` (ensures header injected, no Authorization when missing).
 
+### Phone Verification & Twilio Formatting
+
+Phone numbers entered by users are normalized client-side to E.164 (Twilio‑friendly) format before hitting:
+* `POST /api/auth/start-phone-verification`
+* `POST /api/auth/verify-phone`
+* `POST /api/auth/resend-phone-code`
+
+Utility: `src/lib/phone.ts`
+* `formatPhoneE164(raw)` – strips formatting characters. If input starts with `+`, keeps plus and digits only. If exactly 10 digits (assumed US/CA) prefixes `+1`. Length 11–15 digits becomes `+<digits>`. Otherwise returns `null`.
+* `isLikelyE164(phone)` – regex validation `^\+[1-9]\d{9,14}$`.
+
+Service payloads now send both `phone` and `phoneNumber` keys for backend compatibility.
+
+Examples (accepted → sent to backend):
+```
+"(689) 224-3543"   -> +16892243543
+"6892243543"       -> +16892243543
+"+1 689 224 3543"  -> +16892243543
+"+442071234567"    -> +442071234567
+```
+Invalid / rejected (display error):
+```
+"12345"            // too short
+"+000123456789"    // invalid country code pattern
+```
+
+Tests:
+* `phoneUtil.test.ts` – unit coverage for formatter & validator.
+* `PhoneVerificationFlow.test.tsx` – asserts normalized `+16892243543` is passed when user types various raw US formats.
+
+Future enhancement: adopt `libphonenumber-js` for full international parsing and dynamic default country selection.
+
 Throttling / multiple navigation prevention:
 * Login / Register pages use a `useRef` latch (`redirectedRef`) so redirect side-effects only fire once after hydration and verification conditions are satisfied.
 * `PhoneVerificationPage` and `OnboardingRedirect` also guard repeated `navigate` calls with a ref to avoid React Router's "navigation throttled" warnings.

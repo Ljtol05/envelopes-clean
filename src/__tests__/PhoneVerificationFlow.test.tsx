@@ -89,6 +89,42 @@ describe('Phone Verification Flow', () => {
     await waitFor(() => expect(resendPhoneVerification).toHaveBeenCalledWith('+14444444444'));
   });
 
+  test('formats various US inputs to E.164 before sending', async () => {
+    const user = userEvent.setup();
+    render(
+      <Provider>
+        <MemoryRouter initialEntries={['/auth/verify-phone']}>
+          <Routes>
+            <Route path="/auth/verify-phone" element={<PhoneVerificationPage />} />
+            <Route path="/auth/kyc" element={<div>KYC Page</div>} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+    const phoneInput = await screen.findByLabelText(/phone number/i);
+    await user.type(phoneInput, '(689) 224-3543');
+    await user.click(screen.getByRole('button', { name: /send code/i }));
+    await waitFor(() => expect(startPhoneVerification).toHaveBeenCalledWith('+16892243543'));
+  });
+
+  test('adds +1 for 10 digit unformatted input', async () => {
+    const user = userEvent.setup();
+    render(
+      <Provider>
+        <MemoryRouter initialEntries={['/auth/verify-phone']}>
+          <Routes>
+            <Route path="/auth/verify-phone" element={<PhoneVerificationPage />} />
+            <Route path="/auth/kyc" element={<div>KYC Page</div>} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+    const phoneInput = await screen.findByLabelText(/phone number/i);
+    await user.type(phoneInput, '6892243543');
+    await user.click(screen.getByRole('button', { name: /send code/i }));
+    await waitFor(() => expect(startPhoneVerification).toHaveBeenCalledWith('+16892243543'));
+  });
+
   test('VerificationGuard redirects to /auth/verify-phone when phone not verified', async () => {
     const LocationDisplay = () => { const loc = useLocation(); return <div data-testid="loc">{loc.pathname}</div>; };
     render(

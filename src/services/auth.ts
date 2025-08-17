@@ -98,7 +98,7 @@ export async function resendVerification(email: string) {
 
 // Optional phone verification (stubs; backend must implement)
 export async function startPhoneVerification(phone: string) {
-  const res = await apiClient.post<{ ok: boolean }>(ENDPOINTS.startPhone, { phone });
+  const res = await apiClient.post<{ ok: boolean }>(ENDPOINTS.startPhone, { phone, phoneNumber: phone });
   return res.data;
 }
 
@@ -111,11 +111,11 @@ export interface VerifyPhoneResponse {
   user?: { id: string | number; email: string; name?: string; emailVerified?: boolean; phoneVerified?: boolean; kycApproved?: boolean };
 }
 export async function verifyPhone(phone: string, code: string): Promise<VerifyPhoneResponse> {
-  const res = await apiClient.post<VerifyPhoneResponse>(ENDPOINTS.verifyPhone, { phone, code });
+  const res = await apiClient.post<VerifyPhoneResponse>(ENDPOINTS.verifyPhone, { phone, phoneNumber: phone, code });
   return res.data;
 }
 export async function resendPhoneVerification(phone: string) {
-  const res = await apiClient.post<{ ok: boolean }>(ENDPOINTS.resendPhone, { phone });
+  const res = await apiClient.post<{ ok: boolean }>(ENDPOINTS.resendPhone, { phone, phoneNumber: phone });
   return res.data;
 }
 

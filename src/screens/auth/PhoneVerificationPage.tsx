@@ -6,6 +6,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Button } from '../../components/ui/button';
 import { startPhoneVerification, verifyPhone, resendPhoneVerification, getMe, type VerifyPhoneResponse } from '../../services/auth';
+import { formatPhoneE164, isLikelyE164 } from '../../lib/phone';
 import { nextRouteFromSteps } from '../../lib/authRouting';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/useAuth';
@@ -33,17 +34,31 @@ export default function PhoneVerificationPage() {
       }
     }
   }, [requirePhone, user?.phoneVerified, navigate, location]);
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(''); // raw user input (may include spaces, dashes, parentheses)
+  const [normalizedPhone, setNormalizedPhone] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'enter'|'code'>('enter');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function computeNormalized(): string | null {
+    const norm = formatPhoneE164(phone);
+    return norm;
+  }
 
   async function start(e: React.FormEvent) {
     e.preventDefault();
     if (!phone.trim()) return;
+    const norm = computeNormalized();
+    if (!norm) {
+      setError('Enter a valid international number (e.g. +16892243543)');
+      return;
+    }
+    setError(null);
     setLoading(true);
     try {
-      await startPhoneVerification(phone.trim());
+      await startPhoneVerification(norm);
+      setNormalizedPhone(norm);
       toast.success('Code sent');
       setStep('code');
     } catch (err) {
@@ -54,9 +69,14 @@ export default function PhoneVerificationPage() {
   async function submitCode(e: React.FormEvent) {
     e.preventDefault();
     if (!code.trim()) return;
+    const norm = normalizedPhone || computeNormalized();
+    if (!norm || !isLikelyE164(norm)) {
+      setError('Phone format invalid');
+      return;
+    }
     setLoading(true);
     try {
-  const resp: VerifyPhoneResponse = await verifyPhone(phone.trim(), code.trim());
+  const resp: VerifyPhoneResponse = await verifyPhone(norm, code.trim());
   if (resp.token || resp.user) {
     const u = resp.user;
     if (u) {
@@ -77,7 +97,12 @@ export default function PhoneVerificationPage() {
 
   async function resend() {
     try {
-      await resendPhoneVerification(phone.trim());
+      const norm = normalizedPhone || computeNormalized();
+      if (!norm) {
+        setError('Phone format invalid');
+        return;
+      }
+      await resendPhoneVerification(norm);
       toast.success('Code resent');
     } catch (err) {
       toast.error((err as Error).message || 'Resend failed');
@@ -93,7 +118,8 @@ export default function PhoneVerificationPage() {
             <form onSubmit={start} className="space-y-4">
               <div>
                 <Label htmlFor="phone">Phone number</Label>
-                <Input id="phone" placeholder="+1 555 555 5555" value={phone} onChange={e=>setPhone(e.target.value)} />
+                <Input id="phone" placeholder="+16892243543" value={phone} onChange={e=>setPhone(e.target.value)} />
+                {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
               </div>
               <Button type="submit" disabled={loading}>{loading ? 'Sending…' : 'Send code'}</Button>
         <Link to="/auth/verify-email" className="block text-center text-xs text-[color:var(--owl-text-secondary)] hover:underline">Back to email verification</Link>
@@ -101,7 +127,7 @@ export default function PhoneVerificationPage() {
           )}
           {step === 'code' && (
             <form onSubmit={submitCode} className="space-y-4">
-              <p className="text-xs text-[color:var(--owl-text-secondary)]">We sent a code to {phone}</p>
+              <p className="text-xs text-[color:var(--owl-text-secondary)]">We sent a code to {normalizedPhone || phone}</p>
               <div>
                 <Label htmlFor="code">Code</Label>
                 <Input id="code" value={code} onChange={e=>setCode(e.target.value)} />
