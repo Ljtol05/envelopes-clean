@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { useKyc } from '../../hooks/useKyc';
+import { useAuth } from '../../context/useAuth';
 import type { KycFormData } from '../../types/kyc';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
@@ -28,10 +29,11 @@ export default function KycScreen() {
   // Disable automatic polling during tests by respecting env flag; prod keeps defaults.
   const isTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
   const { status, error, submitting, submitKyc, reset, refresh } = useKyc(isTest ? { autoPoll: false } : undefined);
+  const { user } = useAuth();
   const navigate = useNavigate();
   const from = '/home';
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       legalFirstName: '',
@@ -45,6 +47,47 @@ export default function KycScreen() {
       postalCode: '',
     },
   });
+
+  // Prefill name from user.name (split on first space) once on mount.
+  React.useEffect(() => {
+    if (user?.name) {
+      const firstCurrent = (watch('legalFirstName') as string) || '';
+      const lastCurrent = (watch('legalLastName') as string) || '';
+      if (!firstCurrent && !lastCurrent) {
+        const parts = user.name.trim().split(/\s+/);
+        if (parts[0]) setValue('legalFirstName', parts[0]);
+        if (parts.length > 1) setValue('legalLastName', parts.slice(1).join(' '));
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.name]);
+
+  // Dynamic DOB formatting: allow typing digits or separators; auto-insert dashes YYYY-MM-DD.
+  const dobVal = watch('dob');
+  function handleDobChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value.replace(/[^0-9]/g,'').slice(0,8); // YYYYMMDD digits only
+    let formatted = raw;
+    if (raw.length > 4) formatted = raw.slice(0,4) + '-' + raw.slice(4);
+    if (raw.length > 6) formatted = raw.slice(0,4) + '-' + raw.slice(4,6) + '-' + raw.slice(6);
+    setValue('dob', formatted);
+  }
+
+  // Simple ZIP -> city/state lookup (placeholder). Real impl should call an address API.
+  const zipVal = watch('postalCode');
+  React.useEffect(() => {
+    if (zipVal && zipVal.length === 5) {
+      // Minimal demo mapping (extend or replace with fetch to external service)
+      const stub: Record<string, { city: string; state: string }> = {
+        '30301': { city: 'Atlanta', state: 'GA' },
+        '37013': { city: 'Antioch', state: 'TN' },
+      };
+      const hit = stub[zipVal];
+      if (hit) {
+        setValue('city', hit.city, { shouldDirty: true });
+        setValue('state', hit.state, { shouldDirty: true });
+      }
+    }
+  }, [zipVal, setValue]);
 
   const onSubmit = handleSubmit(async (values: Record<string, unknown>) => {
     await submitKyc(values as unknown as KycFormData);
@@ -60,7 +103,7 @@ export default function KycScreen() {
   }, [status?.status, navigate, from]);
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
+  <div className="p-4 max-w-xl mx-auto">
       <Card className="bg-[color:var(--owl-surface)] border border-[color:var(--owl-border)] shadow-[var(--owl-shadow-md)]">
         <CardHeader>
           <CardTitle>Identity Verification</CardTitle>
@@ -82,17 +125,17 @@ export default function KycScreen() {
             <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="legalFirstName">First name</Label>
-                <Input id="legalFirstName" aria-invalid={errors.legalFirstName ? 'true' : undefined} aria-describedby={errors.legalFirstName ? 'legalFirstName-error' : undefined} {...register('legalFirstName')} />
+                <Input id="legalFirstName" aria-invalid={errors.legalFirstName ? 'true' : undefined} aria-describedby={errors.legalFirstName ? 'legalFirstName-error' : undefined} {...register('legalFirstName')} onFocus={e=>e.target.select()} />
                 {errors.legalFirstName && (<p id="legalFirstName-error" className="text-xs text-red-500">{errors.legalFirstName.message}</p>)}
               </div>
               <div>
                 <Label htmlFor="legalLastName">Last name</Label>
-                <Input id="legalLastName" aria-invalid={errors.legalLastName ? 'true' : undefined} aria-describedby={errors.legalLastName ? 'legalLastName-error' : undefined} {...register('legalLastName')} />
+                <Input id="legalLastName" aria-invalid={errors.legalLastName ? 'true' : undefined} aria-describedby={errors.legalLastName ? 'legalLastName-error' : undefined} {...register('legalLastName')} onFocus={e=>e.target.select()} />
                 {errors.legalLastName && (<p id="legalLastName-error" className="text-xs text-red-500">{errors.legalLastName.message}</p>)}
               </div>
               <div>
                 <Label htmlFor="dob">Date of birth</Label>
-                <Input id="dob" placeholder="YYYY-MM-DD" aria-invalid={errors.dob ? 'true' : undefined} aria-describedby={errors.dob ? 'dob-error' : undefined} {...register('dob')} />
+                <Input id="dob" placeholder="YYYY-MM-DD" value={dobVal} onChange={handleDobChange} aria-invalid={errors.dob ? 'true' : undefined} aria-describedby={errors.dob ? 'dob-error' : undefined} />
                 {errors.dob && (<p id="dob-error" className="text-xs text-red-500">{errors.dob.message}</p>)}
               </div>
               <div>

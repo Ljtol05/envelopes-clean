@@ -130,7 +130,7 @@ export default function PhoneVerificationPage() {
                         <SelectTrigger aria-label="Country" size="sm">
                           <SelectValue placeholder="Country" />
                         </SelectTrigger>
-                        <SelectContent className="max-h-64">
+                        <SelectContent className="max-h-64 bg-[color:var(--owl-popover-bg)]">
                           {countriesRef.current.slice(0,40).map(c => (
                             <SelectItem key={c.code} value={c.code}>{c.flag} +{c.callingCode} {c.name}</SelectItem>
                           ))}

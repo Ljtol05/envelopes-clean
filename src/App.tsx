@@ -54,19 +54,19 @@ function AppLayout() {
     navigate(`/${tab}`);
   };
 
+  const hideChrome = location.pathname.startsWith('/auth/kyc');
   return (
     <div className="min-h-dvh bg-[color:var(--owl-bg)] text-[color:var(--owl-text-primary)]">
-  <TopAppBar />
-
-  <main className="pb-20 bg-[color:var(--owl-bg)] text-[color:var(--owl-text-primary)]">
+      {!hideChrome && <TopAppBar />}
+      <main className={hideChrome ? 'bg-[color:var(--owl-bg)] text-[color:var(--owl-text-primary)]' : 'pb-20 bg-[color:var(--owl-bg)] text-[color:var(--owl-text-primary)]'}>
         <Outlet />
       </main>
-
-      <BottomNavigation
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
-
+      {!hideChrome && (
+        <BottomNavigation
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+        />
+      )}
       <Toaster richColors position="top-center" />
     </div>
   );
