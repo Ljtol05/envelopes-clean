@@ -38,6 +38,8 @@ export const ENDPOINTS = {
   startPhone: norm(pick('VITE_START_PHONE_VERIFICATION_ENDPOINT') || '/api/auth/start-phone-verification'),
   verifyPhone: norm(pick('VITE_VERIFY_PHONE_ENDPOINT') || '/api/auth/verify-phone'),
   resendPhone: norm(pick('VITE_RESEND_PHONE_ENDPOINT') || '/api/auth/resend-phone-code'),
+  forgotPassword: norm(pick('VITE_FORGOT_PASSWORD_ENDPOINT') || '/api/auth/forgot-password'),
+  resetPassword: norm(pick('VITE_RESET_PASSWORD_ENDPOINT') || '/api/auth/reset-password'),
   me: norm(pick('VITE_ME_ENDPOINT') || '/api/auth/me'),
   kycStart: norm(pick('VITE_START_KYC_ENDPOINT') || '/api/kyc/start'),
   kycStatus: norm(pick('VITE_KYC_STATUS_ENDPOINT') || '/api/kyc/status'),

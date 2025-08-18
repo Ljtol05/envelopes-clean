@@ -11,6 +11,8 @@ describe('ENDPOINTS config', () => {
     expect(ENDPOINTS.startPhone).toBe('/api/auth/start-phone-verification');
     expect(ENDPOINTS.verifyPhone).toBe('/api/auth/verify-phone');
     expect(ENDPOINTS.resendPhone).toBe('/api/auth/resend-phone-code');
+  expect(ENDPOINTS.forgotPassword).toBe('/api/auth/forgot-password');
+  expect(ENDPOINTS.resetPassword).toBe('/api/auth/reset-password');
     expect(ENDPOINTS.me).toBe('/api/auth/me');
     expect(ENDPOINTS.kycStart).toBe('/api/kyc/start');
   expect(ENDPOINTS.kycStatus).toBe('/api/kyc/status');

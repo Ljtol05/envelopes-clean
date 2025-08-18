@@ -97,6 +97,8 @@ VITE_REPLIT_USER_NAME=Dev User
 # VITE_START_PHONE_VERIFICATION_ENDPOINT=/api/auth/start-phone-verification
 # VITE_VERIFY_PHONE_ENDPOINT=/api/auth/verify-phone
 # VITE_RESEND_PHONE_ENDPOINT=/api/auth/resend-phone-code
+# VITE_FORGOT_PASSWORD_ENDPOINT=/api/auth/forgot-password
+# VITE_RESET_PASSWORD_ENDPOINT=/api/auth/reset-password
 # VITE_ME_ENDPOINT=/api/auth/me
 # VITE_START_KYC_ENDPOINT=/api/kyc/start
 # VITE_KYC_STATUS_ENDPOINT=/api/kyc/status
@@ -236,6 +238,34 @@ Dev bypass:
 
 Endpoint resolution:
 * All auth, KYC, core resource, realtime events, and AI feature paths funnel through `src/config/endpoints.ts` which maps optional per-endpoint `VITE_*` overrides to defaults. Legacy alias `VITE_AI_CHAT_ENDPOINT` still maps to the coach endpoint if `VITE_AI_COACH_ENDPOINT` is unset.
+
+### Forgot & Reset Password
+
+Flow Overview:
+1. User enters their email on the "Forgot Password" screen.
+2. Frontend calls `POST /api/auth/forgot-password` (or overridden `VITE_FORGOT_PASSWORD_ENDPOINT`).
+3. UI always advances to the reset step with a generic success message (prevents email enumeration) regardless of whether the email exists.
+4. User supplies the 6‑digit code received (or tests with a mocked value), a new password, and confirmation.
+5. Frontend calls `POST /api/auth/reset-password` (or overridden `VITE_RESET_PASSWORD_ENDPOINT`) with `{ email, code, newPassword }`.
+6. On success, user sees a completion card and can return to login.
+
+Security / UX Notes:
+* Generic message: The forgot endpoint intentionally normalizes failures to a generic "If an account exists..." response to thwart account enumeration.
+* Error specificity is only shown during the reset step (e.g. invalid / expired code) since the user has already demonstrated knowledge of the email address.
+* No token manipulation: Resetting password does not implicitly log the user in; they must authenticate afterwards.
+* Minimum password length enforced client-side (>= 8 chars) with basic match validation; server should enforce additional complexity / reuse policies.
+
+Environment Overrides:
+* `VITE_FORGOT_PASSWORD_ENDPOINT` (default `/api/auth/forgot-password`)
+* `VITE_RESET_PASSWORD_ENDPOINT` (default `/api/auth/reset-password`)
+
+Testing:
+* `ForgotResetPassword.test.tsx` covers: email submission → reset step, password mismatch guard, successful reset, invalid code error surface.
+* Service wrappers: `forgotPassword()` coerces all errors into a generic message; `resetPassword()` surfaces server-provided error messages (e.g. `Invalid code`).
+
+Server Expectations:
+* Forgot: Accepts `{ email }` and should always return 200 with a uniform message even if the account does not exist.
+* Reset: Accepts `{ email, code, newPassword }` and returns success message or an error with `message` field for display (e.g. invalid / expired code, weak password).
 
 ## Address Autocomplete & KYC UX
 

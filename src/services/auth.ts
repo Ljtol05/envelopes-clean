@@ -119,6 +119,25 @@ export async function resendPhoneVerification(phone: string) {
   return res.data;
 }
 
+// Forgot / Reset password (no auth token required)
+export interface ForgotPasswordResponse { message: string }
+export async function forgotPassword(email: string): Promise<ForgotPasswordResponse> {
+  try {
+    const { data } = await apiClient.post<ForgotPasswordResponse>(ENDPOINTS.forgotPassword, { email });
+    // Do not expose whether email exists; rely on server returning generic message.
+    return data;
+  } catch {
+    // Normalize error shape to generic message (avoid enumeration) while surfacing network issues.
+    return { message: 'If an account exists for that email, a reset code has been sent.' };
+  }
+}
+
+export interface ResetPasswordResponse { message: string }
+export async function resetPassword(email: string, code: string, newPassword: string): Promise<ResetPasswordResponse> {
+  const { data } = await apiClient.post<ResetPasswordResponse>(ENDPOINTS.resetPassword, { email, code, newPassword });
+  return data;
+}
+
 // Helper for diagnostics
 export function getResolvedApiBase(): string {
   return API_BASE_URL;
