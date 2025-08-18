@@ -65,8 +65,9 @@ Centralized reference for all frontend runtime variables. Defined in `.env.examp
 | Variable | Required | Purpose |
 |----------|----------|---------|
 | VITE_NODE_ENV | No | Explicit environment override (mirrors `import.meta.env.MODE`). |
-| VITE_GOOGLE_PLACES_API_KEY | No | Enables Google Places Autocomplete + Place Details enrichment on the KYC form (address autofill). Gracefully optional. |
-| VITE_PLACES_PROXY_BASE | No | Frontend will call this base (e.g. `http://localhost:5055`) instead of Google directly; pair with `npm run places:proxy`. |
+| VITE_PLACES_PROXY_BASE | No | Backend Places service base (include version, e.g. `https://places.example.com/v1`). Preferred over direct key. |
+| VITE_GOOGLE_PLACES_API_KEY | Legacy | Direct Google Places key (only used if no proxy base). |
+| VITE_KYC_WIZARD | No | Multi-step KYC wizard flag (default ENABLED now; set to `false` to fall back to legacy single form). |
 
 ### Example `.env`
 ```env
@@ -86,16 +87,17 @@ VITE_REPLIT_USER_ID=123
 VITE_REPLIT_USER_NAME=Dev User
 # VITE_DEV_BYPASS_AUTH=true
 
-# Optional address autocomplete (Google Places)
-# VITE_GOOGLE_PLACES_API_KEY=YOUR_KEY_HERE
+# Address autocomplete (proxy preferred)
+# VITE_PLACES_PROXY_BASE=https://places.example.com/v1
+# VITE_GOOGLE_PLACES_API_KEY=YOUR_LEGACY_KEY
 
 # (Optional) Individual endpoint overrides (defaults shown). Uncomment to customize only if backend path differs.
 # VITE_REGISTER_ENDPOINT=/api/auth/register
 # VITE_LOGIN_ENDPOINT=/api/auth/login
 # VITE_VERIFY_EMAIL_ENDPOINT=/api/auth/verify-email
 # VITE_RESEND_EMAIL_ENDPOINT=/api/auth/resend-verification
-# VITE_START_PHONE_VERIFICATION_ENDPOINT=/api/auth/start-phone-verification
-# VITE_VERIFY_PHONE_ENDPOINT=/api/auth/verify-phone
+| VITE_PLACES_PROXY_BASE | No | Base URL of backend Places service (include `/v1`). |
+| VITE_GOOGLE_PLACES_API_KEY | (deprecated fallback) | Only used if no proxy base set; direct Google fetch. |
 # VITE_RESEND_PHONE_ENDPOINT=/api/auth/resend-phone-code
 # VITE_FORGOT_PASSWORD_ENDPOINT=/api/auth/forgot-password
 # VITE_RESET_PASSWORD_ENDPOINT=/api/auth/reset-password
@@ -165,16 +167,18 @@ Guards:
 * `PHONE_VERIFICATION_REQUIRED` constant (in `src/lib/onboarding.ts`) defaults to `true` unless `VITE_REQUIRE_PHONE_VERIFICATION="false"` is explicitly set (string literal false).
 * Setting `VITE_REQUIRE_PHONE_VERIFICATION=false` (in `.env`) collapses flow to Email -> KYC.
 
-Backend-driven step routing:
+* `VITE_PLACES_PROXY_BASE` (recommended) – Base URL of backend Places service (include `/v1`).
+* `VITE_GOOGLE_PLACES_API_KEY` (deprecated fallback) – Only used if no proxy base set; direct Google fetch.
 * Auth endpoints (`/login`, `/verify-email`, `/verify-phone`) can return two optional fields: `verificationStep` (current achieved stage) and `nextStep` (explicit required next action).
 * A small helper `nextRouteFromSteps(nextStep, verificationStep)` (see `src/lib/authRouting.ts`) normalizes these into the client route.
-* Priority: `nextStep` if present, otherwise `verificationStep`; unknown/omitted values default to `/auth/kyc` as a safe gate; `complete` maps to `/home`.
-
-Token & user propagation:
-* Both email and phone verification endpoints may return a `token` and/or updated `user` object. The pages call a shared `applyAuth` helper (AuthContext) to persist the token (localStorage `auth_token`).
-* For compatibility with backend docs / external snippets, the token is also mirrored under a generic `token` key. The Axios interceptor looks up `auth_token` first, then falls back to `token` so either storage key works for `Authorization: Bearer <token>`.
-* Interceptor validated in `src/__tests__/apiInterceptor.test.ts` (ensures header injected, no Authorization when missing).
-
+Backend Places Service (Current)
+* Versioned endpoints:
+	* `GET /v1/health`
+	* `GET /v1/places/autocomplete?q=<query>&sessionToken=<token>` → `{ suggestions: [...] }`
+	* `GET /v1/places/details/:placeId?sessionToken=<token>` → `{ details: {...} }`
+* Configure with `VITE_PLACES_PROXY_BASE=https://host:port/v1`.
+* Legacy local script removed in favor of centralized service (rate limiting, logging, rotation).
+* Centralization enables server-side rate limiting, structured logging, key rotation, and future multi-provider abstraction.
 ### Phone Verification & Twilio Formatting
 
 Phone numbers are now parsed & normalized with `libphonenumber-js` for robust international support, then sent in E.164 format (Twilio‑friendly) to:
@@ -278,6 +282,7 @@ Features
 * Capped in‑memory caches for suggestions, place details, and ZIP lookups (size 50 / 100) for snappy UX and quota conservation.
 * Google attribution line required by Maps Platform.
 * Age (18+) validation and DOB auto‑formatter (digits → YYYY-MM-DD) to reduce error friction.
+* Multi-step wizard (default on; disable with `VITE_KYC_WIZARD=false`) breaks the form into guided steps (Name → DOB → SSN → Address → Location → Review) with segmented DOB inputs (MM / DD / YYYY) and per-step validation. Legacy single-form layout retained behind the flag for fallback/testing.
 * First/Last name auto‑prefill from `user.name` when both blank.
 
 Env Variable
@@ -291,7 +296,7 @@ Tests
 * `addressAutocomplete.test.ts` – query guard, parsing & caching, details extraction, non‑destructive merging.
 * `KycFlow.test.tsx` – overall screen integration stays stable.
 
-Why add (and now use) a server proxy?
+Why a dedicated backend Places service?
 1. Hide the real key (harder to abuse even with referrer restrictions).
 2. Central rate limiting + logging, anomaly detection.
 3. Easier rotation & multi‑provider abstraction.

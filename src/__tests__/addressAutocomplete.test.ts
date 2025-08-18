@@ -8,14 +8,14 @@ function mockFetchOnce(body: unknown, ok = true) {
   });
 }
 
-describe('addressAutocomplete', () => {
-  const KEY = 'test-key';
+describe('addressAutocomplete (proxy mode only)', () => {
+  const BASE = 'https://proxy.test/v1';
   beforeEach(() => {
-    (global as unknown as { importMetaEnv: Record<string,string> }).importMetaEnv = { VITE_GOOGLE_PLACES_API_KEY: KEY };
+    (global as unknown as { importMetaEnv: Record<string,string> }).importMetaEnv = { VITE_PLACES_PROXY_BASE: BASE };
     (global as unknown as { fetch?: unknown }).fetch = undefined;
     __addressCaches.suggestionCache.clear();
     __addressCaches.detailsCache.clear();
-  resetPlacesSessionToken();
+    resetPlacesSessionToken();
   });
 
   it('returns [] when query too short', async () => {
@@ -24,7 +24,7 @@ describe('addressAutocomplete', () => {
   });
 
   it('parses suggestions and caches them', async () => {
-    mockFetchOnce({ predictions: [ { place_id: 'p1', description: '123 Main St, Atlanta, GA 30301' } ]});
+    mockFetchOnce({ suggestions: [ { id: 'p1', description: '123 Main St, Atlanta, GA 30301', city: 'Atlanta', state: 'GA', postalCode: '30301' } ]});
     const first = await fetchAddressSuggestions('123 Main');
     expect(first[0]).toMatchObject({ id: 'p1', city: 'Atlanta', state: 'GA', postalCode: '30301' });
     // Second call should hit cache, so fetch not invoked again
@@ -42,14 +42,8 @@ describe('addressAutocomplete', () => {
     expect(merged.postalCode).toBe('10001');
   });
 
-  it('fetchPlaceDetails extracts structured components', async () => {
-    mockFetchOnce({ result: { address_components: [
-      { types: ['street_number'], long_name: '1600' },
-      { types: ['route'], long_name: 'Amphitheatre Pkwy' },
-      { types: ['locality'], long_name: 'Mountain View' },
-      { types: ['administrative_area_level_1'], short_name: 'CA' },
-      { types: ['postal_code'], long_name: '94043' },
-    ], formatted_address: '1600 Amphitheatre Pkwy, Mountain View, CA 94043' } });
+  it('fetchPlaceDetails returns normalized details from proxy', async () => {
+    mockFetchOnce({ details: { addressLine1: '1600 Amphitheatre Pkwy', city: 'Mountain View', state: 'CA', postalCode: '94043', formattedAddress: '1600 Amphitheatre Pkwy, Mountain View, CA 94043' } });
     const details = await fetchPlaceDetails('place123');
     expect(details).toMatchObject({ city: 'Mountain View', state: 'CA', postalCode: '94043', addressLine1: '1600 Amphitheatre Pkwy' });
     // cached second call
@@ -65,7 +59,7 @@ describe('addressAutocomplete', () => {
   });
 
   it('session token persists across calls until reset', async () => {
-    mockFetchOnce({ predictions: [] });
+    mockFetchOnce({ suggestions: [] });
     const token1 = getPlacesSessionToken();
     await fetchAddressSuggestions('123 Main');
     const token2 = getPlacesSessionToken();
@@ -73,5 +67,11 @@ describe('addressAutocomplete', () => {
     resetPlacesSessionToken();
     const token3 = getPlacesSessionToken();
     expect(token3).not.toBe(token1);
+  });
+
+  it('includes sessionToken param (camelCase) in autocomplete request', async () => {
+    mockFetchOnce({ suggestions: [] });
+    await fetchAddressSuggestions('123 Main');
+    expect((global.fetch as jest.Mock).mock.calls[0][0]).toContain('sessionToken=');
   });
 });

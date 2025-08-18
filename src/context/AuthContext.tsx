@@ -59,7 +59,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       };
       setUser(coerced);
     } else {
-      // Backend didn't return user; synthesize minimal user so verification flows have email context
       setUser({ id: 0, name, email });
     }
   }, []);

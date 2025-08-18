@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../../context/useAuth';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { PHONE_VERIFICATION_REQUIRED } from '../../lib/onboarding';
+import AuthProgress from '../../components/auth/AuthProgress';
 
 export default function PhoneVerificationPage() {
   const { user, applyAuth } = useAuth(); // may contain existing phone flags
@@ -116,6 +117,7 @@ export default function PhoneVerificationPage() {
 
   return (
     <AuthScaffold subtitle="Verify your phone number.">
+      <AuthProgress />
       <Card className="w-full max-w-md mx-auto bg-[color:var(--owl-surface)] border border-[color:var(--owl-border)] shadow-[var(--owl-shadow-md)]">
         <CardHeader><CardTitle>Phone Verification</CardTitle></CardHeader>
         <CardContent>

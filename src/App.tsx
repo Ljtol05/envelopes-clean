@@ -32,6 +32,7 @@ import OnboardingCoach from './screens/OnboardingCoach';
 import DevApiSwitcher from './components/system/DevApiSwitcher';
 // Endpoint diagnostics (dev only, gated by VITE_SHOW_ENDPOINT_DIAGNOSTICS=true)
 import EndpointDiagnostics from './components/system/EndpointDiagnostics';
+import PlacesHealthBadge from './components/system/PlacesHealthBadge';
 
 function AppLayout() {
   const location = useLocation();
@@ -113,6 +114,7 @@ export default function App() {
   <ApiBaseBanner />
   <DevApiSwitcher />
   <EndpointDiagnostics />
+  <PlacesHealthBadge />
       </EnvelopesProvider>
     </AuthProvider>
   );

@@ -49,17 +49,85 @@ if (typeof window !== 'undefined' && !window.localStorage) {
 // Suppress noisy Node.js deprecation warnings for transitive punycode usage (DEP0040)
 // so CI logs stay focused on actionable issues.
 const originalEmitWarning = process.emitWarning;
-process.emitWarning = function (warning: unknown, ...args: unknown[]) {
+process.emitWarning = function (warning: unknown, ...args: unknown[]): void {
   const msg = typeof warning === 'string' ? warning : (warning as { message?: string })?.message;
-  if (msg && msg.toLowerCase().includes('punycode')) return;
+  if (msg && msg.toLowerCase().includes('punycode')) return; // swallow
+  // @ts-expect-error spread types
   return originalEmitWarning.call(process, warning, ...args);
 };
 
 // Suppress React act() warnings originating from intentional async state updates in polling hooks
 const originalError = console.error;
-console.error = (...args: unknown[]) => {
+console.error = (...args: unknown[]): void => {
   const first = args[0];
   if (typeof first === 'string' && first.includes('not wrapped in act')) return;
   if (typeof first === 'string' && first.includes('You seem to have overlapping act')) return;
+  if ((typeof first === 'string' && first.includes('Cross origin')) || (first instanceof Error && first.message.includes('Cross origin'))) return;
+  // @ts-expect-error rest args pass-through
   originalError(...args);
 };
+
+// NOTE: We intentionally do NOT stub the addressAutocomplete module here because
+// its own dedicated tests exercise real parsing / caching logic. Individual test
+// suites that need to avoid network should mock global.fetch themselves. For all
+// other suites, any unexpected fetch to external services will simply fail fast
+// (fetch() will be undefined or a jest mock) and the feature gracefully degrades.
+
+// Patch XMLHttpRequest to quietly abort localhost cross-origin calls (prevents jsdom error spam)
+try {
+  if (typeof window !== 'undefined' && typeof window.XMLHttpRequest !== 'undefined') {
+    const OriginalXHR = window.XMLHttpRequest;
+    class QuietXHR extends OriginalXHR {
+      private __suppress = false;
+      open(method: string, url: string, ...rest: Parameters<XMLHttpRequest['open']>) {
+        try {
+          if (typeof url === 'string' && url.startsWith('http://localhost')) {
+            this.__suppress = true;
+          }
+        } catch { /* no-op */ }
+        return super.open(method, url, ...rest);
+      }
+      send(body?: Document | BodyInit | null) {
+        if (this.__suppress) {
+          try { this.abort(); } catch { /* ignore */ }
+          return; // swallow
+        }
+        return super.send(body);
+      }
+    }
+    // Cast to unknown first to satisfy TS structural checks
+    window.XMLHttpRequest = QuietXHR as unknown as typeof window.XMLHttpRequest;
+  }
+} catch { /* ignore */ }
+
+// Track timers (real timers) and clear after each test to avoid lingering open handles warnings.
+type TimerId = ReturnType<typeof setTimeout> | number;
+const __activeTimeouts: TimerId[] = [];
+const __activeIntervals: TimerId[] = [];
+// Preserve originals
+const __origSetTimeout = global.setTimeout;
+const __origSetInterval = global.setInterval;
+const __origClearTimeout = global.clearTimeout;
+const __origClearInterval = global.clearInterval;
+// Patch
+(global as unknown as { setTimeout: typeof setTimeout }).setTimeout = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) => {
+  const id = __origSetTimeout(handler, timeout, ...(args as []));
+  __activeTimeouts.push(id as TimerId);
+  return id;
+}) as typeof setTimeout;
+(global as unknown as { setInterval: typeof setInterval }).setInterval = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) => {
+  const id = __origSetInterval(handler, timeout, ...(args as []));
+  __activeIntervals.push(id as TimerId);
+  return id;
+}) as typeof setInterval;
+
+afterEach(() => {
+  while (__activeTimeouts.length) {
+    const id = __activeTimeouts.pop();
+    if (id) __origClearTimeout(id);
+  }
+  while (__activeIntervals.length) {
+    const id = __activeIntervals.pop();
+    if (id) __origClearInterval(id);
+  }
+});

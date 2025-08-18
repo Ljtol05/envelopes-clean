@@ -1,10 +1,10 @@
 import { useForm } from "react-hook-form";
-import { useState } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
+import { PasswordField } from "../../components/ui/password-field";
 import { Label } from "../../components/ui/label";
 import { Button } from "../../components/ui/button";
 import { Link } from "react-router-dom";
@@ -26,7 +26,7 @@ export default function LoginScreen() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues: { email: "", password: "" } });
-  const [showPw, setShowPw] = useState(false);
+  // password visibility handled by PasswordField component
 
   const onSubmit = handleSubmit(async (vals: FormValues) => {
     try {
@@ -63,16 +63,8 @@ export default function LoginScreen() {
               <Input id="email" type="email" placeholder="you@example.com" aria-invalid={errors.email ? 'true' : undefined} aria-describedby={errors.email ? 'login-email-error' : undefined} autoComplete="email" {...register("email", { required: "Email is required", pattern: { value: EMAIL_RE, message: "Enter a valid email" } })} />
               {errors.email && <p id="login-email-error" className="text-xs text-[color:var(--owl-accent)]">{errors.email.message}</p>}
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input id="password" type={showPw? 'text':'password'} aria-invalid={errors.password ? 'true' : undefined} aria-describedby={errors.password ? 'login-password-error' : undefined} autoComplete="current-password" {...register("password", { required: "Password is required", minLength: { value: 6, message: "Min length is 6" } })} />
-                <button type="button" onClick={()=>setShowPw(s=>!s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-xs select-none" aria-label={showPw? 'Hide password':'Show password'}>
-                  {showPw ? '🙈' : '👁️'}
-                </button>
-              </div>
-              {errors.password && <p id="login-password-error" className="text-xs text-[color:var(--owl-accent)]">{errors.password.message}</p>}
-            </div>
+            <PasswordField id="password" label="Password" autoComplete="current-password" aria-invalid={errors.password ? 'true' : undefined} aria-describedby={errors.password ? 'login-password-error' : undefined} {...register("password", { required: "Password is required", minLength: { value: 8, message: "Min length is 8" } })} />
+            {errors.password && <p id="login-password-error" className="text-xs text-[color:var(--owl-accent)]">{errors.password.message}</p>}
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Signing in…" : "Sign in"}
             </Button>

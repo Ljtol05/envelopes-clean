@@ -1,10 +1,12 @@
 import React, { useState } from 'react'; void React;
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
+import { PasswordField } from '../../components/ui/password-field';
 import { Label } from '../../components/ui/label';
 import { Button } from '../../components/ui/button';
 import { forgotPassword, resetPassword } from '../../services/auth';
 import { toast } from 'sonner';
+import AuthProgress from '../../components/auth/AuthProgress';
 import { useNavigate } from 'react-router-dom';
 
 type Step = 'email' | 'reset' | 'done';
@@ -61,6 +63,7 @@ export default function ForgotPassword() {
   if (step === 'done') {
     return (
       <div>
+        <AuthProgress />
         <Card className="w-full max-w-md mx-auto bg-[color:var(--owl-surface)] shadow-[var(--owl-shadow-md)] border border-[color:var(--owl-border)]">
           <CardHeader><CardTitle>Password Reset</CardTitle></CardHeader>
           <CardContent>
@@ -74,6 +77,7 @@ export default function ForgotPassword() {
 
   return (
     <div>
+      <AuthProgress />
       <Card className="w-full max-w-md mx-auto bg-[color:var(--owl-surface)] shadow-[var(--owl-shadow-md)] border border-[color:var(--owl-border)]">
         <CardHeader>
           <CardTitle>{step === 'email' ? 'Reset password' : 'Enter reset code'}</CardTitle>
@@ -88,6 +92,7 @@ export default function ForgotPassword() {
               {message && <p className="text-xs text-green-500">{message}</p>}
               {error && <p className="text-xs text-red-500">{error}</p>}
               <Button type="submit" disabled={loading} className="w-full">{loading ? 'Sending…' : 'Send code'}</Button>
+              <button type="button" onClick={()=>navigate('/auth/login')} className="block w-full text-center text-xs text-[color:var(--owl-text-secondary)] hover:underline">Back to login</button>
             </form>
           )}
           {step === 'reset' && (
@@ -97,19 +102,16 @@ export default function ForgotPassword() {
                 <Label htmlFor="code">Code</Label>
                 <Input id="code" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value)} aria-invalid={error?.toLowerCase().includes('code') ? 'true' : undefined} />
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="newPassword">New password</Label>
-                <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} aria-invalid={error?.toLowerCase().includes('password') ? 'true' : undefined} />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="confirmPassword">Confirm new password</Label>
-                <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} aria-invalid={error?.toLowerCase().includes('match') ? 'true' : undefined} />
-              </div>
+              <PasswordField id="newPassword" label="New password" value={newPassword} onChange={(e)=>setNewPassword(e.target.value)} errorMessage={error?.toLowerCase().includes('password') ? error : undefined} errorId="newPassword-error" />
+              <PasswordField id="confirmPassword" label="Confirm new password" value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} errorMessage={error?.toLowerCase().includes('match') ? error : undefined} errorId="confirmPassword-error" />
               {message && <p className="text-xs text-green-500">{message}</p>}
               {error && <p className="text-xs text-red-500">{error}</p>}
               <div className="flex flex-col gap-2">
                 <Button type="submit" disabled={loading} className="w-full">{loading ? 'Resetting…' : 'Reset password'}</Button>
-                <button type="button" className="text-xs text-[color:var(--owl-accent)] hover:underline" disabled={loading} onClick={() => { setStep('email'); setCode(''); setNewPassword(''); setConfirmPassword(''); setError(null); }}>Back</button>
+                <div className="flex justify-between items-center">
+                  <button type="button" className="text-xs text-[color:var(--owl-accent)] hover:underline" disabled={loading} onClick={() => { setStep('email'); setCode(''); setNewPassword(''); setConfirmPassword(''); setError(null); }}>Back</button>
+                  <button type="button" className="text-xs text-[color:var(--owl-text-secondary)] hover:underline" disabled={loading} onClick={()=>navigate('/auth/login')}>Back to login</button>
+                </div>
               </div>
             </form>
           )}

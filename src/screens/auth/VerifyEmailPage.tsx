@@ -12,6 +12,7 @@ import { useAuth } from '../../context/useAuth';
 import { PHONE_VERIFICATION_REQUIRED } from '../../lib/onboarding';
 const isPhoneRequired = () => PHONE_VERIFICATION_REQUIRED;
 import { toast } from 'sonner';
+import AuthProgress from '../../components/auth/AuthProgress';
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
@@ -96,6 +97,7 @@ export default function VerifyEmailPage() {
 
   return (
     <AuthScaffold subtitle="Check your email for a verification code.">
+      <AuthProgress />
       <Card className="w-full max-w-md mx-auto bg-[color:var(--owl-surface)] shadow-[var(--owl-shadow-md)] border border-[color:var(--owl-border)]">
         <CardHeader>
           <CardTitle>Verify Email</CardTitle>

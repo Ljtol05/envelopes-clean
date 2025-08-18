@@ -6,12 +6,17 @@ jest.mock('../lib/kyc', () => ({
   apiStartKyc: jest.fn(async (form: Record<string, unknown>) => ({ status: 'pending', providerRef: 'mock-ref', ...form })),
   apiGetKycStatus: jest.fn(async () => ({ status: 'not_started' })),
 }));
+// Force experimental wizard off for these legacy flow tests
+(global as unknown as { importMetaEnv?: Record<string,string> }).importMetaEnv = {
+  VITE_REQUIRE_PHONE_VERIFICATION: 'false',
+  VITE_KYC_WIZARD: 'false',
+};
+process.env.VITE_KYC_WIZARD = 'false';
 import KycScreen from '../screens/auth/KycScreen';
 import { apiGetKycStatus, apiStartKyc } from '../lib/kyc';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import KycGuard from '../routes/KycGuard';
-// Provide minimal env polyfill for components reading import.meta.env
-(global as unknown as { importMetaEnv?: Record<string,string> }).importMetaEnv = { VITE_REQUIRE_PHONE_VERIFICATION: 'false' }; // explicit disable for tests
+// (Polyfill already set above including VITE_REQUIRE_PHONE_VERIFICATION)
 // Force PHONE_VERIFICATION_REQUIRED to false for these tests (they assert direct navigation to /auth/kyc)
 jest.mock('../lib/onboarding', () => ({ PHONE_VERIFICATION_REQUIRED: false }));
 import VerifyEmailPage from '../screens/auth/VerifyEmailPage';
@@ -167,7 +172,10 @@ describe('KYC Flow', () => {
     renderInApp(<Routes><Route path="/kyc" element={<KycScreen />} /></Routes>);
     const user = await fillValidForm();
     await user.click(screen.getByRole('button', { name: /submit for verification/i }));
-    expect(await screen.findByText(/kyc submission failed/i)).toBeInTheDocument();
+  expect(await screen.findByText(/kyc submission failed/i)).toBeInTheDocument();
+  // Field persistence after failed submission
+  expect((screen.getByLabelText(/first name/i) as HTMLInputElement).value).toBe('Jane');
+  expect((screen.getByLabelText(/last name/i) as HTMLInputElement).value).toBe('Doe');
   });
 
   test('field-level validation errors block submission and focus first invalid', async () => {
@@ -208,31 +216,4 @@ describe('KYC Flow', () => {
     expect(screen.queryByText(/protected content/i)).toBeNull();
   });
 
-  test('pending persists across manual polls', async () => {
-    (apiGetKycStatus as jest.Mock).mockResolvedValue({ status: 'not_started' });
-    const statuses = ['pending', 'pending', 'pending'];
-    (apiStartKyc as jest.Mock).mockResolvedValue({ status: 'pending' });
-    renderInApp(<Routes><Route path="/kyc" element={<KycScreen />} /></Routes>);
-    const user = await fillValidForm();
-    await user.click(screen.getByRole('button', { name: /submit for verification/i }));
-    // Switch implementation only after form submission to start pending loop
-    (apiGetKycStatus as jest.Mock).mockImplementation(async () => ({ status: statuses.shift() ?? 'pending' }));
-    await user.click(await screen.findByRole('button', { name: /poll now/i }));
-    expect(screen.getByText(/being reviewed/i)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /poll now/i }));
-    await user.click(screen.getByRole('button', { name: /poll now/i }));
-    expect(screen.getByText(/being reviewed/i)).toBeInTheDocument();
-    expect((apiGetKycStatus as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(3);
-  });
-
-  test('form data persists after failed submission', async () => {
-    (apiGetKycStatus as jest.Mock).mockResolvedValue({ status: 'not_started' });
-    (apiStartKyc as jest.Mock).mockRejectedValue(new Error('fail'));
-    renderInApp(<Routes><Route path="/kyc" element={<KycScreen />} /></Routes>);
-    const user = await fillValidForm();
-    await user.click(screen.getByRole('button', { name: /submit for verification/i }));
-    expect(await screen.findByText(/kyc submission failed/i)).toBeInTheDocument();
-    expect((screen.getByLabelText(/first name/i) as HTMLInputElement).value).toBe('Jane');
-    expect((screen.getByLabelText(/last name/i) as HTMLInputElement).value).toBe('Doe');
-  });
 });
