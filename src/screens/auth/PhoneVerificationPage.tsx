@@ -15,6 +15,7 @@ import { useAuth } from '../../context/useAuth';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { PHONE_VERIFICATION_REQUIRED } from '../../lib/onboarding';
 import AuthProgress from '../../components/auth/AuthProgress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../components/ui/dialog';
 
 export default function PhoneVerificationPage() {
   const { user, applyAuth } = useAuth(); // may contain existing phone flags
@@ -45,6 +46,9 @@ export default function PhoneVerificationPage() {
   const [error, setError] = useState<string | null>(null);
   const [country, setCountry] = useState<CountryCode>('US');
   const countriesRef = useRef(getCountryOptions());
+  const [dupDialogOpen, setDupDialogOpen] = useState(false);
+  const [dupEmail, setDupEmail] = useState<string | null>(null);
+  const [dupPhone, setDupPhone] = useState<string | null>(null);
 
   function computeNormalized(): string | null {
     // If user typed national digits without +, try auto-prepend using selected country then parse.
@@ -89,7 +93,29 @@ export default function PhoneVerificationPage() {
       toast.success('Code sent');
       setStep('code');
     } catch (err) {
-      toast.error((err as Error).message || 'Failed');
+      // Try to detect structured axios error with response payload
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const anyErr: any = err;
+      const respData = anyErr?.response?.data;
+      const backendMsg: string | undefined = respData?.error || respData?.message;
+      const msg = (err as Error).message || backendMsg || 'Failed';
+      // Backend may include associatedEmail when phone already claimed
+      const associatedEmail: string | undefined = respData?.associatedEmail;
+      if (/already verified/i.test(msg)) {
+        if (associatedEmail) {
+          setDupEmail(associatedEmail);
+          setDupPhone(norm);
+          setDupDialogOpen(true);
+          // Provide minimal inline message for screen readers
+          setError('Phone already verified by another account');
+        } else {
+          setError('That phone number is already verified by another account.');
+        }
+      } else {
+        setError(msg);
+        toast.error(msg);
+      }
+      setNormalizedPhone(null);
     } finally { setLoading(false); }
   }
 
@@ -139,6 +165,27 @@ export default function PhoneVerificationPage() {
   return (
     <AuthScaffold subtitle="Verify your phone number.">
       <AuthProgress />
+      <Dialog open={dupDialogOpen} onOpenChange={setDupDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Phone already in use</DialogTitle>
+            <DialogDescription>
+              {dupPhone && <span className="font-mono">{dupPhone}</span>} is already verified on another account{dupEmail ? ` (${dupEmail})` : ''}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="text-sm space-y-3">
+            <p>To continue you can:</p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>Enter a different phone number.</li>
+              <li>{dupEmail ? <>Log in as <span className="font-medium">{dupEmail}</span>.</> : 'Log into the existing account.'}</li>
+            </ol>
+          </div>
+          <DialogFooter className="mt-4 gap-2">
+            <Button type="button" variant="secondary" onClick={() => { setDupDialogOpen(false); navigate('/auth/login', { replace: true }); }}>Log into that account</Button>
+            <Button type="button" onClick={() => { setDupDialogOpen(false); setPhone(''); setError(null); }}>Use different number</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Card className="w-full max-w-md mx-auto bg-[color:var(--owl-surface)] border border-[color:var(--owl-border)] shadow-[var(--owl-shadow-md)]">
         <CardHeader><CardTitle>Phone Verification</CardTitle></CardHeader>
         <CardContent>

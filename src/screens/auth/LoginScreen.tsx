@@ -21,7 +21,8 @@ export default function LoginScreen() {
   const navigate = useNavigate();
   const location = useLocation() as { state?: { from?: { pathname?: string } } };
   const from = location.state?.from?.pathname;
-  const failCountRef = useRef(0); // internal counter (value not displayed)
+  // use a ref for fail counter so we don't trigger rerenders or unused var lint warnings
+  const failCountRef = useRef(0);
   const [showResetHint, setShowResetHint] = useState(false);
 
   const {
@@ -55,8 +56,7 @@ export default function LoginScreen() {
       // Count only 401/Unauthorized style failures toward reset hint
       const message = err.message || 'Login failed';
       if (/unauthorized|401|invalid credentials|email not verified/i.test(message)) {
-  const next = failCountRef.current + 1;
-  failCountRef.current = next;
+  const next = ++failCountRef.current;
   if (next >= 3) setShowResetHint(true);
       }
       toast.error(message);
