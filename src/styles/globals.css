@@ -365,9 +365,25 @@ img[data-theme-logo] {
   /* Force fully opaque solid surface for readability (override any unintended translucency) */
   background: var(--owl-modal-bg);
   background-image: linear-gradient(180deg, var(--owl-modal-bg-top, var(--owl-modal-bg)) 0%, var(--owl-modal-bg-bottom, var(--owl-modal-bg)) 100%);
+  /* Belt + suspenders: ensure background-color explicitly set (some Tailwind builds emit background instead of background-color) */
+  background-color: var(--owl-modal-bg) !important;
   position: relative;
-  isolation: isolate; /* ensure pseudo overlays don't bleed */
+  isolation: isolate;
+  /* ensure pseudo overlays don't bleed */
   /* In case a parent sets opacity, counter it locally */
+  opacity: 1 !important;
+  background-clip: padding-box;
+}
+
+/* Explicitly neutralize any backdrop/filter/opacity inheritance that could cause translucency */
+.owl-modal-surface {
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Defensive: if a parent applied opacity via utility (e.g., opacity-90 on Content), reset via higher specificity */
+.owl-modal-surface.owl-modal-surface {
   opacity: 1 !important;
 }
 
