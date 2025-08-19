@@ -102,15 +102,11 @@ export default function PhoneVerificationPage() {
       // Backend may include associatedEmail when phone already claimed
       const associatedEmail: string | undefined = respData?.associatedEmail;
       if (/already verified/i.test(msg)) {
-        if (associatedEmail) {
-          setDupEmail(associatedEmail);
-          setDupPhone(norm);
-          setDupDialogOpen(true);
-          // Provide minimal inline message for screen readers
-          setError('Phone already verified by another account');
-        } else {
-          setError('That phone number is already verified by another account.');
-        }
+        if (associatedEmail) setDupEmail(associatedEmail);
+        setDupPhone(norm);
+        setDupDialogOpen(true);
+        // Provide accessible inline hint too (includes email if known)
+        setError(`That phone number is already verified by another account${associatedEmail ? ' (' + associatedEmail + ')' : ''}.`);
       } else {
         setError(msg);
         toast.error(msg);
@@ -211,7 +207,7 @@ export default function PhoneVerificationPage() {
                   </div>
                   {normalizedPhone && <p className="text-[10px] text-[color:var(--owl-text-secondary)]">Will send: {normalizedPhone}</p>}
                 </div>
-                {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+                {error && <p className="text-xs text-red-500 mt-1" role="alert">{error}</p>}
               </div>
               <div className="flex flex-col items-center">
                 <Button type="submit" disabled={loading}>{loading ? 'Sending…' : 'Send code'}</Button>

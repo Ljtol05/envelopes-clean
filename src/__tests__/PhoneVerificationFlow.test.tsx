@@ -192,4 +192,28 @@ describe('Phone Verification Flow', () => {
     // Ensure we did not advance to code step
     expect(screen.queryByLabelText(/code/i)).not.toBeInTheDocument();
   });
+
+  test('shows associated email when backend provides associatedEmail', async () => {
+    // Simulate axios-like error object with response.data.associatedEmail
+    (startPhoneVerification as jest.Mock).mockRejectedValueOnce(Object.assign(new Error('That number is already verified'), {
+      response: { data: { error: 'Phone already verified', associatedEmail: 'owner@example.com' } }
+    }));
+    const user = userEvent.setup();
+    render(
+      <Provider>
+        <MemoryRouter initialEntries={['/auth/verify-phone']}>
+          <Routes>
+            <Route path="/auth/verify-phone" element={<PhoneVerificationPage />} />
+            <Route path="/auth/kyc" element={<div>KYC Page</div>} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+    const phoneInput = await screen.findByLabelText(/phone number/i);
+    await user.type(phoneInput, '+16892240000');
+    await user.click(screen.getByRole('button', { name: /send code/i }));
+    await waitFor(() => screen.getByText(/owner@example.com/));
+    expect(screen.getByText(/already verified by another account/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/code/i)).not.toBeInTheDocument();
+  });
 });

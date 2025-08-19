@@ -111,7 +111,9 @@ export async function startPhoneVerification(phone: string) {
         payload: { phone }
       });
     }
-    throw new Error(e?.response?.data?.message || 'Failed to start phone verification');
+  // Re-throw while preserving original structured response (so UI can read associatedEmail, etc.)
+  const message = e?.response?.data?.message || e?.response?.data?.error || 'Failed to start phone verification';
+  throw Object.assign(new Error(message), { response: e?.response });
   }
 }
 
