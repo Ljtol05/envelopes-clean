@@ -362,11 +362,13 @@ img[data-theme-logo] {
 
 /* Unified modal gradient surface helper (both themes; tokens differ per theme) */
 .owl-modal-surface {
+  /* Force fully opaque solid surface for readability (override any unintended translucency) */
   background: var(--owl-modal-bg);
-  background: linear-gradient(180deg, var(--owl-modal-bg-top, var(--owl-modal-bg)) 0%, var(--owl-modal-bg-bottom, var(--owl-modal-bg)) 100%);
+  background-image: linear-gradient(180deg, var(--owl-modal-bg-top, var(--owl-modal-bg)) 0%, var(--owl-modal-bg-bottom, var(--owl-modal-bg)) 100%);
   position: relative;
-  isolation: isolate;
-  /* ensure pseudo overlays don't bleed */
+  isolation: isolate; /* ensure pseudo overlays don't bleed */
+  /* In case a parent sets opacity, counter it locally */
+  opacity: 1 !important;
 }
 
 /* Gloss / subtle top highlight */
