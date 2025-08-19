@@ -362,11 +362,10 @@ img[data-theme-logo] {
 
 /* Unified modal gradient surface helper (both themes; tokens differ per theme) */
 .owl-modal-surface {
-  /* Force fully opaque solid surface for readability (override any unintended translucency) */
-  background: var(--owl-modal-bg);
-  background-image: linear-gradient(180deg, var(--owl-modal-bg-top, var(--owl-modal-bg)) 0%, var(--owl-modal-bg-bottom, var(--owl-modal-bg)) 100%);
-  /* Belt + suspenders: ensure background-color explicitly set (some Tailwind builds emit background instead of background-color) */
+  /* HARD SOLID: remove gradient & any chance of transparency until issue resolved */
+  background: var(--owl-modal-bg) !important;
   background-color: var(--owl-modal-bg) !important;
+  background-image: none !important;
   position: relative;
   isolation: isolate;
   /* ensure pseudo overlays don't bleed */
@@ -388,7 +387,13 @@ img[data-theme-logo] {
 }
 
 /* Gloss / subtle top highlight */
-.owl-modal-surface::before {
+/* Previous gradient + gloss moved to optional glass variant */
+.owl-modal-surface-glass {
+  background: var(--owl-modal-bg);
+  background-image: linear-gradient(180deg, var(--owl-modal-bg-top, var(--owl-modal-bg)) 0%, var(--owl-modal-bg-bottom, var(--owl-modal-bg)) 100%);
+}
+
+.owl-modal-surface-glass::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -400,6 +405,11 @@ img[data-theme-logo] {
   mix-blend-mode: normal;
   border-radius: inherit;
   z-index: 0;
+}
+
+/* Debug helper: add class 'owl-modal-debug' on body to force hotpink fill for verification */
+.owl-modal-debug .owl-modal-surface {
+  background: hotpink !important;
 }
 
 /* Popover surface variant (lighter elevation) */
