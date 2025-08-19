@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { render } from '@testing-library/react';
-import { Dialog, DialogContent } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '../components/ui/dialog';
 
 // Basic test to ensure solid variant produces an opaque (non-transparent) background.
 // We can't inspect actual pixel alpha in jsdom, but we can ensure no gradient/backdrop utility classes
@@ -8,9 +8,10 @@ import { Dialog, DialogContent } from '../components/ui/dialog';
 
 describe('DialogContent solid variant opacity', () => {
   it('renders solid variant without glass classes or backdrop blur', () => {
-    const { getByRole } = render(
+  const { getByRole } = render(
       <Dialog open>
         <DialogContent>
+          <DialogTitle className="sr-only">Opacity Regression</DialogTitle>
           <p>Content</p>
         </DialogContent>
       </Dialog>
@@ -28,6 +29,7 @@ describe('DialogContent solid variant opacity', () => {
     const { getByRole } = render(
       <Dialog open>
         <DialogContent variant="glass">
+          <DialogTitle className="sr-only">Opacity Regression Glass</DialogTitle>
           <p>Glass</p>
         </DialogContent>
       </Dialog>
