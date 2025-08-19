@@ -6,12 +6,6 @@ import { Dialog, DialogContent } from '../components/ui/dialog';
 // We can't inspect actual pixel alpha in jsdom, but we can ensure no gradient/backdrop utility classes
 // or glass variant classes are present by default and that background-image is 'none'.
 
-// Touch React so the import is not removed by tooling / satisfies TS unused check
-// Dummy assertion to use React so TS doesn't flag unused import
-test('react version available', () => {
-  expect(typeof React.version).toBe('string');
-});
-
 describe('DialogContent solid variant opacity', () => {
   it('renders solid variant without glass classes or backdrop blur', () => {
     const { getByRole } = render(
@@ -23,6 +17,8 @@ describe('DialogContent solid variant opacity', () => {
     );
     const dialog = getByRole('dialog');
     const className = dialog.className;
+  // Ensure React is actually referenced so the import is not stripped as unused
+  expect(typeof React.version).toBe('string');
     expect(className).toContain('owl-modal-surface');
     expect(className).not.toContain('owl-modal-surface-glass');
     expect(className).not.toContain('backdrop-blur');
