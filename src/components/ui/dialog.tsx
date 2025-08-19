@@ -58,7 +58,9 @@ function DialogContent({
     <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-      "owl-modal-surface bg-[color:var(--owl-modal-bg)] supports-[backdrop-filter]:bg-[color:var(--owl-modal-bg)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 motion-reduce:transition-none motion-reduce:animate-none fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-[color:var(--owl-modal-border)] p-6 shadow-[var(--owl-shadow-modal)] duration-200 sm:max-w-lg",
+  // NOTE: previous syntax used bg-[color:var(--owl-modal-bg)] which produces invalid CSS (background-color: color:var(--...)).
+  // Using bg-[var(--owl-modal-bg)] ensures the modal surface is truly opaque and not see-through.
+  "owl-modal-surface bg-[var(--owl-modal-bg)] supports-[backdrop-filter]:bg-[var(--owl-modal-bg)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 motion-reduce:transition-none motion-reduce:animate-none fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-[color:var(--owl-modal-border)] p-6 shadow-[var(--owl-shadow-modal)] duration-200 sm:max-w-lg",
           className,
         )}
         {...props}

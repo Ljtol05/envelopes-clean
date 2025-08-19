@@ -56,7 +56,8 @@ const SheetContent = React.forwardRef<
       ref={ref}
       data-slot="sheet-content"
     className={cn(
-  "owl-modal-surface bg-[color:var(--owl-modal-bg)] supports-[backdrop-filter]:bg-[color:var(--owl-modal-bg)] border-[color:var(--owl-modal-border)] data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-[var(--owl-shadow-sheet)] transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+  // Correct invalid bg-[color:...] syntax so sheet surface is opaque
+  "owl-modal-surface bg-[var(--owl-modal-bg)] supports-[backdrop-filter]:bg-[var(--owl-modal-bg)] border-[color:var(--owl-modal-border)] data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-[var(--owl-shadow-sheet)] transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
         side === "right" &&
           "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
         side === "left" &&
