@@ -44,20 +44,24 @@ const SheetOverlay = React.forwardRef<
 ));
 SheetOverlay.displayName = "SheetOverlay";
 
+interface SheetContentProps extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content> {
+  side?: "top" | "right" | "bottom" | "left";
+  variant?: 'solid' | 'glass';
+}
+
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content> & {
-    side?: "top" | "right" | "bottom" | "left";
-  }
->(({ className, children, side = "right", ...props }, ref) => (
+  SheetContentProps
+>(({ className, children, side = "right", variant = 'solid', ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content
       ref={ref}
       data-slot="sheet-content"
     className={cn(
-  // Correct invalid bg-[color:...] syntax so sheet surface is opaque
+  // Opaque base surface; add glass variant when requested
   "owl-modal-surface bg-[var(--owl-modal-bg)] supports-[backdrop-filter]:bg-[var(--owl-modal-bg)] border-[color:var(--owl-modal-border)] data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-[var(--owl-shadow-sheet)] transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+        variant === 'glass' && "owl-modal-surface-glass backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md",
         side === "right" &&
           "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
         side === "left" &&

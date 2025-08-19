@@ -6,27 +6,21 @@ import { XIcon } from "lucide-react";
 
 import { cn } from "./utils";
 
-function Dialog({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
+function Dialog(
+  props: React.ComponentProps<typeof DialogPrimitive.Root>,
+) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
-function DialogTrigger({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
+function DialogTrigger(
+  props: React.ComponentProps<typeof DialogPrimitive.Trigger>,
+) {
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
-function DialogPortal({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
-}
-
-function DialogClose({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Close>) {
+function DialogClose(
+  props: React.ComponentProps<typeof DialogPrimitive.Close>,
+) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
@@ -38,8 +32,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-  // Darker neutral overlay w/ subtle blur for stronger separation
-  "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 motion-reduce:transition-none motion-reduce:animate-none fixed inset-0 z-50 backdrop-blur-sm bg-[color:var(--owl-overlay)]",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 motion-reduce:transition-none motion-reduce:animate-none fixed inset-0 z-50 backdrop-blur-sm bg-[color:var(--owl-overlay)]",
         className,
       )}
       {...props}
@@ -47,33 +40,38 @@ function DialogOverlay({
   );
 }
 
+interface DialogContentProps
+  extends React.ComponentProps<typeof DialogPrimitive.Content> {
+  variant?: "solid" | "glass";
+}
+
 function DialogContent({
   className,
   children,
+  variant = "solid",
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content>) {
+}: DialogContentProps) {
   return (
-    <DialogPortal data-slot="dialog-portal">
+  <DialogPrimitive.Portal data-slot="dialog-portal">
       <DialogOverlay />
-    <DialogPrimitive.Content
+      <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-  // NOTE: previous syntax used bg-[color:var(--owl-modal-bg)] which produces invalid CSS (background-color: color:var(--...)).
-  // Using bg-[var(--owl-modal-bg)] ensures the modal surface is truly opaque and not see-through.
-  "owl-modal-surface bg-[var(--owl-modal-bg)] supports-[backdrop-filter]:bg-[var(--owl-modal-bg)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 motion-reduce:transition-none motion-reduce:animate-none fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-[color:var(--owl-modal-border)] p-6 shadow-[var(--owl-shadow-modal)] duration-200 sm:max-w-lg",
+          "owl-modal-surface bg-[var(--owl-modal-bg)] supports-[backdrop-filter]:bg-[var(--owl-modal-bg)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 motion-reduce:transition-none motion-reduce:animate-none fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-[color:var(--owl-modal-border)] p-6 shadow-[var(--owl-shadow-modal)] duration-200 sm:max-w-lg",
+          variant === "glass" &&
+            "owl-modal-surface-glass backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md",
           className,
         )}
         {...props}
       >
         {children}
-        {/* Fallback description to satisfy a11y when consumer forgets it */}
         <DialogDescription className="sr-only">Dialog</DialogDescription>
         <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
           <XIcon />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
-    </DialogPortal>
+  </DialogPrimitive.Portal>
   );
 }
 
@@ -134,7 +132,6 @@ export {
   DialogFooter,
   DialogHeader,
   DialogOverlay,
-  DialogPortal,
   DialogTitle,
   DialogTrigger,
 };
