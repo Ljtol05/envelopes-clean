@@ -115,7 +115,7 @@ export default function VerifyEmailPage() {
             <div className="space-y-1">
               <Label htmlFor="code">6-digit code</Label>
               <Input id="code" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value)} aria-invalid={code.length>0 && code.length!==6 ? 'true' : undefined} />
-              <p className="text-xs text-[color:var(--owl-text-secondary)]">Enter the code we sent to your email.</p>
+              <p className="text-xs text-[color:var(--owl-text-secondary)]">Enter the code we sent to your email. <span className="block mt-1 text-[10px] opacity-80">Not there? Check your spam or junk folder and mark the message as safe to ensure future delivery.</span></p>
             </div>
             <Button type="submit" disabled={submitting || code.length !== 6} className="w-full">{submitting ? 'Verifying…' : 'Verify code'}</Button>
             <button onClick={resend} type="button" className="block w-full text-center text-sm text-[color:var(--owl-accent)] hover:underline disabled:opacity-50" disabled={resending}>{resending ? 'Resending…' : 'Resend code'}</button>

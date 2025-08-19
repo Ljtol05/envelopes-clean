@@ -52,7 +52,11 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
   const [suggestions, setSuggestions] = React.useState<AddressSuggestion[]>([]);
   const [open, setOpen] = React.useState(false);
   const [activeIndex, setActiveIndex] = React.useState<number>(-1);
+  const [entered, setEntered] = React.useState(false); // for enter animation
   const abortRef = React.useRef<AbortController | null>(null);
+  const prefersReduced = usePrefersReducedMotion();
+  const requestSeqRef = React.useRef(0); // incrementing sequence to guard against late responses
+  const [announcement, setAnnouncement] = React.useState('');
   const val = watch('addressLine1') as string;
   React.useEffect(() => { setQ(val || ''); }, [val]);
   React.useEffect(() => {
@@ -60,13 +64,46 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
+    const seq = ++requestSeqRef.current; // capture sequence id for this request lifecycle
     const t = setTimeout(async () => {
-      const res = await fetchAddressSuggestions(q, { signal: ctrl.signal });
-      setSuggestions(res);
-      setOpen(res.length > 0);
+      try {
+        const res = await fetchAddressSuggestions(q, { signal: ctrl.signal });
+        // Ignore if a newer request has started or dropdown was closed meanwhile
+        if (seq === requestSeqRef.current) {
+          setSuggestions(res);
+          // Keep dropdown open even when empty to show a "No matches" state
+          setOpen(true);
+          // Reset active index when new suggestions arrive
+          setActiveIndex(res.length ? 0 : -1);
+          if (q.trim().length >=3) {
+            if (res.length > 0) {
+              setAnnouncement(`${res.length} address suggestion${res.length === 1 ? '' : 's'} available. Use arrow keys to navigate, Enter to select.`);
+            } else {
+              setAnnouncement('No address suggestions found.');
+            }
+          }
+        }
+      } catch (err) {
+        // Swallow abort errors silently; only act on current sequence errors
+        if ((err as DOMException)?.name !== 'AbortError' && seq === requestSeqRef.current) {
+          setSuggestions([]);
+          setOpen(true); // show empty state
+          if (q.trim().length >=3) setAnnouncement('No address suggestions found.');
+        }
+      }
     }, 180);
     return () => { clearTimeout(t); ctrl.abort(); };
   }, [q]);
+  // Handle setting enter state for animation when dropdown opens
+  React.useEffect(() => {
+    if (open) {
+      setEntered(false);
+      // next frame to allow initial styles to apply
+      requestAnimationFrame(() => { setEntered(true); });
+    } else {
+      setEntered(false);
+    }
+  }, [open]);
   async function choose(s: AddressSuggestion) {
     // Merge basic suggestion first (city/state/postalCode if present)
     const current = { city: watch('city'), state: watch('state'), postalCode: watch('postalCode') } as Record<string,string>;
@@ -95,20 +132,60 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
     else if (e.key === 'Enter') { if (activeIndex >= 0) { e.preventDefault(); choose(suggestions[activeIndex]); } }
     else if (e.key === 'Escape') { setOpen(false); setActiveIndex(-1); }
   }
+  // Track refs for scrolling active option into view for keyboard users
+  const optionRefs = React.useRef<(HTMLLIElement | null)[]>([]);
+  React.useEffect(() => {
+    if (activeIndex >= 0 && open) {
+      optionRefs.current[activeIndex]?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [activeIndex, open]);
   return (
     <div className="col-span-2 relative">
       <Label htmlFor="addressLine1">Address line 1</Label>
-      <Input id="addressLine1" autoComplete="off" aria-autocomplete="list" aria-expanded={open? 'true':'false'} aria-controls="addressLine1-suggestions" aria-invalid={error ? 'true' : undefined} aria-describedby={error ? 'addressLine1-error' : undefined} {...register('addressLine1')} onChange={(e)=>{ setQ(e.target.value); register('addressLine1').onChange(e); }} onKeyDown={onKeyDown} />
+      <Input
+        id="addressLine1"
+        autoComplete="off"
+        aria-autocomplete="list"
+        aria-expanded={open? 'true':'false'}
+        aria-controls="addressLine1-suggestions"
+        aria-activedescendant={activeIndex >=0 ? `addressLine1-option-${activeIndex}` : undefined}
+        aria-invalid={error ? 'true' : undefined}
+        aria-describedby={error ? 'addressLine1-error' : undefined}
+        {...register('addressLine1')}
+        onChange={(e)=>{ setQ(e.target.value); register('addressLine1').onChange(e); }}
+        onKeyDown={onKeyDown}
+      />
       {error && <p id="addressLine1-error" className="text-xs text-red-500">{error}</p>}
-      {open && suggestions.length > 0 && (
-        <ul aria-label="Address suggestions" id="addressLine1-suggestions" role="listbox" className="absolute z-20 mt-1 w-full max-h-56 overflow-auto rounded-md border border-[color:var(--owl-border)] bg-[color:var(--owl-popover-bg)] shadow-[var(--owl-shadow-md)] text-sm">
-          {suggestions.map((s,i) => {
+  {/* Live region for screen readers announcing suggestion availability */}
+  <div className="sr-only" aria-live="polite" aria-atomic="true">{announcement}</div>
+    {open && (
+    <ul
+          aria-label="Address suggestions"
+          id="addressLine1-suggestions"
+            role="listbox"
+      className={`absolute z-30 mt-1 w-full max-h-60 overflow-auto rounded-md border border-[color:var(--owl-border-strong,var(--owl-border))] bg-[color:var(--owl-surface)] shadow-[var(--owl-shadow-lg)] text-sm divide-y divide-[color:var(--owl-border)] focus:outline-none ${prefersReduced ? '' : 'transform origin-top transition duration-150 ease-out'} ${prefersReduced ? '' : (entered ? 'opacity-100 scale-100' : 'opacity-0 scale-95')}`}
+        >
+      {suggestions.map((s,i) => {
             const active = i === activeIndex;
             return (
-              <li key={s.id} role="option" tabIndex={-1} className={`px-2 py-1 cursor-pointer ${active ? 'bg-[color:var(--owl-accent-bg)]' : 'hover:bg-[color:var(--owl-accent-bg)] focus:bg-[color:var(--owl-accent-bg)]'}`} onMouseDown={e=>e.preventDefault()} onMouseEnter={()=>setActiveIndex(i)} onClick={()=>choose(s)}>{s.description}</li>
+              <li
+                key={s.id}
+                id={`addressLine1-option-${i}`}
+                role="option"
+                aria-selected={active ? 'true' : 'false'}
+                tabIndex={-1}
+                ref={el => { optionRefs.current[i] = el; }}
+                className={`px-3 py-2 cursor-pointer leading-snug select-none outline-none ${active ? 'bg-[color:var(--owl-accent-bg)] text-[color:var(--owl-accent-fg,var(--owl-bg))]' : 'hover:bg-[color:var(--owl-accent-bg)] hover:text-[color:var(--owl-accent-fg,var(--owl-bg))]'} focus-visible:ring-2 focus-visible:ring-[color:var(--owl-accent)] focus-visible:ring-offset-0 transition-colors`}
+                onMouseDown={e=>e.preventDefault()}
+                onMouseEnter={()=>setActiveIndex(i)}
+                onClick={()=>choose(s)}
+              >{s.description}</li>
             );
           })}
-          <li className="px-2 py-1 text-[10px] opacity-70 select-none" aria-hidden="true">Powered by Google</li>
+          {suggestions.length === 0 && (
+            <li className="px-3 py-2 text-[color:var(--owl-text-secondary)] text-xs select-none" aria-disabled="true">No matches. Continue typing your address manually.</li>
+          )}
+          <li className="px-3 py-1 text-[10px] select-none bg-[color:var(--owl-surface-subtle,var(--owl-surface))] border-t border-[color:var(--owl-border)] sticky bottom-0 text-[color:var(--owl-text-secondary)]" aria-hidden="true">Powered by Google</li>
         </ul>
       )}
     </div>
@@ -352,16 +429,16 @@ export default function KycScreen() {
           )}
           {(!status || status.status === 'not_started' || status.status === 'rejected') && wizardEnabled && (
             <div>
-              <div className="mb-4">
-                <ol className={reduceMotion ? 'flex items-center gap-2 text-[10px] uppercase tracking-wide' : 'flex items-center gap-2 text-[10px] uppercase tracking-wide transition-all'}>
+              <div className="mb-6">
+                <ol className={reduceMotion ? 'flex items-center gap-3 text-[10px] uppercase tracking-wide' : 'flex items-center gap-3 text-[10px] uppercase tracking-wide transition-all'}>
                   {wizardSteps.map((s,i) => (
                     <React.Fragment key={s.key}>
-                      <li className={`flex flex-col items-center ${i===wizIndex ? 'text-[color:var(--owl-accent)]' : 'text-[color:var(--owl-text-secondary)]'}`}
+                      <li className={`flex flex-col items-center ${i===wizIndex ? 'text-[color:var(--owl-accent)] font-semibold' : 'text-[color:var(--owl-text-secondary)]'}`}
                         aria-current={i===wizIndex ? 'step' : undefined}>
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium mb-1 ${i<wizIndex ? 'bg-[color:var(--owl-success)] text-white' : i===wizIndex ? 'border-2 border-[color:var(--owl-accent)]' : 'border border-[color:var(--owl-border)]'} ${reduceMotion ? '' : 'transition-all duration-300'} ${i<wizIndex && !reduceMotion ? 'scale-110' : ''}`}>{i<wizIndex ? '✓' : i+1}</div>
-                        {s.label}
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-medium mb-1 shadow-sm ${i<wizIndex ? 'bg-[color:var(--owl-success)] text-white' : i===wizIndex ? 'border-2 border-[color:var(--owl-accent)] bg-[color:var(--owl-surface)]' : 'border border-[color:var(--owl-border)] bg-[color:var(--owl-surface)]'} ${reduceMotion ? '' : 'transition-all duration-300'} ${i<wizIndex && !reduceMotion ? 'scale-110' : ''}`}>{i<wizIndex ? '✓' : i+1}</div>
+                        <span className="tracking-normal text-[11px]">{s.label}</span>
                       </li>
-                      {i < wizardSteps.length -1 && <li aria-hidden="true" className="flex-1 h-px bg-[color:var(--owl-border)]" />}
+                      {i < wizardSteps.length -1 && <li aria-hidden="true" className="flex-1 h-[2px] rounded bg-gradient-to-r from-[color:var(--owl-border)] via-[color:var(--owl-border)] to-[color:var(--owl-border)] opacity-60" />}
                     </React.Fragment>
                   ))}
                 </ol>
@@ -407,7 +484,7 @@ export default function KycScreen() {
                 {currentStep.key === 'address1' && (
                   <div className="grid gap-4" data-testid="wizard-step-address1">
                     <AddressLine1Autocomplete register={register} watch={watch} setValue={setValue} error={errors.addressLine1?.message as string | undefined} />
-                    <div>
+                    <div className="col-span-2">
                       <Label htmlFor="addressLine2">Address line 2</Label>
                       <Input id="addressLine2" aria-invalid={errors.addressLine2 ? 'true' : undefined} aria-describedby={errors.addressLine2 ? 'addressLine2-error' : undefined} {...register('addressLine2')} />
                       {errors.addressLine2 && (<p id="addressLine2-error" className="text-xs text-red-500">{errors.addressLine2.message}</p>)}

@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import { toast } from "sonner";
@@ -20,6 +21,8 @@ export default function LoginScreen() {
   const navigate = useNavigate();
   const location = useLocation() as { state?: { from?: { pathname?: string } } };
   const from = location.state?.from?.pathname;
+  const failCountRef = useRef(0); // internal counter (value not displayed)
+  const [showResetHint, setShowResetHint] = useState(false);
 
   const {
     register,
@@ -30,9 +33,12 @@ export default function LoginScreen() {
 
   const onSubmit = handleSubmit(async (vals: FormValues) => {
     try {
+      // Normalize email casing before sending (backend treats emails case-insensitively)
+      const normalizedEmail = vals.email.trim().toLowerCase();
       const hadPrevious = !!localStorage.getItem("auth_token");
-  const { verificationStep, nextStep } = await login(vals.email, vals.password);
+      const { verificationStep, nextStep } = await login(normalizedEmail, vals.password);
       toast.success("Welcome back!");
+  failCountRef.current = 0; setShowResetHint(false);
       // Decide next route from backend-provided step for progressive verification
   // Derive step; if backend omitted fields, infer from stored user record in localStorage refresh via guards later.
   const step = nextStep || verificationStep;
@@ -46,7 +52,14 @@ export default function LoginScreen() {
       }
     } catch (e) {
       const err = e as Error;
-      toast.error(err.message || "Login failed");
+      // Count only 401/Unauthorized style failures toward reset hint
+      const message = err.message || 'Login failed';
+      if (/unauthorized|401|invalid credentials|email not verified/i.test(message)) {
+  const next = failCountRef.current + 1;
+  failCountRef.current = next;
+  if (next >= 3) setShowResetHint(true);
+      }
+      toast.error(message);
     }
   });
 
@@ -69,6 +82,11 @@ export default function LoginScreen() {
               {isSubmitting ? "Signing in…" : "Sign in"}
             </Button>
             {isSubmitting && <p className="text-xs text-center text-[color:var(--owl-text-secondary)]">Contacting {apiBase}…</p>}
+            {showResetHint && (
+              <p className="mt-2 text-xs text-[color:var(--owl-accent)] text-center">
+                Having trouble? <button type="button" onClick={() => navigate('/auth/forgot')} className="underline">Reset your password</button>.
+              </p>
+            )}
           </form>
           <div className="mt-3 text-center">
             <Link to="/auth/forgot" className="text-sm text-[color:var(--owl-accent)] hover:underline">Forgot password?</Link>

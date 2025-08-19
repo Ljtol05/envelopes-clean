@@ -6,7 +6,6 @@ import { Label } from '../../components/ui/label';
 import { Button } from '../../components/ui/button';
 import { forgotPassword, resetPassword } from '../../services/auth';
 import { toast } from 'sonner';
-import AuthProgress from '../../components/auth/AuthProgress';
 import { useNavigate } from 'react-router-dom';
 
 type Step = 'email' | 'reset' | 'done';
@@ -63,7 +62,6 @@ export default function ForgotPassword() {
   if (step === 'done') {
     return (
       <div>
-        <AuthProgress />
         <Card className="w-full max-w-md mx-auto bg-[color:var(--owl-surface)] shadow-[var(--owl-shadow-md)] border border-[color:var(--owl-border)]">
           <CardHeader><CardTitle>Password Reset</CardTitle></CardHeader>
           <CardContent>
@@ -77,7 +75,6 @@ export default function ForgotPassword() {
 
   return (
     <div>
-      <AuthProgress />
       <Card className="w-full max-w-md mx-auto bg-[color:var(--owl-surface)] shadow-[var(--owl-shadow-md)] border border-[color:var(--owl-border)]">
         <CardHeader>
           <CardTitle>{step === 'email' ? 'Reset password' : 'Enter reset code'}</CardTitle>

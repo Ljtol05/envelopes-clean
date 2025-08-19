@@ -98,8 +98,21 @@ export async function resendVerification(email: string) {
 
 // Optional phone verification (stubs; backend must implement)
 export async function startPhoneVerification(phone: string) {
-  const res = await apiClient.post<{ ok: boolean }>(ENDPOINTS.startPhone, { phone, phoneNumber: phone });
-  return res.data;
+  try {
+    const res = await apiClient.post<{ ok: boolean }>(ENDPOINTS.startPhone, { phone });
+    return res.data;
+  } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e: any = err;
+    if (import.meta.env.DEV) {
+      console.debug('[auth.startPhoneVerification] error', {
+        status: e?.response?.status,
+        data: e?.response?.data,
+        payload: { phone }
+      });
+    }
+    throw new Error(e?.response?.data?.message || 'Failed to start phone verification');
+  }
 }
 
 export interface VerifyPhoneResponse {
@@ -111,12 +124,30 @@ export interface VerifyPhoneResponse {
   user?: { id: string | number; email: string; name?: string; emailVerified?: boolean; phoneVerified?: boolean; kycApproved?: boolean };
 }
 export async function verifyPhone(phone: string, code: string): Promise<VerifyPhoneResponse> {
-  const res = await apiClient.post<VerifyPhoneResponse>(ENDPOINTS.verifyPhone, { phone, phoneNumber: phone, code });
-  return res.data;
+  try {
+    const res = await apiClient.post<VerifyPhoneResponse>(ENDPOINTS.verifyPhone, { phone, code });
+    return res.data;
+  } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e: any = err;
+    if (import.meta.env.DEV) {
+      console.debug('[auth.verifyPhone] error', { status: e?.response?.status, data: e?.response?.data });
+    }
+    throw new Error(e?.response?.data?.message || 'Phone verification failed');
+  }
 }
 export async function resendPhoneVerification(phone: string) {
-  const res = await apiClient.post<{ ok: boolean }>(ENDPOINTS.resendPhone, { phone, phoneNumber: phone });
-  return res.data;
+  try {
+    const res = await apiClient.post<{ ok: boolean }>(ENDPOINTS.resendPhone, { phone });
+    return res.data;
+  } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e: any = err;
+    if (import.meta.env.DEV) {
+      console.debug('[auth.resendPhoneVerification] error', { status: e?.response?.status, data: e?.response?.data });
+    }
+    throw new Error(e?.response?.data?.message || 'Failed to resend code');
+  }
 }
 
 // Forgot / Reset password (no auth token required)

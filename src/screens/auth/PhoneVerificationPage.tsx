@@ -37,7 +37,7 @@ export default function PhoneVerificationPage() {
       }
     }
   }, [requirePhone, user?.phoneVerified, navigate, location]);
-  const [phone, setPhone] = useState(''); // raw user input (may include spaces, dashes, parentheses)
+  const [phone, setPhone] = useState(''); // masked input (may include dashes for US/CA)
   const [normalizedPhone, setNormalizedPhone] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'enter'|'code'>('enter');
@@ -48,9 +48,30 @@ export default function PhoneVerificationPage() {
 
   function computeNormalized(): string | null {
     // If user typed national digits without +, try auto-prepend using selected country then parse.
-  const candidate = phone.startsWith('+') ? phone : autoPrependCountry(phone, country);
-  return formatPhoneE164(candidate, { defaultCountry: country });
+    const candidate = phone.startsWith('+') ? phone : autoPrependCountry(phone, country);
+    return formatPhoneE164(candidate, { defaultCountry: country });
   }
+
+  function maskIfNeeded(raw: string): string {
+    // Only mask for US / CA and when user not typing international form (+)
+    if (!['US','CA'].includes(country) || raw.startsWith('+')) return raw;
+    const digits = raw.replace(/\D+/g,'').slice(0,10);
+    if (!digits) return '';
+    let out = digits;
+    if (digits.length > 3 && digits.length <= 6) out = `${digits.slice(0,3)}-${digits.slice(3)}`;
+    else if (digits.length > 6) out = `${digits.slice(0,3)}-${digits.slice(3,6)}-${digits.slice(6)}`;
+    return out;
+  }
+
+  function onPhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value;
+    const masked = maskIfNeeded(raw);
+    setPhone(masked);
+    // Clear previously computed normalized preview when editing
+    setNormalizedPhone(null);
+    setError(null);
+  }
+  
 
   async function start(e: React.FormEvent) {
     e.preventDefault();
@@ -129,17 +150,17 @@ export default function PhoneVerificationPage() {
                   <div className="flex w-full items-center gap-2">
                     <div className="w-40">
                       <Select value={country} onValueChange={(v)=>setCountry(v as CountryCode)}>
-                        <SelectTrigger aria-label="Country" size="sm">
+                        <SelectTrigger aria-label="Country" size="sm" className="bg-[color:var(--owl-surface)] border-[color:var(--owl-border)] focus:ring-0">
                           <SelectValue placeholder="Country" />
                         </SelectTrigger>
-                        <SelectContent className="max-h-64 bg-[color:var(--owl-popover-bg)]">
+                        <SelectContent className="max-h-64 bg-[color:var(--owl-surface)] border border-[color:var(--owl-border)] shadow-[var(--owl-shadow-md)]">
                           {countriesRef.current.slice(0,40).map(c => (
                             <SelectItem key={c.code} value={c.code}>{c.flag} +{c.callingCode} {c.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <Input id="phone" placeholder="(689) 224-3543" value={phone} onChange={e=>setPhone(e.target.value)} />
+                    <Input id="phone" placeholder="999-999-9999" value={phone} onChange={onPhoneChange} />
                   </div>
                   {normalizedPhone && <p className="text-[10px] text-[color:var(--owl-text-secondary)]">Will send: {normalizedPhone}</p>}
                 </div>
