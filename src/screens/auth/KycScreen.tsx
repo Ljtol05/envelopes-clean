@@ -8,10 +8,12 @@ import { useKyc } from '../../hooks/useKyc';
 import { useAuth } from '../../context/useAuth';
 import type { KycFormData } from '../../types/kyc';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { cn } from '../../components/ui/utils';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Button } from '../../components/ui/button';
 import { fetchAddressSuggestions, applySuggestion, fetchPlaceDetails, type AddressSuggestion } from '../../lib/addressAutocomplete';
+import useKycPersistence from '../../hooks/useKycPersistence';
 import { lookupZip } from '../../lib/zipLookup';
 import AuthProgress from '../../components/auth/AuthProgress';
 import usePrefersReducedMotion from '../../hooks/usePrefersReducedMotion';
@@ -53,12 +55,14 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
   const [open, setOpen] = React.useState(false);
   const [activeIndex, setActiveIndex] = React.useState<number>(-1);
   const [entered, setEntered] = React.useState(false); // for enter animation
+  const [loading, setLoading] = React.useState(false);
   const abortRef = React.useRef<AbortController | null>(null);
   const prefersReduced = usePrefersReducedMotion();
   const requestSeqRef = React.useRef(0); // incrementing sequence to guard against late responses
   const [announcement, setAnnouncement] = React.useState('');
   const val = watch('addressLine1') as string;
   React.useEffect(() => { setQ(val || ''); }, [val]);
+  const DEBOUNCE_MS = 200;
   React.useEffect(() => {
     if (!q || q.trim().length < 3) { setSuggestions([]); setOpen(false); return; }
     abortRef.current?.abort();
@@ -67,6 +71,7 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
     const seq = ++requestSeqRef.current; // capture sequence id for this request lifecycle
     const t = setTimeout(async () => {
       try {
+        setLoading(true);
         const res = await fetchAddressSuggestions(q, { signal: ctrl.signal });
         // Ignore if a newer request has started or dropdown was closed meanwhile
         if (seq === requestSeqRef.current) {
@@ -90,8 +95,10 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
           setOpen(true); // show empty state
           if (q.trim().length >=3) setAnnouncement('No address suggestions found.');
         }
+      } finally {
+        if (seq === requestSeqRef.current) setLoading(false);
       }
-    }, 180);
+    }, DEBOUNCE_MS);
     return () => { clearTimeout(t); ctrl.abort(); };
   }, [q]);
   // Handle setting enter state for animation when dropdown opens
@@ -126,11 +133,35 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
     setActiveIndex(-1);
   }
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (!open || suggestions.length === 0) return;
-    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => (i + 1) % suggestions.length); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => (i - 1 + suggestions.length) % suggestions.length); }
-    else if (e.key === 'Enter') { if (activeIndex >= 0) { e.preventDefault(); choose(suggestions[activeIndex]); } }
-    else if (e.key === 'Escape') { setOpen(false); setActiveIndex(-1); }
+    if (!open) return;
+    const count = suggestions.length;
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        if (count === 0) return; setActiveIndex(i => (i + 1) % count);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        if (count === 0) return; setActiveIndex(i => (i - 1 + count) % count);
+        break;
+      case 'Home':
+        if (count) { e.preventDefault(); setActiveIndex(0); }
+        break;
+      case 'End':
+        if (count) { e.preventDefault(); setActiveIndex(count -1); }
+        break;
+      case 'PageDown':
+        if (count) { e.preventDefault(); setActiveIndex(i => Math.min(count -1, i + 5)); }
+        break;
+      case 'PageUp':
+        if (count) { e.preventDefault(); setActiveIndex(i => Math.max(0, i - 5)); }
+        break;
+      case 'Enter':
+        if (activeIndex >= 0 && count) { e.preventDefault(); choose(suggestions[activeIndex]); }
+        break;
+      case 'Escape':
+        setOpen(false); setActiveIndex(-1); break;
+    }
   }
   // Track refs for scrolling active option into view for keyboard users
   const optionRefs = React.useRef<(HTMLLIElement | null)[]>([]);
@@ -140,7 +171,7 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
     }
   }, [activeIndex, open]);
   return (
-    <div className="col-span-2 relative">
+  <div className="col-span-2 relative" data-autocomplete>
       <Label htmlFor="addressLine1">Address line 1</Label>
       <Input
         id="addressLine1"
@@ -158,7 +189,7 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
       {error && <p id="addressLine1-error" className="text-xs text-red-500">{error}</p>}
   {/* Live region for screen readers announcing suggestion availability */}
   <div className="sr-only" aria-live="polite" aria-atomic="true">{announcement}</div>
-    {open && (
+      {open && (
     <ul
           aria-label="Address suggestions"
           id="addressLine1-suggestions"
@@ -172,20 +203,23 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
                 key={s.id}
                 id={`addressLine1-option-${i}`}
                 role="option"
-                aria-selected={active ? 'true' : 'false'}
+                aria-selected={active}
                 tabIndex={-1}
                 ref={el => { optionRefs.current[i] = el; }}
-                className={`px-3 py-2 cursor-pointer leading-snug select-none outline-none ${active ? 'bg-[color:var(--owl-accent-bg)] text-[color:var(--owl-accent-fg,var(--owl-bg))]' : 'hover:bg-[color:var(--owl-accent-bg)] hover:text-[color:var(--owl-accent-fg,var(--owl-bg))]'} focus-visible:ring-2 focus-visible:ring-[color:var(--owl-accent)] focus-visible:ring-offset-0 transition-colors`}
+                className={`px-3 py-2 cursor-pointer leading-snug select-none outline-none ${active ? 'bg-[color:var(--owl-accent-bg,var(--owl-accent))] text-[color:var(--owl-accent-fg,var(--owl-bg))] shadow-[0_0_0_1px_var(--owl-accent)]' : 'hover:bg-[color:var(--owl-accent-bg,var(--owl-accent))] hover:text-[color:var(--owl-accent-fg,var(--owl-bg))]'} focus-visible:ring-2 focus-visible:ring-[color:var(--owl-accent)] focus-visible:ring-offset-0 transition-colors`}
                 onMouseDown={e=>e.preventDefault()}
                 onMouseEnter={()=>setActiveIndex(i)}
                 onClick={()=>choose(s)}
               >{s.description}</li>
             );
           })}
-          {suggestions.length === 0 && (
-            <li className="px-3 py-2 text-[color:var(--owl-text-secondary)] text-xs select-none" aria-disabled="true">No matches. Continue typing your address manually.</li>
+          {suggestions.length === 0 && !loading && (
+            <li role="option" aria-selected="false" className="px-3 py-2 text-[color:var(--owl-text-secondary)] text-xs select-none cursor-default">No matches. Continue typing your address manually.</li>
           )}
-          <li className="px-3 py-1 text-[10px] select-none bg-[color:var(--owl-surface-subtle,var(--owl-surface))] border-t border-[color:var(--owl-border)] sticky bottom-0 text-[color:var(--owl-text-secondary)]" aria-hidden="true">Powered by Google</li>
+          {loading && (
+            <li role="option" aria-selected="false" className="px-3 py-2 text-[10px] text-[color:var(--owl-text-secondary)] animate-pulse cursor-default">Loading…</li>
+          )}
+          <li role="option" aria-selected="false" className="px-3 py-1 text-[10px] select-none bg-[color:var(--owl-surface-subtle,var(--owl-surface))] border-t border-[color:var(--owl-border)] sticky bottom-0 text-[color:var(--owl-text-secondary)] cursor-default" aria-hidden="true">Powered by Google</li>
         </ul>
       )}
     </div>
@@ -200,7 +234,7 @@ export default function KycScreen() {
   const navigate = useNavigate();
   const from = '/home';
 
-  const { register, handleSubmit, setValue, watch, formState: { errors }, trigger } = useForm({
+  const { register, handleSubmit, setValue, watch, getValues, formState: { errors }, trigger, reset: formReset } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       legalFirstName: '',
@@ -265,12 +299,13 @@ export default function KycScreen() {
 
   // Optional multi-step wizard (experimental) guarded by env flag to avoid breaking existing tests.
   // Wizard now ON by default; can be disabled by explicitly setting VITE_KYC_WIZARD="false" in any env source.
-  const wizardFlagValue = (
-    (typeof import.meta !== 'undefined' && (import.meta as unknown as { env?: Record<string,string> }).env?.VITE_KYC_WIZARD) ??
-    ((globalThis as unknown as { importMetaEnv?: Record<string,string> }).importMetaEnv?.VITE_KYC_WIZARD) ??
-    (typeof process !== 'undefined' ? process.env?.VITE_KYC_WIZARD : undefined)
-  );
-  const wizardEnabled = wizardFlagValue !== 'false';
+  const wizardSourceValues: (string | undefined)[] = [
+    (typeof import.meta !== 'undefined' ? ((import.meta as unknown as { env?: Record<string,string> }).env?.VITE_KYC_WIZARD) : undefined),
+    ((globalThis as unknown as { importMetaEnv?: Record<string,string> }).importMetaEnv?.VITE_KYC_WIZARD),
+    (typeof process !== 'undefined' ? process.env?.VITE_KYC_WIZARD : undefined),
+  ];
+  // Disable wizard if ANY source explicitly sets 'false'. Otherwise default enabled.
+  const wizardEnabled = !wizardSourceValues.some(v => v === 'false');
 
   type WizardKey = 'name' | 'dob' | 'ssn' | 'address1' | 'address2' | 'review';
   interface WizardStep { key: WizardKey; label: string; fields: (keyof KycFormData)[]; }
@@ -284,6 +319,26 @@ export default function KycScreen() {
   ];
   const [wizIndex, setWizIndex] = React.useState(0);
   const currentStep = wizardSteps[wizIndex];
+  // Centralized persistence via hook
+  const { showResumePrompt, applyResume, startOver, lastSavedText, saveNow, /* for potential future use */ dismissResume } = useKycPersistence({
+    userId: user?.id,
+    wizardEnabled,
+    wizardStepsLength: wizardSteps.length,
+    watch,
+    getValues,
+    setValue,
+    formReset,
+    wizIndex,
+    setWizIndex,
+    status: status?.status,
+  }) as unknown as {
+    showResumePrompt: boolean;
+    applyResume: () => void;
+    startOver: () => void;
+    lastSavedText: string | null;
+    saveNow: (opts?: { force?: boolean }) => Promise<void>;
+    dismissResume: () => void;
+  };
 
   // Segmented DOB inputs for wizard mode
   const dobRaw = (watch('dob') as string) || '';
@@ -347,6 +402,8 @@ export default function KycScreen() {
   const wizAdvancingRef = React.useRef(false);
   const [wizAdvancing, setWizAdvancing] = React.useState(false);
 
+  // Inline persistence logic moved into useKycPersistence hook
+
   // Redirect once approved (side-effect)
   React.useEffect(() => {
     if (status?.status === 'approved') {
@@ -364,6 +421,17 @@ export default function KycScreen() {
           <CardTitle>Identity Verification</CardTitle>
         </CardHeader>
         <CardContent>
+      {showResumePrompt && wizardEnabled && (!status || status.status === 'not_started' || status.status === 'rejected') && (
+            <div role="alert" className="mb-4 p-3 rounded-md border border-[color:var(--owl-border-strong,var(--owl-border))] bg-[color:var(--owl-surface-subtle,var(--owl-surface))] flex flex-col gap-2 text-sm" data-testid="resume-prompt">
+              <p className="font-medium">Hey you still need to complete your KYC verification.</p>
+              <p>Would you like to continue where you left off?</p>
+              <div className="flex gap-2 flex-wrap">
+                <Button type="button" size="sm" onClick={applyResume} data-testid="resume-continue">Resume</Button>
+        <Button type="button" size="sm" variant="secondary" onClick={startOver} data-testid="resume-start-over">Start over</Button>
+        <Button type="button" size="sm" variant="ghost" onClick={dismissResume} data-testid="resume-dismiss">Dismiss</Button>
+              </div>
+            </div>
+          )}
           {status?.status === 'pending' && (
             <div className="space-y-4">
               <p className="text-sm">Your information is being reviewed. This usually takes a minute…</p>
@@ -429,18 +497,38 @@ export default function KycScreen() {
           )}
           {(!status || status.status === 'not_started' || status.status === 'rejected') && wizardEnabled && (
             <div>
-              <div className="mb-6">
-                <ol className={reduceMotion ? 'flex items-center gap-3 text-[10px] uppercase tracking-wide' : 'flex items-center gap-3 text-[10px] uppercase tracking-wide transition-all'}>
-                  {wizardSteps.map((s,i) => (
-                    <React.Fragment key={s.key}>
-                      <li className={`flex flex-col items-center ${i===wizIndex ? 'text-[color:var(--owl-accent)] font-semibold' : 'text-[color:var(--owl-text-secondary)]'}`}
-                        aria-current={i===wizIndex ? 'step' : undefined}>
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-medium mb-1 shadow-sm ${i<wizIndex ? 'bg-[color:var(--owl-success)] text-white' : i===wizIndex ? 'border-2 border-[color:var(--owl-accent)] bg-[color:var(--owl-surface)]' : 'border border-[color:var(--owl-border)] bg-[color:var(--owl-surface)]'} ${reduceMotion ? '' : 'transition-all duration-300'} ${i<wizIndex && !reduceMotion ? 'scale-110' : ''}`}>{i<wizIndex ? '✓' : i+1}</div>
-                        <span className="tracking-normal text-[11px]">{s.label}</span>
-                      </li>
-                      {i < wizardSteps.length -1 && <li aria-hidden="true" className="flex-1 h-[2px] rounded bg-gradient-to-r from-[color:var(--owl-border)] via-[color:var(--owl-border)] to-[color:var(--owl-border)] opacity-60" />}
-                    </React.Fragment>
-                  ))}
+              <div className="mb-6" aria-label="Verification progress">
+                <ol className="flex items-center gap-3 text-[10px] uppercase tracking-wide" role="list">
+                  {wizardSteps.map((s,i) => {
+                    const completed = i < wizIndex;
+                    const active = i === wizIndex;
+                    return (
+                      <React.Fragment key={s.key}>
+                        <li role="listitem" aria-current={active ? 'step' : undefined} aria-label={`Step ${i+1} of ${wizardSteps.length}: ${s.label}${active ? ' (current)' : completed ? ' (completed)' : ''}`}
+                          className={`flex flex-col items-center min-w-[3.5rem] ${active ? 'text-[color:var(--owl-accent)] font-semibold' : 'text-[color:var(--owl-text-secondary)]'}`}>
+                          <div className={cn(
+                            'relative flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-medium mb-1',
+                            'before:absolute before:inset-0 before:rounded-full before:opacity-0 before:scale-75 before:bg-[color:var(--owl-accent)] before:text-[color:var(--owl-accent-fg,var(--owl-bg))] before:blur-sm',
+                            !reduceMotion && 'transition-all duration-300',
+                            completed && 'bg-[color:var(--owl-success)] text-white shadow-sm',
+                            active && !completed && 'border-2 border-[color:var(--owl-accent)] bg-[color:var(--owl-surface)] shadow-[0_0_0_2px_rgba(69,208,199,0.15)]',
+                            !active && !completed && 'border border-[color:var(--owl-border)] bg-[color:var(--owl-surface)]',
+                            active && !reduceMotion && 'animate-kycPulse'
+                          )}>
+                            {completed ? '✓' : i+1}
+                          </div>
+                          <span className="tracking-normal text-[11px] whitespace-nowrap">{s.label}</span>
+                        </li>
+                        {i < wizardSteps.length -1 && (
+                          <li aria-hidden="true" className="flex-1 h-2 flex items-center">
+                            <div className="relative w-full h-[2px] bg-[color:var(--owl-border)] rounded overflow-hidden">
+                              <div className={cn('absolute inset-y-0 left-0 bg-[color:var(--owl-accent)] text-[color:var(--owl-accent-fg,var(--owl-bg))] rounded w-0', (completed || active) && !reduceMotion && 'animate-kycConnectorGrow', completed && 'w-full', active && 'w-1/2')} />
+                            </div>
+                          </li>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
                 </ol>
               </div>
               <form onSubmit={isLastStep ? onSubmit : (e)=>{ e.preventDefault(); nextWizard(); }} className="space-y-6">
@@ -530,7 +618,27 @@ export default function KycScreen() {
                   ) : (
                     <Button type="submit" variant="default" disabled={submitting || wizAdvancing}>Next</Button>
                   )}
+                  <div className="flex-1" />
+                  {!isLastStep && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={async () => {
+                        // Ensure any final keystrokes are flushed
+                        await Promise.resolve();
+                        await saveNow({ force: true });
+                        navigate('/auth/login');
+                      }}
+                      data-testid="save-exit-btn"
+                    >
+                      Save & Exit
+                    </Button>
+                  )}
                 </div>
+                {lastSavedText && (
+                  <div className="text-[10px] text-[color:var(--owl-text-secondary)] text-right" aria-live="polite" data-testid="last-saved">{lastSavedText}</div>
+                )}
               </form>
             </div>
           )}

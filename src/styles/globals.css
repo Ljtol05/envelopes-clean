@@ -361,10 +361,12 @@ img[data-theme-logo] {
 }
 
 /* Unified modal gradient surface helper (both themes; tokens differ per theme) */
+._owl-modal-solid-fix,
+/* internal utility (not exported) */
 .owl-modal-surface {
   /* HARD SOLID: remove gradient & any chance of transparency until issue resolved */
-  background: var(--owl-modal-bg) !important;
-  background-color: var(--owl-modal-bg) !important;
+  background: var(--owl-modal-bg, #FFFFFF) !important;
+  background-color: var(--owl-modal-bg, #FFFFFF) !important;
   background-image: none !important;
   position: relative;
   isolation: isolate;
@@ -372,25 +374,62 @@ img[data-theme-logo] {
   /* In case a parent sets opacity, counter it locally */
   opacity: 1 !important;
   background-clip: padding-box;
+  /* Prevent accidental blending from parent mix-blend-mode */
+  mix-blend-mode: normal !important;
 }
 
 /* Explicitly neutralize any backdrop/filter/opacity inheritance that could cause translucency */
+._owl-modal-solid-fix,
 .owl-modal-surface {
   filter: none !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 /* Defensive: if a parent applied opacity via utility (e.g., opacity-90 on Content), reset via higher specificity */
+._owl-modal-solid-fix.owl-modal-surface,
 .owl-modal-surface.owl-modal-surface {
   opacity: 1 !important;
+}
+
+/* KYC progress animations */
+@keyframes kycPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(69, 208, 199, 0.0);
+  }
+
+  50% {
+    box-shadow: 0 0 0 4px rgba(69, 208, 199, 0.25);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(69, 208, 199, 0.0);
+  }
+}
+
+@keyframes kycConnectorGrow {
+  0% {
+    width: 0;
+  }
+
+  100% {
+    width: 100%;
+  }
+}
+
+.animate-kycPulse {
+  animation: kycPulse 1.8s ease-in-out infinite;
+}
+
+.animate-kycConnectorGrow {
+  animation: kycConnectorGrow 0.9s cubic-bezier(.4, .0, .2, 1) forwards;
 }
 
 /* Gloss / subtle top highlight */
 /* Previous gradient + gloss moved to optional glass variant */
 .owl-modal-surface-glass {
-  background: var(--owl-modal-bg);
-  background-image: linear-gradient(180deg, var(--owl-modal-bg-top, var(--owl-modal-bg)) 0%, var(--owl-modal-bg-bottom, var(--owl-modal-bg)) 100%);
+  background: var(--owl-modal-bg, #FFFFFF);
+  background-image: linear-gradient(180deg, var(--owl-modal-bg-top, var(--owl-modal-bg, #FFFFFF)) 0%, var(--owl-modal-bg-bottom, var(--owl-modal-bg, #FFFFFF)) 100%);
 }
 
 .owl-modal-surface-glass::before {

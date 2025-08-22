@@ -25,6 +25,7 @@ Modern budgeting / envelopes UI built with React 19, Vite 7, TypeScript 5, Tailw
 14. [Environment & API Diagnostics](#environment--api-diagnostics)
 15. [Endpoint Diagnostics Panel](#endpoint-diagnostics-panel)
 16. [Address Autocomplete & KYC UX](#address-autocomplete--kyc-ux)
+17. [KYC Progress Persistence](#kyc-progress-persistence)
 
 ## Key Features
 * Semantic theming system (`--owl-*`) with enforced contrast & accent foreground pairing
@@ -323,6 +324,49 @@ Remaining
 
 Privacy Note
 * Avoid storing full user-entered address queries with PII unless required; consider hashing or truncating at persistence layer.
+
+## KYC Progress Persistence
+
+The KYC wizard persists per-user progress in localStorage and can resume across sessions.
+
+What is stored
+* Key: `kyc_wizard_progress_v1_<userId>`
+* Shape: `{ step: number, data: Partial<KycFormData>, updated: epochMs }`
+
+Retention & expiry
+* TTL: 7 days (hard-coded default). Stale entries are auto-removed on load and no resume prompt is shown.
+
+Privacy hardening
+* ssnLast4 uses Web Crypto AES‑GCM at rest with an `aes:` prefix. The payload is `base64(iv || ciphertext)` where `iv` is a 12‑byte random nonce; the AES key is derived from the user id via SHA‑256 (per‑user key) in `AES-GCM` mode. If AES is unavailable (very old browsers/tests), it falls back to the prior XOR+base64 scheme with an `enc:` prefix.
+* Legacy `enc:` values are still readable (XOR‑decoded) and will be rewritten as `aes:` on the next save when AES is available. Unprefixed values (rare legacy) are treated as plain text and re‑encoded.
+
+User controls
+* Resume prompt appears when valid progress is found; users can Resume, Start over (clears storage), or Dismiss.
+* Save & Exit immediately persists current values and navigates to `/auth/login`.
+* A subtle “Saved X minutes ago” indicator reflects the last persisted time and updates on changes.
+
+Implementation
+* Utilities: `src/lib/kycPersistence.ts` (storage key, TTL helpers, AES‑GCM encode/decode with `aes:` prefix, XOR fallback with `enc:`).
+* Hook: `src/hooks/useKycPersistence.ts` encapsulates load/persist/clear, last‑saved tracking, and a resume prompt. While the resume prompt is visible, persistence is temporarily suspended to avoid clobbering the saved step with step 0; it resumes after the user chooses Resume/Dismiss/Start over.
+* Screen: `src/screens/auth/KycScreen.tsx` wires the hook and renders the indicator and controls.
+
+Notes
+* This is client-side convenience storage only. Final submission clears the stored progress on `pending`/`approved` status.
+* For maximum protection, consider avoiding client persistence of `ssnLast4` entirely; current AES‑GCM implementation significantly raises the bar while preserving UX.
+
+### Test JSON logs + jq
+
+You can emit machine‑readable Jest output and summarize with `jq`:
+
+```bash
+# Single file
+npx jest src/__tests__/KycPersistence.test.tsx -w=1 --json --outputFile=.tmp/kyc-basic.json
+jq '{ok: (.numFailed==0), numFailed, tests: [.testResults[] | {name: .name, status: .status, failed: (.assertionResults | map(select(.status=="failed")))}]}' .tmp/kyc-basic.json
+
+# Full suite (serialize to minimize flake)
+npx jest -w=1 --json --outputFile=.tmp/jest-full.json
+jq '{ok: (.numFailed==0), numFailed, failed: [.testResults[] | select(.status=="failed") | {name: .name, firstFailure: (.assertionResults | map(select(.status=="failed")) | .[0]?.title)}]}' .tmp/jest-full.json
+```
 
 ## Theming & Branding
 Semantic CSS variables (`--owl-*`) define color tokens for light & dark modes. Theme preference stored in `localStorage` (`owl-theme`) and synced across tabs. Accent usage rules and contrast are automatically audited.

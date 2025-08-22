@@ -1,1 +1,4 @@
+/* Tailwind base + components + utilities */
 @import "tailwindcss";
+/* Project design tokens & modal surface hardening */
+@import "./styles/globals.css";

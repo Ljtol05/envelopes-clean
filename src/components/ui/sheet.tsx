@@ -36,7 +36,7 @@ const SheetOverlay = React.forwardRef<
     ref={ref}
     data-slot="sheet-overlay"
     className={cn(
-  "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 backdrop-blur-sm bg-[color:var(--owl-overlay)]",
+  "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 backdrop-blur-sm bg-[color:var(--owl-overlay,rgba(14,26,43,0.62))]",
       className,
     )}
     {...props}
@@ -59,8 +59,8 @@ const SheetContent = React.forwardRef<
       ref={ref}
       data-slot="sheet-content"
     className={cn(
-  // Opaque base surface; add glass variant when requested
-  "owl-modal-surface bg-[var(--owl-modal-bg)] supports-[backdrop-filter]:bg-[var(--owl-modal-bg)] border-[color:var(--owl-modal-border)] data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-[var(--owl-shadow-sheet)] transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+  // Opaque base surface with fallback color to prevent transparency if tokens missing
+  "owl-modal-surface bg-[var(--owl-modal-bg,#fff)] supports-[backdrop-filter]:bg-[var(--owl-modal-bg,#fff)] border-[color:var(--owl-modal-border)] data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-[var(--owl-shadow-sheet)] transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
         variant === 'glass' && "owl-modal-surface-glass backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md",
         side === "right" &&
           "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",

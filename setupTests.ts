@@ -3,6 +3,11 @@ import '@testing-library/jest-dom';
 import 'jest-axe/extend-expect';
 // Polyfill TextEncoder/TextDecoder required by react-router / underlying libs in Node test env
 import { TextEncoder, TextDecoder } from 'util';
+// Provide Web Crypto in Node/Jest env for AES-GCM (used by KYC persistence)
+import { webcrypto as nodeWebcrypto } from 'crypto';
+if (nodeWebcrypto && !(globalThis as unknown as { crypto?: Crypto }).crypto) {
+  (globalThis as unknown as { crypto?: Crypto }).crypto = nodeWebcrypto as unknown as Crypto;
+}
 interface EncoderGlobal { TextEncoder?: typeof TextEncoder; TextDecoder?: typeof TextDecoder; }
 const eg = globalThis as unknown as EncoderGlobal;
 if (!eg.TextEncoder) eg.TextEncoder = TextEncoder;
@@ -52,8 +57,7 @@ const originalEmitWarning = process.emitWarning;
 process.emitWarning = function (warning: unknown, ...args: unknown[]): void {
   const msg = typeof warning === 'string' ? warning : (warning as { message?: string })?.message;
   if (msg && msg.toLowerCase().includes('punycode')) return; // swallow
-  // @ts-expect-error spread types
-  return originalEmitWarning.call(process, warning, ...args);
+  return (originalEmitWarning as (w: unknown, ...a: unknown[]) => void).call(process, warning, ...args);
 };
 
 // Suppress React act() warnings originating from intentional async state updates in polling hooks
@@ -63,8 +67,7 @@ console.error = (...args: unknown[]): void => {
   if (typeof first === 'string' && first.includes('not wrapped in act')) return;
   if (typeof first === 'string' && first.includes('You seem to have overlapping act')) return;
   if ((typeof first === 'string' && first.includes('Cross origin')) || (first instanceof Error && first.message.includes('Cross origin'))) return;
-  // @ts-expect-error rest args pass-through
-  originalError(...args);
+  (originalError as (...a: unknown[]) => void)(...args);
 };
 
 // NOTE: We intentionally do NOT stub the addressAutocomplete module here because
@@ -79,15 +82,16 @@ try {
     const OriginalXHR = window.XMLHttpRequest;
     class QuietXHR extends OriginalXHR {
       private __suppress = false;
-      open(method: string, url: string, ...rest: Parameters<XMLHttpRequest['open']>) {
+      open(method: string, url: string | URL, async?: boolean, username?: string | null, password?: string | null): void {
         try {
-          if (typeof url === 'string' && url.startsWith('http://localhost')) {
+          const target = typeof url === 'string' ? url : url.toString();
+          if (target.startsWith('http://localhost')) {
             this.__suppress = true;
           }
         } catch { /* no-op */ }
-        return super.open(method, url, ...rest);
+        return super.open(method, url, async as boolean, username ?? undefined, password ?? undefined);
       }
-      send(body?: Document | BodyInit | null) {
+      send(body?: Document | XMLHttpRequestBodyInit | null): void {
         if (this.__suppress) {
           try { this.abort(); } catch { /* ignore */ }
           return; // swallow

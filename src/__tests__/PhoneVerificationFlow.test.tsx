@@ -212,8 +212,8 @@ describe('Phone Verification Flow', () => {
     const phoneInput = await screen.findByLabelText(/phone number/i);
     await user.type(phoneInput, '+16892240000');
     await user.click(screen.getByRole('button', { name: /send code/i }));
-    await waitFor(() => screen.getByText(/owner@example.com/));
-    expect(screen.getByText(/already verified by another account/i)).toBeInTheDocument();
+  await waitFor(() => expect(screen.getAllByText(/owner@example.com/).length).toBeGreaterThan(0));
+  expect(screen.getAllByText(/already verified by another account/i).length).toBeGreaterThan(0);
     expect(screen.queryByLabelText(/code/i)).not.toBeInTheDocument();
   });
 });

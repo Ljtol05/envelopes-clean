@@ -188,7 +188,7 @@ export default function PhoneVerificationPage() {
       {step === 'enter' && (
             <form onSubmit={start} className="space-y-4">
               <div>
-                <Label htmlFor="phone" className="block text-center">Phone number</Label>
+                <Label htmlFor="phone" className="block text-center mb-2">Phone number</Label>
                 <div className="flex flex-col items-center gap-2">
                   <div className="flex w-full items-center gap-2">
                     <div className="w-40">

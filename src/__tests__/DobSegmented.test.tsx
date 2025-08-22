@@ -37,6 +37,7 @@ describe('DOB segmented inputs', () => {
     await user.type(day, '02');
     await user.type(year, '1990');
     await user.click(screen.getByRole('button', { name: /next/i }));
-    expect(screen.getByLabelText(/ssn/i)).toBeInTheDocument();
+  // Disambiguate from progress step aria-label containing SSN
+  expect(screen.getByRole('textbox', { name: /ssn/i })).toBeInTheDocument();
   });
 });

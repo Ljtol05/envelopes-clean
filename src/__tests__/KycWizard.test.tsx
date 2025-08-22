@@ -42,7 +42,8 @@ describe('KYC Wizard', () => {
     await user.type(screen.getByLabelText(/day/i), '02');
     await user.type(screen.getByLabelText(/year/i), '1990');
     await user.click(screen.getByRole('button', { name: /next/i }));
-    await user.type(await screen.findByLabelText(/ssn/i), '1234');
+  // Use role-based query to avoid ambiguity with progress step aria-label containing "SSN"
+  await user.type(await screen.findByRole('textbox', { name: /ssn/i }), '1234');
     await user.click(screen.getByRole('button', { name: /next/i }));
     // Address step: repeatedly attempt to find address line 1 in case guard delays advancement
     let addr1: HTMLElement | null = null;
@@ -77,7 +78,8 @@ describe('KYC Wizard', () => {
   await user.clear(firstName);
   await user.click(screen.getByRole('button', { name: /next/i }));
   // Either we remain on name step or show validation; we should NOT be on SSN step directly.
-  expect(screen.queryByLabelText(/ssn/i)).not.toBeInTheDocument();
+  // Query by role to avoid matching progress step aria-label
+  expect(screen.queryByRole('textbox', { name: /ssn/i })).not.toBeInTheDocument();
   });
 
   test('double clicking next does not skip a step', async () => {
@@ -98,6 +100,7 @@ describe('KYC Wizard', () => {
   // Allow some time for a single-step advance (if any)
   await new Promise(r => setTimeout(r, 250));
   // Core assertion: SSN field must not be present (no multi-step skip)
-  expect(screen.queryByLabelText(/ssn/i)).not.toBeInTheDocument();
+  // Ensure SSN input not present yet (avoid progress step aria-label)
+  expect(screen.queryByRole('textbox', { name: /ssn/i })).not.toBeInTheDocument();
   });
 });
