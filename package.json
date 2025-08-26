@@ -78,7 +78,7 @@
     "@types/react-dom": "^19.1.7",
     "@types/testing-library__jest-dom": "5.14.9",
     "@vitejs/plugin-react": "^4.7.0",
-    "babel-jest": "^28.0.2",
+    "babel-jest": "^30.0.5",
     "cmdk": "1.1.1",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
