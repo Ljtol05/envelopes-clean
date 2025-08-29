@@ -8,7 +8,10 @@ export interface ApiClientOptions {
 }
 
 export class ApiClient {
-  constructor(private opts: ApiClientOptions) {}
+  private opts: ApiClientOptions;
+  constructor(opts: ApiClientOptions) {
+    this.opts = opts;
+  }
 
   private buildUrl(path: string) {
     const p = path.startsWith('/') ? path : `/${path}`;

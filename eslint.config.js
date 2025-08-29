@@ -40,13 +40,14 @@ export default [
   // Node/config files
   {
     files: [
-      "*.js",
-      "*.cjs",
-      "*.mjs",
+      "**/*.js",
+      "**/*.cjs",
+      "**/*.mjs",
       "scripts/**/*.mjs",
       "styleMock.js",
       "jest.config.cjs",
-      "babel.config.js",
+      "**/babel.config.js",
+      "**/metro.config.js",
       "postcss.config.mjs",
     ],
     languageOptions: {
@@ -55,6 +56,9 @@ export default [
         ...globals.node,
         ...globals.es2021,
       },
+    },
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
 

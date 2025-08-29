@@ -2,6 +2,7 @@ import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Link } from 'expo-router';
 import { api } from '../src/api/client';
 import { useState } from 'react';
+import { getHealth } from '@envelopes/core';
 
 export default function Home() {
   const [status, setStatus] = useState<string>('');
@@ -14,10 +15,10 @@ export default function Home() {
       <Pressable
         onPress={async () => {
           try {
-            const res = await api.get('/healthz');
+            const res = await getHealth(api);
             setStatus(JSON.stringify(res));
-          } catch (e: any) {
-            setStatus(`error: ${e?.message}`);
+          } catch (e) {
+            setStatus(`error: ${e instanceof Error ? e.message : 'unknown'}`);
           }
         }}
         style={{ padding: 12, backgroundColor: '#eee', borderRadius: 8 }}

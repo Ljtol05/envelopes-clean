@@ -4,8 +4,8 @@ This document tracks the migration from the existing Vite web app to Expo, and o
 
 | Web screen/component | Expo (React Native) file | Future SwiftUI view | Notes |
 |---|---|---|---|
-| `src/screens/Mobile/HomeScreen.tsx` | `apps/mobile/app/home.tsx` | `HomeView.swift` | Route: /home; API: GET /healthz via shared ApiClient |
-| `src/screens/Mobile/ActivityScreen.tsx` | `apps/mobile/app/activity.tsx` | `ActivityView.swift` | Route: /activity |
+| `src/screens/Mobile/HomeScreen.tsx` | `apps/mobile/app/home.tsx` | `HomeView.swift` | Route: /home; API: getHealth(api) from @envelopes/core |
+| `src/screens/Mobile/ActivityScreen.tsx` | `apps/mobile/app/activity.tsx` | `ActivityView.swift` | Route: /activity; API: getEnvelopes(api) from @envelopes/core |
 | `src/screens/Mobile/CardScreen.tsx` | `apps/mobile/app/card.tsx` | `CardView.swift` | Route: /card |
 | `src/screens/Mobile/RulesScreen.tsx` | `apps/mobile/app/rules.tsx` | `RulesView.swift` | Route: /rules |
 | `src/screens/Mobile/SettingsScreen.tsx` | `apps/mobile/app/settings.tsx` | `SettingsView.swift` | Route: /settings |
