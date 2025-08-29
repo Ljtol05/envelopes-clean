@@ -21,8 +21,8 @@ import usePrefersReducedMotion from '../../hooks/usePrefersReducedMotion';
 // Zod schema for form validation with age refinement (18+)
 function isAdult(dob: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) return false;
-  const [y,m,d] = dob.split('-').map(Number);
-  const birth = new Date(Date.UTC(y, m-1, d));
+  const [y, m, d] = dob.split('-').map(Number);
+  const birth = new Date(Date.UTC(y, m - 1, d));
   if (isNaN(birth.getTime())) return false;
   const now = new Date();
   let age = now.getUTCFullYear() - birth.getUTCFullYear();
@@ -33,13 +33,13 @@ function isAdult(dob: string): boolean {
 const schema = z.object({
   legalFirstName: z.string().min(1, 'Required'),
   legalLastName: z.string().min(1, 'Required'),
-  dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/,'Must be YYYY-MM-DD').refine(isAdult, 'Must be 18 or older'),
-  ssnLast4: z.string().length(4,'Must be 4 digits'),
-  addressLine1: z.string().min(1,'Required'),
+  dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD').refine(isAdult, 'Must be 18 or older'),
+  ssnLast4: z.string().length(4, 'Must be 4 digits'),
+  addressLine1: z.string().min(1, 'Required'),
   addressLine2: z.string().optional(),
-  city: z.string().min(1,'Required'),
-  state: z.string().length(2,'2-letter state code'),
-  postalCode: z.string().min(5,'Too short'),
+  city: z.string().min(1, 'Required'),
+  state: z.string().length(2, '2-letter state code'),
+  postalCode: z.string().min(5, 'Too short'),
 });
 
 // Inline component for address line 1 autocomplete (kept local to file for now)
@@ -80,7 +80,7 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
           setOpen(true);
           // Reset active index when new suggestions arrive
           setActiveIndex(res.length ? 0 : -1);
-          if (q.trim().length >=3) {
+          if (q.trim().length >= 3) {
             if (res.length > 0) {
               setAnnouncement(`${res.length} address suggestion${res.length === 1 ? '' : 's'} available. Use arrow keys to navigate, Enter to select.`);
             } else {
@@ -93,7 +93,7 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
         if ((err as DOMException)?.name !== 'AbortError' && seq === requestSeqRef.current) {
           setSuggestions([]);
           setOpen(true); // show empty state
-          if (q.trim().length >=3) setAnnouncement('No address suggestions found.');
+          if (q.trim().length >= 3) setAnnouncement('No address suggestions found.');
         }
       } finally {
         if (seq === requestSeqRef.current) setLoading(false);
@@ -113,9 +113,9 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
   }, [open]);
   async function choose(s: AddressSuggestion) {
     // Merge basic suggestion first (city/state/postalCode if present)
-    const current = { city: watch('city'), state: watch('state'), postalCode: watch('postalCode') } as Record<string,string>;
+    const current = { city: watch('city'), state: watch('state'), postalCode: watch('postalCode') } as Record<string, string>;
     const merged = applySuggestion(current, s);
-    Object.entries(merged).forEach(([k,v]) => v && setValue(k as keyof KycFormData, v as string, { shouldDirty: true }));
+    Object.entries(merged).forEach(([k, v]) => v && setValue(k as keyof KycFormData, v as string, { shouldDirty: true }));
     setValue('addressLine1', s.description.split(',')[0] || s.description, { shouldDirty: true });
     // Attempt structured place details enrichment (street number, route, postal code variations)
     try {
@@ -148,10 +148,10 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
         if (count) { e.preventDefault(); setActiveIndex(0); }
         break;
       case 'End':
-        if (count) { e.preventDefault(); setActiveIndex(count -1); }
+        if (count) { e.preventDefault(); setActiveIndex(count - 1); }
         break;
       case 'PageDown':
-        if (count) { e.preventDefault(); setActiveIndex(i => Math.min(count -1, i + 5)); }
+        if (count) { e.preventDefault(); setActiveIndex(i => Math.min(count - 1, i + 5)); }
         break;
       case 'PageUp':
         if (count) { e.preventDefault(); setActiveIndex(i => Math.max(0, i - 5)); }
@@ -171,32 +171,32 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
     }
   }, [activeIndex, open]);
   return (
-  <div className="col-span-2 relative" data-autocomplete>
+    <div className="col-span-2 relative" data-autocomplete>
       <Label htmlFor="addressLine1">Address line 1</Label>
       <Input
         id="addressLine1"
         autoComplete="off"
         aria-autocomplete="list"
-        aria-expanded={open? 'true':'false'}
+        aria-expanded={open ? 'true' : 'false'}
         aria-controls="addressLine1-suggestions"
-        aria-activedescendant={activeIndex >=0 ? `addressLine1-option-${activeIndex}` : undefined}
+        aria-activedescendant={activeIndex >= 0 ? `addressLine1-option-${activeIndex}` : undefined}
         aria-invalid={error ? 'true' : undefined}
         aria-describedby={error ? 'addressLine1-error' : undefined}
         {...register('addressLine1')}
-        onChange={(e)=>{ setQ(e.target.value); register('addressLine1').onChange(e); }}
+        onChange={(e) => { setQ(e.target.value); register('addressLine1').onChange(e); }}
         onKeyDown={onKeyDown}
       />
       {error && <p id="addressLine1-error" className="text-xs text-red-500">{error}</p>}
-  {/* Live region for screen readers announcing suggestion availability */}
-  <div className="sr-only" aria-live="polite" aria-atomic="true">{announcement}</div>
+      {/* Live region for screen readers announcing suggestion availability */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">{announcement}</div>
       {open && (
-    <ul
+        <ul
           aria-label="Address suggestions"
           id="addressLine1-suggestions"
-            role="listbox"
-      className={`absolute z-30 mt-1 w-full max-h-60 overflow-auto rounded-md border border-[color:var(--owl-border-strong,var(--owl-border))] bg-[color:var(--owl-surface)] shadow-[var(--owl-shadow-lg)] text-sm divide-y divide-[color:var(--owl-border)] focus:outline-none ${prefersReduced ? '' : 'transform origin-top transition duration-150 ease-out'} ${prefersReduced ? '' : (entered ? 'opacity-100 scale-100' : 'opacity-0 scale-95')}`}
+          role="listbox"
+          className={`absolute z-30 mt-1 w-full max-h-60 overflow-auto rounded-md border border-[color:var(--owl-border-strong,var(--owl-border))] bg-[color:var(--owl-surface)] shadow-[var(--owl-shadow-lg)] text-sm divide-y divide-[color:var(--owl-border)] focus:outline-none ${prefersReduced ? '' : 'transform origin-top transition duration-150 ease-out'} ${prefersReduced ? '' : (entered ? 'opacity-100 scale-100' : 'opacity-0 scale-95')}`}
         >
-      {suggestions.map((s,i) => {
+          {suggestions.map((s, i) => {
             const active = i === activeIndex;
             return (
               <li
@@ -207,9 +207,9 @@ function AddressLine1Autocomplete({ register, watch, setValue, error }: AddressL
                 tabIndex={-1}
                 ref={el => { optionRefs.current[i] = el; }}
                 className={`px-3 py-2 cursor-pointer leading-snug select-none outline-none ${active ? 'bg-[color:var(--owl-accent-bg,var(--owl-accent))] text-[color:var(--owl-accent-fg,var(--owl-bg))] shadow-[0_0_0_1px_var(--owl-accent)]' : 'hover:bg-[color:var(--owl-accent-bg,var(--owl-accent))] hover:text-[color:var(--owl-accent-fg,var(--owl-bg))]'} focus-visible:ring-2 focus-visible:ring-[color:var(--owl-accent)] focus-visible:ring-offset-0 transition-colors`}
-                onMouseDown={e=>e.preventDefault()}
-                onMouseEnter={()=>setActiveIndex(i)}
-                onClick={()=>choose(s)}
+                onMouseDown={e => e.preventDefault()}
+                onMouseEnter={() => setActiveIndex(i)}
+                onClick={() => choose(s)}
               >{s.description}</li>
             );
           })}
@@ -260,16 +260,16 @@ export default function KycScreen() {
         if (parts.length > 1) setValue('legalLastName', parts.slice(1).join(' '));
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.name]);
 
   // Dynamic DOB formatting: allow typing digits or separators; auto-insert dashes YYYY-MM-DD.
   const dobVal = watch('dob');
   function handleDobChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value.replace(/[^0-9]/g,'').slice(0,8); // YYYYMMDD digits only
+    const raw = e.target.value.replace(/[^0-9]/g, '').slice(0, 8); // YYYYMMDD digits only
     let formatted = raw;
-    if (raw.length > 4) formatted = raw.slice(0,4) + '-' + raw.slice(4);
-    if (raw.length > 6) formatted = raw.slice(0,4) + '-' + raw.slice(4,6) + '-' + raw.slice(6);
+    if (raw.length > 4) formatted = raw.slice(0, 4) + '-' + raw.slice(4);
+    if (raw.length > 6) formatted = raw.slice(0, 4) + '-' + raw.slice(4, 6) + '-' + raw.slice(6);
     setValue('dob', formatted);
   }
 
@@ -290,7 +290,7 @@ export default function KycScreen() {
       }
     })();
     return () => { active = false; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zipVal]);
 
   const onSubmit = handleSubmit(async (values: Record<string, unknown>) => {
@@ -300,8 +300,8 @@ export default function KycScreen() {
   // Optional multi-step wizard (experimental) guarded by env flag to avoid breaking existing tests.
   // Wizard now ON by default; can be disabled by explicitly setting VITE_KYC_WIZARD="false" in any env source.
   const wizardSourceValues: (string | undefined)[] = [
-    (typeof import.meta !== 'undefined' ? ((import.meta as unknown as { env?: Record<string,string> }).env?.VITE_KYC_WIZARD) : undefined),
-    ((globalThis as unknown as { importMetaEnv?: Record<string,string> }).importMetaEnv?.VITE_KYC_WIZARD),
+    (typeof import.meta !== 'undefined' ? ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_KYC_WIZARD) : undefined),
+    ((globalThis as unknown as { importMetaEnv?: Record<string, string> }).importMetaEnv?.VITE_KYC_WIZARD),
     (typeof process !== 'undefined' ? process.env?.VITE_KYC_WIZARD : undefined),
   ];
   // Disable wizard if ANY source explicitly sets 'false'. Otherwise default enabled.
@@ -310,11 +310,11 @@ export default function KycScreen() {
   type WizardKey = 'name' | 'dob' | 'ssn' | 'address1' | 'address2' | 'review';
   interface WizardStep { key: WizardKey; label: string; fields: (keyof KycFormData)[]; }
   const wizardSteps: WizardStep[] = [
-    { key: 'name', label: 'Name', fields: ['legalFirstName','legalLastName'] },
+    { key: 'name', label: 'Name', fields: ['legalFirstName', 'legalLastName'] },
     { key: 'dob', label: 'Birth Date', fields: ['dob'] },
     { key: 'ssn', label: 'SSN', fields: ['ssnLast4'] },
-    { key: 'address1', label: 'Address', fields: ['addressLine1','addressLine2'] },
-    { key: 'address2', label: 'Location', fields: ['city','state','postalCode'] },
+    { key: 'address1', label: 'Address', fields: ['addressLine1', 'addressLine2'] },
+    { key: 'address2', label: 'Location', fields: ['city', 'state', 'postalCode'] },
     { key: 'review', label: 'Review', fields: [] },
   ];
   const [wizIndex, setWizIndex] = React.useState(0);
@@ -350,10 +350,10 @@ export default function KycScreen() {
   const yyRef = React.useRef<HTMLInputElement | null>(null);
   React.useEffect(() => {
     if (dobRaw && /^\d{4}-\d{2}-\d{2}$/.test(dobRaw)) {
-      const [y,m,d] = dobRaw.split('-');
+      const [y, m, d] = dobRaw.split('-');
       setDobYear(y); setDobMonth(m); setDobDay(d);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   function syncDob(y: string, m: string, d: string) {
     if (y.length === 4 && m.length === 2 && d.length === 2) {
@@ -363,21 +363,21 @@ export default function KycScreen() {
     }
   }
   function onDobMonth(e: React.ChangeEvent<HTMLInputElement>) {
-    const v = e.target.value.replace(/[^0-9]/g,'').slice(0,2);
+    const v = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
     setDobMonth(v);
     if (v.length === 2) ddRef.current?.focus();
-    syncDob(dobYear,v,dobDay);
+    syncDob(dobYear, v, dobDay);
   }
   function onDobDay(e: React.ChangeEvent<HTMLInputElement>) {
-    const v = e.target.value.replace(/[^0-9]/g,'').slice(0,2);
+    const v = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
     setDobDay(v);
     if (v.length === 2) yyRef.current?.focus();
-    syncDob(dobYear,dobMonth,v);
+    syncDob(dobYear, dobMonth, v);
   }
   function onDobYear(e: React.ChangeEvent<HTMLInputElement>) {
-    const v = e.target.value.replace(/[^0-9]/g,'').slice(0,4);
+    const v = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
     setDobYear(v);
-    syncDob(v,dobMonth,dobDay);
+    syncDob(v, dobMonth, dobDay);
   }
 
   async function nextWizard() {
@@ -394,7 +394,7 @@ export default function KycScreen() {
     // Release guard after short delay
     setTimeout(() => { wizAdvancingRef.current = false; setWizAdvancing(false); }, 80);
   }
-  function prevWizard() { setWizIndex(i => Math.max(i-1, 0)); }
+  function prevWizard() { setWizIndex(i => Math.max(i - 1, 0)); }
 
   const reduceMotion = usePrefersReducedMotion();
   const isLastStep = currentStep.key === 'review';
@@ -421,14 +421,14 @@ export default function KycScreen() {
           <CardTitle>Identity Verification</CardTitle>
         </CardHeader>
         <CardContent>
-      {showResumePrompt && wizardEnabled && (!status || status.status === 'not_started' || status.status === 'rejected') && (
+          {showResumePrompt && wizardEnabled && (!status || status.status === 'not_started' || status.status === 'rejected') && (
             <div role="alert" className="mb-4 p-3 rounded-md border border-[color:var(--owl-border-strong,var(--owl-border))] bg-[color:var(--owl-surface-subtle,var(--owl-surface))] flex flex-col gap-2 text-sm" data-testid="resume-prompt">
               <p className="font-medium">Hey you still need to complete your KYC verification.</p>
               <p>Would you like to continue where you left off?</p>
               <div className="flex gap-2 flex-wrap">
                 <Button type="button" size="sm" onClick={applyResume} data-testid="resume-continue">Resume</Button>
-        <Button type="button" size="sm" variant="secondary" onClick={startOver} data-testid="resume-start-over">Start over</Button>
-        <Button type="button" size="sm" variant="ghost" onClick={dismissResume} data-testid="resume-dismiss">Dismiss</Button>
+                <Button type="button" size="sm" variant="secondary" onClick={startOver} data-testid="resume-start-over">Start over</Button>
+                <Button type="button" size="sm" variant="ghost" onClick={dismissResume} data-testid="resume-dismiss">Dismiss</Button>
               </div>
             </div>
           )}
@@ -448,12 +448,12 @@ export default function KycScreen() {
             <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="legalFirstName">First name</Label>
-                <Input id="legalFirstName" aria-invalid={errors.legalFirstName ? 'true' : undefined} aria-describedby={errors.legalFirstName ? 'legalFirstName-error' : undefined} {...register('legalFirstName')} onFocus={e=>e.target.select()} />
+                <Input id="legalFirstName" aria-invalid={errors.legalFirstName ? 'true' : undefined} aria-describedby={errors.legalFirstName ? 'legalFirstName-error' : undefined} {...register('legalFirstName')} onFocus={e => e.target.select()} />
                 {errors.legalFirstName && (<p id="legalFirstName-error" className="text-xs text-red-500">{errors.legalFirstName.message}</p>)}
               </div>
               <div>
                 <Label htmlFor="legalLastName">Last name</Label>
-                <Input id="legalLastName" aria-invalid={errors.legalLastName ? 'true' : undefined} aria-describedby={errors.legalLastName ? 'legalLastName-error' : undefined} {...register('legalLastName')} onFocus={e=>e.target.select()} />
+                <Input id="legalLastName" aria-invalid={errors.legalLastName ? 'true' : undefined} aria-describedby={errors.legalLastName ? 'legalLastName-error' : undefined} {...register('legalLastName')} onFocus={e => e.target.select()} />
                 {errors.legalLastName && (<p id="legalLastName-error" className="text-xs text-red-500">{errors.legalLastName.message}</p>)}
               </div>
               <div>
@@ -499,12 +499,12 @@ export default function KycScreen() {
             <div>
               <div className="mb-6" aria-label="Verification progress">
                 <ol className="flex items-center gap-3 text-[10px] uppercase tracking-wide" role="list">
-                  {wizardSteps.map((s,i) => {
+                  {wizardSteps.map((s, i) => {
                     const completed = i < wizIndex;
                     const active = i === wizIndex;
                     return (
                       <React.Fragment key={s.key}>
-                        <li role="listitem" aria-current={active ? 'step' : undefined} aria-label={`Step ${i+1} of ${wizardSteps.length}: ${s.label}${active ? ' (current)' : completed ? ' (completed)' : ''}`}
+                        <li role="listitem" aria-current={active ? 'step' : undefined} aria-label={`Step ${i + 1} of ${wizardSteps.length}: ${s.label}${active ? ' (current)' : completed ? ' (completed)' : ''}`}
                           className={`flex flex-col items-center min-w-[3.5rem] ${active ? 'text-[color:var(--owl-accent)] font-semibold' : 'text-[color:var(--owl-text-secondary)]'}`}>
                           <div className={cn(
                             'relative flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-medium mb-1',
@@ -515,11 +515,11 @@ export default function KycScreen() {
                             !active && !completed && 'border border-[color:var(--owl-border)] bg-[color:var(--owl-surface)]',
                             active && !reduceMotion && 'animate-kycPulse'
                           )}>
-                            {completed ? '✓' : i+1}
+                            {completed ? '✓' : i + 1}
                           </div>
                           <span className="tracking-normal text-[11px] whitespace-nowrap">{s.label}</span>
                         </li>
-                        {i < wizardSteps.length -1 && (
+                        {i < wizardSteps.length - 1 && (
                           <li aria-hidden="true" className="flex-1 h-2 flex items-center">
                             <div className="relative w-full h-[2px] bg-[color:var(--owl-border)] rounded overflow-hidden">
                               <div className={cn('absolute inset-y-0 left-0 bg-[color:var(--owl-accent)] text-[color:var(--owl-accent-fg,var(--owl-bg))] rounded w-0', (completed || active) && !reduceMotion && 'animate-kycConnectorGrow', completed && 'w-full', active && 'w-1/2')} />
@@ -531,7 +531,7 @@ export default function KycScreen() {
                   })}
                 </ol>
               </div>
-              <form onSubmit={isLastStep ? onSubmit : (e)=>{ e.preventDefault(); nextWizard(); }} className="space-y-6">
+              <form onSubmit={isLastStep ? onSubmit : (e) => { e.preventDefault(); nextWizard(); }} className="space-y-6">
                 {currentStep.key === 'name' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-testid="wizard-step-name">
                     <div>
@@ -612,7 +612,7 @@ export default function KycScreen() {
                   </div>
                 )}
                 <div className="flex justify-between pt-2">
-                  <Button type="button" variant="ghost" disabled={wizIndex===0 || submitting} onClick={prevWizard}>Back</Button>
+                  <Button type="button" variant="ghost" disabled={wizIndex === 0 || submitting} onClick={prevWizard}>Back</Button>
                   {isLastStep ? (
                     <Button type="submit" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit'}</Button>
                   ) : (

@@ -19,7 +19,9 @@ module.exports = {
   },
   moduleFileExtensions: ['ts','tsx','js','jsx'],
   moduleNameMapper: {
-    '^(.*)\\.(css|less|scss)$': '<rootDir>/styleMock.cjs'
+  '^(.*)\\.(css|less|scss)$': '<rootDir>/styleMock.cjs',
+  '^@envelopes/core$': '<rootDir>/packages/core/src/index.ts',
+  '^@envelopes/core/(.*)$': '<rootDir>/packages/core/src/$1'
   },
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.{ts,tsx}','!src/**/*.d.ts'],
