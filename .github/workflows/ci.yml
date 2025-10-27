@@ -48,7 +48,7 @@ jobs:
       - name: Build
         run: npm run build
       - name: Upload Contrast Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: contrast-report
           path: contrast-report.txt
