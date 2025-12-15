@@ -26,13 +26,13 @@ jobs:
         run: node scripts/compare-lhci.mjs
       - name: Upload LHCI Reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: lighthouse-report
           path: .lighthouseci
       - name: Upload Bundle Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: bundle-report
           path: bundle-report.json
